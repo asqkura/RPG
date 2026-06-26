@@ -1,6 +1,7 @@
 *.gitattributes text eol=lf
 *.cs diff=csharp text eol=lf
 *.shader text eol=lf
+*.shadergraph text eol=lf
 *.compute text eol=lf
 *.cginc text eol=lf
 *.hlsl text eol=lf
@@ -16,3 +17,4 @@
 *.anim text eol=lf
 *.json text eol=lf
 *.txt text eol=lf
+*.ttf binary
