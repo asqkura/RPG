@@ -16,6 +16,7 @@
 *.controller text eol=lf
 *.anim text eol=lf
 *.json text eol=lf
+*.md text eol=lf
 *.txt text eol=lf
 *.ttf binary
 *.otf binary
