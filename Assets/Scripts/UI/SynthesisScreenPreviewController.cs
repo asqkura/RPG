@@ -664,7 +664,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
     {
         if (moneyText != null)
         {
-            moneyText.text = $"{runSaveData?.Money ?? 0:N0} G";
+            moneyText.text = $"{runSaveData?.Money ?? 0:N0}";
         }
     }
 

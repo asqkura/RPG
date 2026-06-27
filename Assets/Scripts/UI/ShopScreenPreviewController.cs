@@ -65,7 +65,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     private void Awake()
     {
         InitializeGameState();
-        ApplyReferenceShopLayout();
         ResolveOptionalReferences();
         HideDetailSummaryStats();
         RegisterCategoryButtons();
@@ -199,10 +198,18 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
 
         if (equipmentDetailsByEntryId.TryGetValue(row.ShopItemId, out var equipmentDetail))
         {
-            EnsureEquipmentDetailPanelView()?.Show(equipmentDetail);
-            if (detailBodyText != null)
+            if (equipmentDetailPanelView != null)
             {
-                detailBodyText.gameObject.SetActive(false);
+                equipmentDetailPanelView.Show(equipmentDetail);
+                if (detailBodyText != null)
+                {
+                    detailBodyText.gameObject.SetActive(false);
+                }
+            }
+            else if (detailBodyText != null)
+            {
+                detailBodyText.gameObject.SetActive(true);
+                detailBodyText.text = row.DetailText;
             }
         }
         else if (detailBodyText != null)
@@ -930,6 +937,16 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             allCategoryButton = FindDeep(transform, "AllCategory")?.GetComponent<Button>();
         }
 
+        if (consumableCategoryButton == null)
+        {
+            consumableCategoryButton = FindDeep(transform, "ConsumableCategory")?.GetComponent<Button>();
+        }
+
+        if (materialCategoryButton == null)
+        {
+            materialCategoryButton = FindDeep(transform, "MaterialCategory")?.GetComponent<Button>();
+        }
+
         if (weaponCategoryButton == null)
         {
             weaponCategoryButton = FindDeep(transform, "WeaponCategory")?.GetComponent<Button>();
@@ -970,35 +987,16 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             priceHeaderText = FindDeep(transform, "価格Header")?.GetComponent<TMP_Text>();
         }
 
+        if (equipmentDetailPanelView == null)
+        {
+            equipmentDetailPanelView = FindDeep(transform, "EquipmentDetailPanel")?.GetComponent<EquipmentDetailPanelView>();
+        }
+
         var quantityPanel = FindDeep(transform, "QuantityPanel");
         if (quantityPanel != null)
         {
             quantityPanel.gameObject.SetActive(false);
         }
-    }
-
-    private EquipmentDetailPanelView EnsureEquipmentDetailPanelView()
-    {
-        if (equipmentDetailPanelView != null)
-        {
-            return equipmentDetailPanelView;
-        }
-
-        if (detailBodyText == null)
-        {
-            return null;
-        }
-
-        var root = new GameObject("EquipmentDetailPanel", typeof(RectTransform), typeof(EquipmentDetailPanelView));
-        var rect = root.GetComponent<RectTransform>();
-        rect.SetParent(detailBodyText.transform.parent, false);
-        rect.anchorMin = detailBodyText.rectTransform.anchorMin;
-        rect.anchorMax = detailBodyText.rectTransform.anchorMax;
-        rect.offsetMin = detailBodyText.rectTransform.offsetMin;
-        rect.offsetMax = detailBodyText.rectTransform.offsetMax;
-        equipmentDetailPanelView = root.GetComponent<EquipmentDetailPanelView>();
-        equipmentDetailPanelView.Hide();
-        return equipmentDetailPanelView;
     }
 
     private void HideDetailSummaryStats()
@@ -1019,207 +1017,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             ? valueText.transform.parent.gameObject
             : valueText.gameObject;
         target.SetActive(visible);
-    }
-
-    private void ApplyReferenceShopLayout()
-    {
-        var listPanel = FindDeep(transform, "ItemListPanel") as RectTransform;
-        var detailPanel = FindDeep(transform, "DetailPanel") as RectTransform;
-        if (listPanel == null || detailPanel == null)
-        {
-            return;
-        }
-
-        var windowSprite = listPanel.GetComponent<Image>()?.sprite;
-        var hoverSprite = (FindDeep(transform, "BuyTab") as RectTransform)?.GetComponent<Image>()?.sprite ?? windowSprite;
-
-        SetLeftTop(listPanel, 344f, -192f, 780f, 700f);
-        SetRightTop(detailPanel, 34f, -192f, 640f, 700f);
-        SetLeftTop(FindDeep(transform, "BuyTab") as RectTransform, 34f, -105f, 250f, 62f);
-        SetLeftTop(FindDeep(transform, "SellTab") as RectTransform, 284f, -105f, 250f, 62f);
-        SetRightTop(FindDeep(transform, "MoneyPanel") as RectTransform, 239f, -32f, 430f, 72f);
-        SetRightTop(FindDeep(transform, "BackButton") as RectTransform, 34f, -32f, 160f, 72f);
-
-        var categoryPanel = EnsureImagePanel("CategoryPanel", windowSprite);
-        SetLeftTop(categoryPanel, 34f, -192f, 280f, 700f);
-        EnsureCategoryTitle(categoryPanel);
-
-        allCategoryButton ??= EnsureCategoryButton(categoryPanel, windowSprite, hoverSprite, "AllCategory", "すべて", -102f);
-        consumableCategoryButton = MoveOrCreateCategoryButton(categoryPanel, windowSprite, hoverSprite, consumableCategoryButton, "ConsumableCategory", "消耗品", -162f);
-        materialCategoryButton = MoveOrCreateCategoryButton(categoryPanel, windowSprite, hoverSprite, materialCategoryButton, "MaterialCategory", "素材", -222f);
-        weaponCategoryButton ??= EnsureCategoryButton(categoryPanel, windowSprite, hoverSprite, "WeaponCategory", "武器", -282f);
-        armorCategoryButton ??= EnsureCategoryButton(categoryPanel, windowSprite, hoverSprite, "ArmorCategory", "防具", -342f);
-        accessoryCategoryButton ??= EnsureCategoryButton(categoryPanel, windowSprite, hoverSprite, "AccessoryCategory", "装飾品", -402f);
-        otherCategoryButton ??= EnsureCategoryButton(categoryPanel, windowSprite, hoverSprite, "OtherCategory", "その他", -462f);
-
-        if (equipmentCategoryButton != null)
-        {
-            equipmentCategoryButton.gameObject.SetActive(false);
-        }
-
-        var categoryLabel = FindDeep(listPanel, "CategoryLabel");
-        if (categoryLabel != null)
-        {
-            categoryLabel.gameObject.SetActive(false);
-        }
-
-        SetStretch(FindDeep(transform, "ItemRowViewport") as RectTransform, new Vector2(38f, 36f), new Vector2(-48f, -148f));
-        SetLeftTop(FindDeep(transform, "ItemScrollbar") as RectTransform, 732.5f, -139f, 27f, 510f);
-        SetAnchor(FindDeep(transform, "DetailIcon") as RectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f, -148f), new Vector2(116f, 116f));
-        SetTopStretch(FindDeep(transform, "DetailTitle") as RectTransform, 250f, 54f, 116f, 54f);
-        SetTopStretch(FindDeep(transform, "DetailBody") as RectTransform, 68f, 64f, 190f, 360f);
-        SetAnchor(FindDeep(transform, "BuyButton") as RectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 52f), new Vector2(360f, 72f));
-    }
-
-    private RectTransform EnsureImagePanel(string name, Sprite sprite)
-    {
-        var existing = FindDeep(transform, name) as RectTransform;
-        if (existing != null)
-        {
-            return existing;
-        }
-
-        var rect = new GameObject(name, typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
-        rect.SetParent(transform, false);
-        var image = rect.GetComponent<Image>();
-        image.sprite = sprite;
-        image.type = Image.Type.Sliced;
-        image.color = Color.white;
-        return rect;
-    }
-
-    private void EnsureCategoryTitle(RectTransform categoryPanel)
-    {
-        if (FindDeep(categoryPanel, "PanelTitle") != null)
-        {
-            return;
-        }
-
-        var title = CreateRuntimeText("PanelTitle", categoryPanel, "カテゴリ", 22f, TextAlignmentOptions.MidlineLeft, TextColor);
-        SetAnchor(title.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(96f, -42f), new Vector2(150f, 34f));
-    }
-
-    private Button MoveOrCreateCategoryButton(RectTransform parent, Sprite windowSprite, Sprite hoverSprite, Button button, string name, string label, float y)
-    {
-        if (button == null)
-        {
-            return EnsureCategoryButton(parent, windowSprite, hoverSprite, name, label, y);
-        }
-
-        button.transform.SetParent(parent, false);
-        button.name = name;
-        SetAnchor(button.GetComponent<RectTransform>(), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(140f, y), new Vector2(256f, 58f));
-        SetCategoryLabel(button.transform, label);
-        return button;
-    }
-
-    private Button EnsureCategoryButton(RectTransform parent, Sprite windowSprite, Sprite hoverSprite, string name, string label, float y)
-    {
-        var existing = FindDeep(parent, name)?.GetComponent<Button>();
-        if (existing != null)
-        {
-            return MoveOrCreateCategoryButton(parent, windowSprite, hoverSprite, existing, name, label, y);
-        }
-
-        var rect = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button)).GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        SetAnchor(rect, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(140f, y), new Vector2(256f, 58f));
-
-        var image = rect.GetComponent<Image>();
-        image.sprite = windowSprite;
-        image.type = Image.Type.Sliced;
-        image.color = Color.white;
-
-        var labelText = CreateRuntimeText("Label", rect, label, 24f, TextAlignmentOptions.MidlineLeft, TextColor);
-        SetStretch(labelText.rectTransform, new Vector2(38f, 8f), new Vector2(-24f, -8f));
-        return rect.GetComponent<Button>();
-    }
-
-    private void SetCategoryLabel(Transform buttonTransform, string label)
-    {
-        var labelTransform = buttonTransform.Find("Label") as RectTransform;
-        var labelText = labelTransform != null ? labelTransform.GetComponent<TMP_Text>() : null;
-        if (labelText == null)
-        {
-            labelText = CreateRuntimeText("Label", buttonTransform, label, 24f, TextAlignmentOptions.MidlineLeft, TextColor);
-            labelTransform = labelText.rectTransform;
-        }
-
-        labelText.text = label;
-        labelText.alignment = TextAlignmentOptions.MidlineLeft;
-        SetStretch(labelTransform, new Vector2(38f, 8f), new Vector2(-24f, -8f));
-    }
-
-    private static TMP_Text CreateRuntimeText(string name, Transform parent, string value, float fontSize, TextAlignmentOptions alignment, Color color)
-    {
-        var rect = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        var text = rect.GetComponent<TMP_Text>();
-        text.text = value;
-        text.fontSize = fontSize;
-        text.alignment = alignment;
-        text.color = color;
-        text.raycastTarget = false;
-        return text;
-    }
-
-    private static void SetLeftTop(RectTransform rect, float left, float top, float width, float height)
-    {
-        if (rect == null)
-        {
-            return;
-        }
-
-        SetAnchor(rect, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(left + width * 0.5f, top - height * 0.5f), new Vector2(width, height));
-    }
-
-    private static void SetRightTop(RectTransform rect, float right, float top, float width, float height)
-    {
-        if (rect == null)
-        {
-            return;
-        }
-
-        SetAnchor(rect, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-(right + width * 0.5f), top - height * 0.5f), new Vector2(width, height));
-    }
-
-    private static void SetAnchor(RectTransform rect, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 sizeDelta)
-    {
-        if (rect == null)
-        {
-            return;
-        }
-
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.anchoredPosition = anchoredPosition;
-        rect.sizeDelta = sizeDelta;
-    }
-
-    private static void SetStretch(RectTransform rect, Vector2 offsetMin, Vector2 offsetMax)
-    {
-        if (rect == null)
-        {
-            return;
-        }
-
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = offsetMin;
-        rect.offsetMax = offsetMax;
-    }
-
-    private static void SetTopStretch(RectTransform rect, float left, float right, float top, float height)
-    {
-        if (rect == null)
-        {
-            return;
-        }
-
-        rect.anchorMin = new Vector2(0f, 1f);
-        rect.anchorMax = new Vector2(1f, 1f);
-        rect.offsetMin = new Vector2(left, -top - height);
-        rect.offsetMax = new Vector2(-right, -top);
     }
 
     private void RegisterCategoryButtons()
@@ -1504,7 +1301,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     {
         if (moneyText != null && runSaveData != null)
         {
-            moneyText.text = $"{runSaveData.Money:N0} G";
+            moneyText.text = $"{runSaveData.Money:N0}";
         }
     }
 
