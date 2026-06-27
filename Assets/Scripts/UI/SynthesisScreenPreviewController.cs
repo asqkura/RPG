@@ -23,6 +23,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
     [SerializeField] private TMP_Text detailTitleText;
     [SerializeField] private Image detailIconImage;
     [SerializeField] private TMP_Text detailBodyText;
+    [SerializeField] private EquipmentDetailPanelView equipmentDetailPanelView;
     [SerializeField] private TMP_Text detailStockText;
     [SerializeField] private TMP_Text detailOwnedText;
     [SerializeField] private TMP_Text detailPriceText;
@@ -65,12 +66,14 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
     private SynthesisService synthesisService;
     private readonly List<SynthesisDisplayEntry> displayEntries = new();
     private readonly List<ShopItemRowView> itemRows = new();
+    private readonly Dictionary<string, EquipmentDetailData> equipmentDetailsByRecipeId = new();
     private bool initialized;
 
     private void Awake()
     {
         InitializePreviewState();
         ResolveOptionalReferences();
+        HideDetailSummaryStats();
         RegisterButtons();
         RefreshColumnHeaders();
         RefreshCategoryButtons();
@@ -242,6 +245,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
     private void PopulateRows()
     {
         displayEntries.Clear();
+        equipmentDetailsByRecipeId.Clear();
 
         if (recipeDatabase == null || itemDatabase == null || equipmentDatabase == null || synthesisService == null || runSaveData == null)
         {
@@ -326,6 +330,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
             $"Lv{recipe.RequiredSynthesisLevel}",
             GetOwnedEquipmentCount(equipment.EquipmentId).ToString(),
             $"{recipe.Cost} G");
+        equipmentDetailsByRecipeId[recipe.RecipeId] = BuildEquipmentDetailData(equipment);
         return true;
     }
 
@@ -336,7 +341,60 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
 
     private string BuildEquipmentDetail(RecipeData recipe, EquipmentData equipment)
     {
-        return $"{equipment.Description}\n\n種別: {FormatRecipeType(recipe.RecipeType)}";
+        var lines = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(equipment.Description))
+        {
+            lines.Add(equipment.Description);
+            lines.Add(string.Empty);
+        }
+
+        lines.Add("ステータス");
+        AppendStatLines(lines, equipment.StatModifiers);
+
+        lines.Add(string.Empty);
+        lines.Add("スキル");
+        AppendSkillLines(lines, equipment.BaseSkillIds);
+
+        return string.Join("\n", lines);
+    }
+
+    private EquipmentDetailData BuildEquipmentDetailData(EquipmentData equipment)
+    {
+        var detail = new EquipmentDetailData
+        {
+            Description = equipment.Description
+        };
+
+        AddStatData(detail.Stats, "HP", equipment.StatModifiers?.Hp ?? 0);
+        AddStatData(detail.Stats, "SP", equipment.StatModifiers?.Sp ?? 0);
+        AddStatData(detail.Stats, "攻撃", equipment.StatModifiers?.Attack ?? 0);
+        AddStatData(detail.Stats, "魔力", equipment.StatModifiers?.Magic ?? 0);
+        AddStatData(detail.Stats, "防御", equipment.StatModifiers?.Defense ?? 0);
+        AddStatData(detail.Stats, "素早さ", equipment.StatModifiers?.Speed ?? 0);
+        AddStatData(detail.Stats, "会心率", equipment.StatModifiers != null && !Mathf.Approximately(equipment.StatModifiers.CriticalRate, 0f)
+            ? FormatSignedPercent(equipment.StatModifiers.CriticalRate)
+            : "-");
+
+        foreach (var skillId in equipment.BaseSkillIds)
+        {
+            if (!string.IsNullOrWhiteSpace(skillId))
+            {
+                detail.FixedSkills.Add(FormatSkillName(skillId));
+            }
+        }
+
+        return detail;
+    }
+
+    private static void AddStatData(List<EquipmentDetailStat> stats, string label, int value)
+    {
+        stats.Add(new EquipmentDetailStat(label, value != 0 ? FormatSigned(value) : "-"));
+    }
+
+    private static void AddStatData(List<EquipmentDetailStat> stats, string label, string value)
+    {
+        stats.Add(new EquipmentDetailStat(label, string.IsNullOrWhiteSpace(value) ? "-" : value));
     }
 
     private int GetOwnedItemCount(ItemData item)
@@ -367,8 +425,18 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
             detailIconImage.enabled = row.IconSprite != null;
         }
 
-        if (detailBodyText != null)
+        if (equipmentDetailsByRecipeId.TryGetValue(row.ShopItemId, out var equipmentDetail))
         {
+            EnsureEquipmentDetailPanelView()?.Show(equipmentDetail);
+            if (detailBodyText != null)
+            {
+                detailBodyText.gameObject.SetActive(false);
+            }
+        }
+        else if (detailBodyText != null)
+        {
+            equipmentDetailPanelView?.Hide();
+            detailBodyText.gameObject.SetActive(true);
             detailBodyText.text = row.DetailText;
         }
 
@@ -406,8 +474,11 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
 
         if (detailBodyText != null)
         {
+            detailBodyText.gameObject.SetActive(true);
             detailBodyText.text = string.Empty;
         }
+
+        equipmentDetailPanelView?.Hide();
 
         SetHelpText("作成するレシピを選んでください。");
         ClearIngredients();
@@ -723,6 +794,50 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         {
             ResolveResultPopupReferences();
         }
+    }
+
+    private EquipmentDetailPanelView EnsureEquipmentDetailPanelView()
+    {
+        if (equipmentDetailPanelView != null)
+        {
+            return equipmentDetailPanelView;
+        }
+
+        if (detailBodyText == null)
+        {
+            return null;
+        }
+
+        var root = new GameObject("EquipmentDetailPanel", typeof(RectTransform), typeof(EquipmentDetailPanelView));
+        var rect = root.GetComponent<RectTransform>();
+        rect.SetParent(detailBodyText.transform.parent, false);
+        rect.anchorMin = detailBodyText.rectTransform.anchorMin;
+        rect.anchorMax = detailBodyText.rectTransform.anchorMax;
+        rect.offsetMin = detailBodyText.rectTransform.offsetMin;
+        rect.offsetMax = detailBodyText.rectTransform.offsetMax;
+        equipmentDetailPanelView = root.GetComponent<EquipmentDetailPanelView>();
+        equipmentDetailPanelView.Hide();
+        return equipmentDetailPanelView;
+    }
+
+    private void HideDetailSummaryStats()
+    {
+        SetDetailSummaryStatVisible(detailStockText, false);
+        SetDetailSummaryStatVisible(detailOwnedText, false);
+        SetDetailSummaryStatVisible(detailPriceText, false);
+    }
+
+    private static void SetDetailSummaryStatVisible(TMP_Text valueText, bool visible)
+    {
+        if (valueText == null)
+        {
+            return;
+        }
+
+        var target = valueText.transform.parent != null
+            ? valueText.transform.parent.gameObject
+            : valueText.gameObject;
+        target.SetActive(visible);
     }
 
     private void ResolveResultPopupReferences()
@@ -1067,6 +1182,56 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         }
 
         return null;
+    }
+
+    private static void AppendStatLines(List<string> lines, BattleStats stats)
+    {
+        AddStatLine(lines, "HP", stats?.Hp ?? 0);
+        AddStatLine(lines, "SP", stats?.Sp ?? 0);
+        AddStatLine(lines, "攻撃", stats?.Attack ?? 0);
+        AddStatLine(lines, "魔力", stats?.Magic ?? 0);
+        AddStatLine(lines, "防御", stats?.Defense ?? 0);
+        AddStatLine(lines, "素早さ", stats?.Speed ?? 0);
+        lines.Add($"・会心率 {(stats != null && !Mathf.Approximately(stats.CriticalRate, 0f) ? FormatSignedPercent(stats.CriticalRate) : "-")}");
+    }
+
+    private static void AddStatLine(List<string> lines, string label, int value)
+    {
+        lines.Add($"・{label} {(value != 0 ? FormatSigned(value) : "-")}");
+    }
+
+    private void AppendSkillLines(List<string> lines, IReadOnlyList<string> skillIds)
+    {
+        if (skillIds == null || skillIds.Count == 0)
+        {
+            lines.Add("・なし");
+            return;
+        }
+
+        var startCount = lines.Count;
+        foreach (var skillId in skillIds)
+        {
+            if (!string.IsNullOrWhiteSpace(skillId))
+            {
+                lines.Add($"・{FormatSkillName(skillId)}");
+            }
+        }
+
+        if (lines.Count == startCount)
+        {
+            lines.Add("・なし");
+        }
+    }
+
+    private static string FormatSigned(int value)
+    {
+        return value >= 0 ? $"+{value}" : value.ToString();
+    }
+
+    private static string FormatSignedPercent(float value)
+    {
+        var percent = Mathf.RoundToInt(value * 100f);
+        return $"{FormatSigned(percent)}%";
     }
 
     private static string FormatRecipeType(RecipeDataType recipeType)

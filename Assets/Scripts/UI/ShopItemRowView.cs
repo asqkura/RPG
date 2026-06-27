@@ -28,6 +28,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     [SerializeField] private Color highlightedBackgroundColor = new(0.42f, 0.34f, 0.23f, 0.45f);
 
     private IItemRowViewController controller;
+    private Image hitAreaImage;
 
     public string ItemName => itemName;
     public string DetailText => detailText;
@@ -100,6 +101,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     public void Initialize(IItemRowViewController owner)
     {
         controller = owner;
+        EnsureHitArea();
         SetHighlighted(false);
     }
 
@@ -129,6 +131,8 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
 
     public void SetHighlighted(bool highlighted)
     {
+        EnsureHitArea();
+
         if (windowImage != null)
         {
             if (highlighted && highlightedWindowSprite != null)
@@ -159,5 +163,24 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         {
             selectionMarker.gameObject.SetActive(false);
         }
+    }
+
+    private void EnsureHitArea()
+    {
+        if (hitAreaImage != null)
+        {
+            return;
+        }
+
+        hitAreaImage = GetComponent<Image>();
+        if (hitAreaImage == null)
+        {
+            hitAreaImage = gameObject.AddComponent<Image>();
+        }
+
+        hitAreaImage.sprite = null;
+        hitAreaImage.type = Image.Type.Simple;
+        hitAreaImage.color = new Color(1f, 1f, 1f, 0.001f);
+        hitAreaImage.raycastTarget = true;
     }
 }

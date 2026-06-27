@@ -109,7 +109,8 @@ public static class ShopScreenPrefabBuilder
         var image = root.gameObject.AddComponent<Image>();
         image.sprite = null;
         image.type = Image.Type.Simple;
-        image.color = Color.clear;
+        image.color = new Color(1f, 1f, 1f, 0.001f);
+        image.raycastTarget = true;
 
         var selectionBackground = CreateImage("SelectionBackground", root.transform, null, Image.Type.Simple, Color.clear);
         selectionBackground.raycastTarget = false;
