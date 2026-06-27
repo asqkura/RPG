@@ -4,13 +4,15 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 public static class HomeScreenPrefabBuilder
 {
     private const string WindowSpritePath = "Assets/UI/Windows/Sprites/Window.png";
+    private const string WindowHoverSpritePath = "Assets/UI/Windows/Sprites/Window_Hover.png";
     private const string BackgroundPath = "Assets/UI/Home/Backgrounds/HomeCastleBackground.png";
-    private const string FontPath = "Assets/Fonts/NotoSansJP/NotoSansCJKjp-Regular SDF.asset";
     private const string Icon11Path = "Assets/UI/Icons/icon-1_1.png";
     private const string Icon12Path = "Assets/UI/Icons/icon-1_2.png";
     private const string Icon21Path = "Assets/UI/Icons/icon-2_1.png";
@@ -25,6 +27,16 @@ public static class HomeScreenPrefabBuilder
     private static readonly Color TextColor = new(0.86f, 0.82f, 0.75f, 1f);
     private static readonly Color MutedTextColor = new(0.55f, 0.52f, 0.47f, 1f);
     private static readonly Color WindowSpriteColor = Color.white;
+    private static readonly Dictionary<string, string> Descriptions = new()
+    {
+        ["クエスト"] = "仲間から依頼を受注したり、完了したクエストを報告します。\nストーリーの進行や報酬の獲得ができます。",
+        ["うろつき"] = "街や周辺を探索して、仲間との会話やイベントを進めます。\n思わぬ発見や新しい出会いがあるかもしれません。",
+        ["合成"] = "素材を組み合わせて、道具や装備品を作成します。\n冒険に役立つ品を準備できます。",
+        ["ショップ"] = "所持金を使って道具や装備品を購入します。\n不要なアイテムの売却もここで行います。",
+        ["編成"] = "冒険に参加する仲間や装備を整えます。\n目的に合わせて隊列や役割を調整できます。",
+        ["キャンプ"] = "一息ついて仲間の状態を確認します。\n休息や会話で次の行動に備えます。",
+        ["セーブ"] = "現在の進行状況を保存します。\n続きから再開できるように記録します。",
+    };
 
     [MenuItem("Tools/RPG/Build Home Screen UI")]
     public static void Build()
@@ -33,18 +45,18 @@ public static class HomeScreenPrefabBuilder
         ConfigureTextureImporters();
 
         var windowSprite = AssetDatabase.LoadAssetAtPath<Sprite>(WindowSpritePath);
+        var hoverSprite = AssetDatabase.LoadAssetAtPath<Sprite>(WindowHoverSpritePath);
         var backgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(BackgroundPath);
-        var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
 
-        if (windowSprite == null || backgroundSprite == null || font == null)
+        if (windowSprite == null || hoverSprite == null || backgroundSprite == null)
         {
-            Debug.LogError("Home screen build failed. Missing window sprite, background sprite, or TMP font.");
+            Debug.LogError("Home screen build failed. Missing window sprite, hover sprite, or background sprite.");
             return;
         }
 
-        var menuItemPrefab = CreateMenuItemPrefab(windowSprite, font, LoadSprite(Icon31Path, "icon-3_1_6"));
-        var textPanelPrefab = CreateTextPanelPrefab(windowSprite, font);
-        var homeScreenPrefab = CreateHomeScreenPrefab(windowSprite, backgroundSprite, font, menuItemPrefab, textPanelPrefab);
+        var menuItemPrefab = CreateMenuItemPrefab(windowSprite, LoadSprite(Icon31Path, "icon-3_1_6"));
+        var textPanelPrefab = CreateTextPanelPrefab(windowSprite);
+        var homeScreenPrefab = CreateHomeScreenPrefab(windowSprite, hoverSprite, backgroundSprite, menuItemPrefab, textPanelPrefab);
 
         PlaceHomeScreenInScene(homeScreenPrefab);
 
@@ -73,6 +85,7 @@ public static class HomeScreenPrefabBuilder
     private static void ConfigureTextureImporters()
     {
         ConfigureSprite(WindowSpritePath, new Vector4(13, 13, 13, 13), FilterMode.Point);
+        ConfigureSprite(WindowHoverSpritePath, new Vector4(13, 13, 13, 13), FilterMode.Point);
         ConfigureSprite(BackgroundPath, Vector4.zero, FilterMode.Bilinear);
     }
 
@@ -93,7 +106,7 @@ public static class HomeScreenPrefabBuilder
         importer.SaveAndReimport();
     }
 
-    private static GameObject CreateMenuItemPrefab(Sprite windowSprite, TMP_FontAsset font, Sprite defaultIcon)
+    private static GameObject CreateMenuItemPrefab(Sprite windowSprite, Sprite defaultIcon)
     {
         var root = CreateRectObject("HomeMenuItem");
         SetSize(root, 520, 68);
@@ -115,7 +128,7 @@ public static class HomeScreenPrefabBuilder
         icon.raycastTarget = false;
         Anchor(icon, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(74, 0), new Vector2(42, 42));
 
-        var label = CreateText("Label", root.transform, font, "クエスト", 30, TextAlignmentOptions.MidlineLeft, TextColor);
+        var label = CreateText("Label", root.transform, "クエスト", 30, TextAlignmentOptions.MidlineLeft, TextColor);
         Anchor(label, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(280, 0), new Vector2(320, 52));
 
         var saved = PrefabUtility.SaveAsPrefabAsset(root.gameObject, MenuItemPrefabPath);
@@ -123,7 +136,7 @@ public static class HomeScreenPrefabBuilder
         return saved;
     }
 
-    private static GameObject CreateTextPanelPrefab(Sprite windowSprite, TMP_FontAsset font)
+    private static GameObject CreateTextPanelPrefab(Sprite windowSprite)
     {
         var root = CreateRectObject("HomeTextPanel");
         SetSize(root, 1800, 160);
@@ -132,7 +145,7 @@ public static class HomeScreenPrefabBuilder
         image.type = Image.Type.Sliced;
         image.color = WindowSpriteColor;
 
-        var text = CreateText("Description", root.transform, font,
+        var text = CreateText("Description", root.transform,
             "仲間から依頼を受注したり、完了したクエストを報告します。\nストーリーの進行や報酬の獲得ができます。",
             30, TextAlignmentOptions.MidlineLeft, TextColor);
         Stretch(text, new Vector2(55, 26), new Vector2(-55, -26));
@@ -144,8 +157,8 @@ public static class HomeScreenPrefabBuilder
 
     private static GameObject CreateHomeScreenPrefab(
         Sprite windowSprite,
+        Sprite hoverSprite,
         Sprite backgroundSprite,
-        TMP_FontAsset font,
         GameObject menuItemPrefab,
         GameObject textPanelPrefab)
     {
@@ -163,7 +176,7 @@ public static class HomeScreenPrefabBuilder
         Stretch(background, Vector2.zero, Vector2.zero);
         background.preserveAspect = false;
 
-        var day = CreateText("DayText", root.transform, font, "1 日目", 48, TextAlignmentOptions.MidlineLeft, TextColor);
+        var day = CreateText("DayText", root.transform, "1 日目", 48, TextAlignmentOptions.MidlineLeft, TextColor);
         Anchor(day, new Vector2(0, 1), new Vector2(0, 1), new Vector2(ScreenMargin + 150, -72), new Vector2(300, 70));
 
         var dayLine = CreateImage("DayDivider", root.transform, null, Image.Type.Simple, new Color(0.45f, 0.36f, 0.25f, 0.75f));
@@ -172,12 +185,13 @@ public static class HomeScreenPrefabBuilder
         var settings = CreateImage("SettingsButton", root.transform, windowSprite, Image.Type.Sliced, WindowSpriteColor);
         Anchor(settings, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-(ScreenMargin + 88), -64), new Vector2(176, 68));
         settings.gameObject.AddComponent<Button>();
+        AddWindowHover(settings.gameObject, settings, windowSprite, hoverSprite);
         var settingsIcon = CreateImage("Icon", settings.transform, LoadSprite(Icon12Path, "icon-1_2_138"), Image.Type.Simple, Color.white);
         settingsIcon.preserveAspect = true;
         settingsIcon.raycastTarget = false;
         Anchor(settingsIcon, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(48, 0), new Vector2(34, 34));
 
-        var settingsText = CreateText("Label", settings.transform, font, "設定", 30, TextAlignmentOptions.MidlineLeft, TextColor);
+        var settingsText = CreateText("Label", settings.transform, "設定", 30, TextAlignmentOptions.MidlineLeft, TextColor);
         Anchor(settingsText, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(118, 0), new Vector2(88, 44));
 
         var menuRoot = CreateRectObject("Menu");
@@ -197,6 +211,12 @@ public static class HomeScreenPrefabBuilder
             new MenuCommand("セーブ", Icon12Path, "icon-1_2_99"),
         };
 
+        var textPanel = (GameObject)PrefabUtility.InstantiatePrefab(textPanelPrefab, root.transform);
+        textPanel.name = "QuestDescriptionPanel";
+        StretchToBottom(textPanel.GetComponent<RectTransform>(), ScreenMargin, ScreenMargin, 50, 160);
+        var descriptionText = textPanel.transform.Find("Description")?.GetComponent<TMP_Text>();
+        var views = new List<HomeMenuItemView>();
+
         for (var i = 0; i < items.Length; i++)
         {
             var item = (GameObject)PrefabUtility.InstantiatePrefab(menuItemPrefab, menuRoot.transform);
@@ -205,11 +225,15 @@ public static class HomeScreenPrefabBuilder
             item.GetComponent<Image>().color = WindowSpriteColor;
             item.transform.Find("Icon").GetComponent<Image>().sprite = LoadSprite(items[i].IconPath, items[i].IconName);
             item.transform.Find("Label").GetComponent<TMP_Text>().text = items[i].Label;
+            views.Add(ConfigureMenuItemView(item, items[i].Label, windowSprite, hoverSprite));
+
+            if (items[i].Label == "ショップ")
+            {
+                ConfigureScreenSwitch(item, "HomeScreen", "ShopScreen");
+            }
         }
 
-        var textPanel = (GameObject)PrefabUtility.InstantiatePrefab(textPanelPrefab, root.transform);
-        textPanel.name = "QuestDescriptionPanel";
-        StretchToBottom(textPanel.GetComponent<RectTransform>(), ScreenMargin, ScreenMargin, 50, 160);
+        ConfigureMenuController(root, descriptionText, views);
 
         var saved = PrefabUtility.SaveAsPrefabAsset(root, HomeScreenPrefabPath);
         Object.DestroyImmediate(root);
@@ -222,7 +246,7 @@ public static class HomeScreenPrefabBuilder
         var destroyTargets = new List<GameObject>();
         foreach (var existing in Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include))
         {
-            if (existing.name == "HomeScreen" || existing.name == "EventSystem")
+            if (existing.name == "HomeScreen")
             {
                 destroyTargets.Add(existing);
             }
@@ -234,9 +258,31 @@ public static class HomeScreenPrefabBuilder
         }
 
         PrefabUtility.InstantiatePrefab(homeScreenPrefab, scene);
+        InstallEventSystem();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
+    }
+
+    private static void InstallEventSystem()
+    {
+        var eventSystem = Object.FindAnyObjectByType<EventSystem>();
+        if (eventSystem == null)
+        {
+            new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            return;
+        }
+
+        var standaloneInputModule = eventSystem.GetComponent<StandaloneInputModule>();
+        if (standaloneInputModule != null)
+        {
+            Object.DestroyImmediate(standaloneInputModule);
+        }
+
+        if (eventSystem.GetComponent<InputSystemUIInputModule>() == null)
+        {
+            eventSystem.gameObject.AddComponent<InputSystemUIInputModule>();
+        }
     }
 
     private static RectTransform CreateRectObject(string name)
@@ -262,12 +308,59 @@ public static class HomeScreenPrefabBuilder
             .FirstOrDefault(sprite => sprite.name == spriteName);
     }
 
-    private static TMP_Text CreateText(string name, Transform parent, TMP_FontAsset font, string value, float size, TextAlignmentOptions alignment, Color color)
+    private static void ConfigureScreenSwitch(GameObject target, string hideTargetName, string showTargetName)
+    {
+        var switchButton = target.GetComponent<UIScreenSwitchButton>() ?? target.AddComponent<UIScreenSwitchButton>();
+        var switchObject = new SerializedObject(switchButton);
+        switchObject.FindProperty("hideTargetName").stringValue = hideTargetName;
+        switchObject.FindProperty("showTargetName").stringValue = showTargetName;
+        switchObject.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static HomeMenuItemView ConfigureMenuItemView(GameObject item, string label, Sprite normalWindowSprite, Sprite hoverWindowSprite)
+    {
+        var view = item.GetComponent<HomeMenuItemView>() ?? item.AddComponent<HomeMenuItemView>();
+        var viewObject = new SerializedObject(view);
+        viewObject.FindProperty("description").stringValue = Descriptions[label];
+        viewObject.FindProperty("windowImage").objectReferenceValue = item.GetComponent<Image>();
+        viewObject.FindProperty("normalWindowSprite").objectReferenceValue = normalWindowSprite;
+        viewObject.FindProperty("highlightedWindowSprite").objectReferenceValue = hoverWindowSprite;
+        viewObject.FindProperty("iconImage").objectReferenceValue = item.transform.Find("Icon")?.GetComponent<Image>();
+        viewObject.FindProperty("labelText").objectReferenceValue = item.transform.Find("Label")?.GetComponent<TMP_Text>();
+        viewObject.ApplyModifiedPropertiesWithoutUndo();
+        return view;
+    }
+
+    private static void ConfigureMenuController(GameObject root, TMP_Text descriptionText, IReadOnlyList<HomeMenuItemView> views)
+    {
+        var controller = root.GetComponent<HomeMenuController>() ?? root.AddComponent<HomeMenuController>();
+        var controllerObject = new SerializedObject(controller);
+        controllerObject.FindProperty("descriptionText").objectReferenceValue = descriptionText;
+        var itemsProperty = controllerObject.FindProperty("menuItems");
+        itemsProperty.arraySize = views.Count;
+        for (var i = 0; i < views.Count; i++)
+        {
+            itemsProperty.GetArrayElementAtIndex(i).objectReferenceValue = views[i];
+        }
+
+        controllerObject.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void AddWindowHover(GameObject target, Image image, Sprite windowSprite, Sprite hoverSprite)
+    {
+        var hover = target.GetComponent<WindowHoverSpriteView>() ?? target.AddComponent<WindowHoverSpriteView>();
+        var hoverObject = new SerializedObject(hover);
+        hoverObject.FindProperty("windowImage").objectReferenceValue = image;
+        hoverObject.FindProperty("normalWindowSprite").objectReferenceValue = windowSprite;
+        hoverObject.FindProperty("highlightedWindowSprite").objectReferenceValue = hoverSprite;
+        hoverObject.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static TMP_Text CreateText(string name, Transform parent, string value, float size, TextAlignmentOptions alignment, Color color)
     {
         var rect = CreateRectObject(name);
         rect.transform.SetParent(parent, false);
         var text = rect.gameObject.AddComponent<TextMeshProUGUI>();
-        text.font = font;
         text.text = value;
         text.fontSize = size;
         text.alignment = alignment;

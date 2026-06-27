@@ -3,8 +3,8 @@ using UnityEngine.EventSystems;
 
 public sealed class UIScreenSwitchButton : MonoBehaviour, IPointerClickHandler, ISubmitHandler
 {
-    [SerializeField] private GameObject hideTarget;
-    [SerializeField] private GameObject showTarget;
+    [SerializeField] private string hideTargetName;
+    [SerializeField] private string showTargetName;
 
     public void OnPointerClick(PointerEventData eventData)
     {
@@ -18,14 +18,36 @@ public sealed class UIScreenSwitchButton : MonoBehaviour, IPointerClickHandler, 
 
     private void Switch()
     {
-        if (hideTarget != null)
+        var resolvedHideTarget = ResolveTarget(hideTargetName);
+        var resolvedShowTarget = ResolveTarget(showTargetName);
+
+        if (resolvedHideTarget != null)
         {
-            hideTarget.SetActive(false);
+            resolvedHideTarget.SetActive(false);
         }
 
-        if (showTarget != null)
+        if (resolvedShowTarget != null)
         {
-            showTarget.SetActive(true);
+            resolvedShowTarget.SetActive(true);
         }
+    }
+
+    private static GameObject ResolveTarget(string targetName)
+    {
+        if (string.IsNullOrWhiteSpace(targetName))
+        {
+            return null;
+        }
+
+        var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        foreach (var root in scene.GetRootGameObjects())
+        {
+            if (root.name == targetName)
+            {
+                return root;
+            }
+        }
+
+        return null;
     }
 }

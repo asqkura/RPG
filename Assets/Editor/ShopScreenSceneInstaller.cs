@@ -67,8 +67,8 @@ public static class ShopScreenSceneInstaller
 
         var switchButton = buttonTransform.GetComponent<UIScreenSwitchButton>() ?? buttonTransform.gameObject.AddComponent<UIScreenSwitchButton>();
         var switchObject = new SerializedObject(switchButton);
-        switchObject.FindProperty("hideTarget").objectReferenceValue = hideTarget;
-        switchObject.FindProperty("showTarget").objectReferenceValue = showTarget;
+        switchObject.FindProperty("hideTargetName").stringValue = hideTarget != null ? hideTarget.name : string.Empty;
+        switchObject.FindProperty("showTargetName").stringValue = showTarget != null ? showTarget.name : string.Empty;
         switchObject.ApplyModifiedPropertiesWithoutUndo();
     }
 

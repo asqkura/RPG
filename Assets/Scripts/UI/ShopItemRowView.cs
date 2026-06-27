@@ -23,6 +23,8 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     [SerializeField] private TMP_Text priceLabel;
     [SerializeField] private Color normalTextColor = new(0.86f, 0.82f, 0.75f, 1f);
     [SerializeField] private Color highlightedTextColor = new(1f, 0.96f, 0.84f, 1f);
+    [SerializeField] private Color normalBackgroundColor = Color.clear;
+    [SerializeField] private Color highlightedBackgroundColor = new(0.42f, 0.34f, 0.23f, 0.45f);
 
     private ShopScreenPreviewController controller;
 
@@ -128,7 +130,9 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
             {
                 windowImage.sprite = normalWindowSprite;
                 windowImage.type = normalWindowSprite != null ? Image.Type.Sliced : Image.Type.Simple;
-                windowImage.color = normalWindowSprite != null ? Color.white : Color.clear;
+                windowImage.color = normalWindowSprite != null
+                    ? Color.white
+                    : highlighted ? highlightedBackgroundColor : normalBackgroundColor;
             }
         }
 
@@ -142,7 +146,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
 
         if (selectionMarker != null)
         {
-            selectionMarker.gameObject.SetActive(highlighted);
+            selectionMarker.gameObject.SetActive(false);
         }
     }
 }

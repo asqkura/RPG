@@ -9,7 +9,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 {
     private const int PreviewPhase = 1;
     private const string UnlimitedStockText = "-";
-    private const float RowStride = 62f;
+    private const float RowStride = 54f;
     private static readonly Color TextColor = new(0.86f, 0.82f, 0.75f, 1f);
     private static readonly Color AccentTextColor = new(1f, 0.9f, 0.62f, 1f);
 
@@ -399,8 +399,8 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         rowRect.anchorMin = new Vector2(0.5f, 1f);
         rowRect.anchorMax = new Vector2(0.5f, 1f);
         rowRect.pivot = new Vector2(0.5f, 0.5f);
-        rowRect.anchoredPosition = new Vector2(0f, -28f - index * RowStride);
-        rowRect.sizeDelta = new Vector2(710f, 56f);
+        rowRect.anchoredPosition = new Vector2(0f, -25f - index * RowStride);
+        rowRect.sizeDelta = new Vector2(710f, 50f);
     }
 
     private void RefreshScrollArea()
@@ -413,11 +413,22 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         var contentHeight = displayEntries.Count * RowStride;
         var viewportHeight = itemRowViewport.rect.height;
         var scrollable = contentHeight > viewportHeight + 0.5f;
+        var contentAreaHeight = Mathf.Max(contentHeight, viewportHeight);
 
-        itemRowContent.sizeDelta = new Vector2(itemRowContent.sizeDelta.x, Mathf.Max(contentHeight, viewportHeight));
+        itemRowContent.sizeDelta = new Vector2(itemRowContent.sizeDelta.x, contentAreaHeight);
         itemRowContent.anchoredPosition = Vector2.zero;
         itemScrollRect.verticalNormalizedPosition = 1f;
-        itemScrollRect.enabled = scrollable;
+        itemScrollRect.vertical = scrollable;
+        itemScrollRect.enabled = true;
+
+        if (itemScrollRect.verticalScrollbar != null)
+        {
+            itemScrollRect.verticalScrollbar.gameObject.SetActive(scrollable);
+            itemScrollRect.verticalScrollbar.value = 1f;
+            itemScrollRect.verticalScrollbar.size = contentAreaHeight > 0f
+                ? Mathf.Clamp01(viewportHeight / contentAreaHeight)
+                : 1f;
+        }
     }
 
     private void SelectFirstRow()
