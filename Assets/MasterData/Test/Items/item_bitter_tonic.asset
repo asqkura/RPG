@@ -15,7 +15,7 @@ MonoBehaviour:
   id: item_bitter_tonic
   displayName: "\u82E6\u3044\u5F37\u58EE\u85AC"
   description: "HP\u3092\u5C11\u3057\u56DE\u5FA9\u3059\u308B\u5B89\u4FA1\u306A\u85AC\u3002"
-  iconSprite: {fileID: -902442727, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
+  iconSprite: {fileID: -838828663, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
   itemType: 0
   category: "HP\u56DE\u5FA9"
   rank: 0

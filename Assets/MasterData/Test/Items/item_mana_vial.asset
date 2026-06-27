@@ -15,7 +15,7 @@ MonoBehaviour:
   id: item_mana_vial
   displayName: "\u30DE\u30CA\u5C0F\u74F6"
   description: "SP\u3092\u4E2D\u56DE\u5FA9\u3059\u308B\u9B54\u529B\u306E\u5C0F\u74F6\u3002"
-  iconSprite: {fileID: -1230680934, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
+  iconSprite: {fileID: -1159505137, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
   itemType: 0
   category: "SP\u56DE\u5FA9"
   rank: 0

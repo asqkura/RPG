@@ -15,7 +15,7 @@ MonoBehaviour:
   id: item_clear_herb
   displayName: "\u6E05\u3081\u306E\u85AC\u8349"
   description: "\u72B6\u614B\u7570\u5E38\u3092\u89E3\u9664\u3059\u308B\u85AC\u8349\u3002"
-  iconSprite: {fileID: 1134075073, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  iconSprite: {fileID: 777661465, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
   itemType: 0
   category: "\u72B6\u614B\u7570\u5E38\u56DE\u5FA9"
   rank: 0

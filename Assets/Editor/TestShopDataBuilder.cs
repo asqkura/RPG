@@ -132,7 +132,7 @@ public static class TestShopDataBuilder
         var item = LoadOrCreate<ItemData>(ItemFolder + "/" + spec.Id + ".asset");
         var serialized = new SerializedObject(item);
         SetMasterFields(serialized, spec.Id, spec.Name, spec.Description);
-        serialized.FindProperty("iconSprite").objectReferenceValue = LoadSprite(spec.IconPath, spec.IconName);
+        SetIcon(serialized, spec.IconPath, spec.IconName);
         serialized.FindProperty("itemType").enumValueIndex = (int)itemType;
         serialized.FindProperty("category").stringValue = spec.Category;
         serialized.FindProperty("rank").intValue = rank;
@@ -152,7 +152,7 @@ public static class TestShopDataBuilder
         var item = LoadOrCreate<ItemData>(ItemFolder + "/" + spec.Id + ".asset");
         var serialized = new SerializedObject(item);
         SetMasterFields(serialized, spec.Id, spec.Name, spec.Description);
-        serialized.FindProperty("iconSprite").objectReferenceValue = LoadSprite(spec.IconPath, spec.IconName);
+        SetIcon(serialized, spec.IconPath, spec.IconName);
         serialized.FindProperty("itemType").enumValueIndex = (int)ItemDataType.Material;
         serialized.FindProperty("category").stringValue = spec.Category;
         serialized.FindProperty("rank").intValue = spec.Rank;
@@ -172,7 +172,7 @@ public static class TestShopDataBuilder
         var equipment = LoadOrCreate<EquipmentData>(EquipmentFolder + "/" + spec.Id + ".asset");
         var serialized = new SerializedObject(equipment);
         SetMasterFields(serialized, spec.Id, spec.Name, spec.Description);
-        serialized.FindProperty("iconSprite").objectReferenceValue = LoadSprite(spec.IconPath, spec.IconName);
+        SetIcon(serialized, spec.IconPath, spec.IconName);
         serialized.FindProperty("equipmentType").enumValueIndex = (int)spec.EquipmentType;
         serialized.FindProperty("weaponType").enumValueIndex = (int)spec.WeaponType;
         serialized.FindProperty("attackAttribute").stringValue = spec.WeaponType == WeaponDataType.None ? string.Empty : "物理";
@@ -295,10 +295,7 @@ public static class TestShopDataBuilder
 
     private static void DeleteGeneratedAssets()
     {
-        DeleteAssetFiles(ItemFolder);
-        DeleteAssetFiles(EquipmentFolder);
         DeleteAssetFiles(ShopFolder);
-        DeleteAssetFiles(DatabaseFolder);
     }
 
     private static void DeleteAssetFiles(string folder)
@@ -324,6 +321,11 @@ public static class TestShopDataBuilder
         serialized.FindProperty("id").stringValue = id;
         serialized.FindProperty("displayName").stringValue = displayName;
         serialized.FindProperty("description").stringValue = description;
+    }
+
+    private static void SetIcon(SerializedObject serialized, string iconPath, string iconName)
+    {
+        serialized.FindProperty("iconSprite").objectReferenceValue = LoadSprite(iconPath, iconName);
     }
 
     private static void SetItemEffect(SerializedProperty effectsProperty, ItemEffectDataType effectType, int amount)

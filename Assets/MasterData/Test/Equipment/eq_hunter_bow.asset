@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eq_hunter_bow
   displayName: "\u72E9\u4EBA\u306E\u5F13"
   description: "\u5F8C\u885B\u304B\u3089\u5B89\u5B9A\u3057\u3066\u653B\u6483\u3067\u304D\u308B\u5F13\u3002"
-  iconSprite: {fileID: -442629408, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  iconSprite: {fileID: 905291376, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
   equipmentType: 0
   weaponType: 5
   attackAttribute: "\u7269\u7406"
@@ -29,6 +29,7 @@ MonoBehaviour:
     criticalRate: 0.03
   baseSkillIds: []
   randomSkillPool: []
+  allowedRandomModifierTypes:
   equippableBy: []
   price: 700
   unsellable: 0
