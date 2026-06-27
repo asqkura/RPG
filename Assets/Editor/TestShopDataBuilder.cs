@@ -176,12 +176,39 @@ public static class TestShopDataBuilder
         serialized.FindProperty("equipmentType").enumValueIndex = (int)spec.EquipmentType;
         serialized.FindProperty("weaponType").enumValueIndex = (int)spec.WeaponType;
         serialized.FindProperty("attackAttribute").stringValue = spec.WeaponType == WeaponDataType.None ? string.Empty : "物理";
+        SetEquipmentStats(serialized.FindProperty("statModifiers"), spec.Id);
         serialized.FindProperty("price").intValue = spec.Price;
         serialized.FindProperty("unsellable").boolValue = false;
         serialized.FindProperty("sortOrder").intValue = sortOrder;
         serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(equipment);
         return equipment;
+    }
+
+    private static void SetEquipmentStats(SerializedProperty statsProperty, string equipmentId)
+    {
+        var stats = equipmentId switch
+        {
+            "eq_apprentice_dagger" => new StatSpec(0, 0, 2, 0, 0, 3, 0.04f),
+            "eq_iron_sword" => new StatSpec(0, 0, 5, 0, 0, 0, 0f),
+            "eq_hunter_bow" => new StatSpec(0, 0, 4, 0, 0, 1, 0.03f),
+            "eq_oak_staff" => new StatSpec(0, 10, 0, 5, 0, 0, 0f),
+            "eq_traveler_cloak" => new StatSpec(10, 0, 0, 0, 1, 1, 0f),
+            "eq_leather_armor" => new StatSpec(0, 0, 0, 0, 3, 1, 0f),
+            "eq_iron_mail" => new StatSpec(15, 0, 0, 0, 5, 0, 0f),
+            "eq_lucky_charm" => new StatSpec(0, 0, 0, 0, 0, 0, 0.05f),
+            "eq_guard_ring" => new StatSpec(0, 0, 0, 0, 2, 0, 0f),
+            "eq_swift_boots" => new StatSpec(0, 0, 0, 0, 0, 4, 0f),
+            _ => default
+        };
+
+        statsProperty.FindPropertyRelative("hp").intValue = stats.Hp;
+        statsProperty.FindPropertyRelative("sp").intValue = stats.Sp;
+        statsProperty.FindPropertyRelative("attack").intValue = stats.Attack;
+        statsProperty.FindPropertyRelative("magic").intValue = stats.Magic;
+        statsProperty.FindPropertyRelative("defense").intValue = stats.Defense;
+        statsProperty.FindPropertyRelative("speed").intValue = stats.Speed;
+        statsProperty.FindPropertyRelative("criticalRate").floatValue = stats.CriticalRate;
     }
 
     private static ShopItemData CreateOrUpdateShopItem(
@@ -410,5 +437,27 @@ public static class TestShopDataBuilder
         public int Price { get; }
         public string IconName { get; }
         public string IconPath { get; }
+    }
+
+    private readonly struct StatSpec
+    {
+        public StatSpec(int hp, int sp, int attack, int magic, int defense, int speed, float criticalRate)
+        {
+            Hp = hp;
+            Sp = sp;
+            Attack = attack;
+            Magic = magic;
+            Defense = defense;
+            Speed = speed;
+            CriticalRate = criticalRate;
+        }
+
+        public int Hp { get; }
+        public int Sp { get; }
+        public int Attack { get; }
+        public int Magic { get; }
+        public int Defense { get; }
+        public int Speed { get; }
+        public float CriticalRate { get; }
     }
 }

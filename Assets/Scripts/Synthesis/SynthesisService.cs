@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using RPG.MasterData;
 using RPG.SaveData;
 using RPG.Shop;
@@ -26,7 +27,11 @@ namespace RPG.Synthesis
             RecipeData recipe,
             string resultId,
             RecipeResultDataType resultType,
-            int cost)
+            int cost,
+            bool hasResultRarity = false,
+            EquipmentRarity resultRarity = default,
+            IReadOnlyList<EquipmentModifierSaveData> resultModifiers = null,
+            string resultRandomSkillId = "")
         {
             CanSynthesize = canSynthesize;
             FailureReason = failureReason;
@@ -34,6 +39,10 @@ namespace RPG.Synthesis
             ResultId = resultId ?? string.Empty;
             ResultType = resultType;
             Cost = Math.Max(0, cost);
+            HasResultRarity = hasResultRarity;
+            ResultRarity = resultRarity;
+            ResultModifiers = resultModifiers ?? Array.Empty<EquipmentModifierSaveData>();
+            ResultRandomSkillId = resultRandomSkillId ?? string.Empty;
         }
 
         public bool CanSynthesize { get; }
@@ -42,10 +51,27 @@ namespace RPG.Synthesis
         public string ResultId { get; }
         public RecipeResultDataType ResultType { get; }
         public int Cost { get; }
+        public bool HasResultRarity { get; }
+        public EquipmentRarity ResultRarity { get; }
+        public IReadOnlyList<EquipmentModifierSaveData> ResultModifiers { get; }
+        public string ResultRandomSkillId { get; }
     }
 
     public sealed class SynthesisService
     {
+        private static readonly EquipmentModifierType[] RandomModifierTypes =
+        {
+            EquipmentModifierType.Hp,
+            EquipmentModifierType.Attack,
+            EquipmentModifierType.Magic,
+            EquipmentModifierType.Defense,
+            EquipmentModifierType.Speed,
+            EquipmentModifierType.CriticalRate,
+            EquipmentModifierType.AttributeResistance,
+            EquipmentModifierType.StatusResistance,
+            EquipmentModifierType.DebuffResistance
+        };
+
         private readonly RecipeDatabase recipeDatabase;
         private readonly ItemDatabase itemDatabase;
         private readonly EquipmentDatabase equipmentDatabase;
@@ -144,8 +170,15 @@ namespace RPG.Synthesis
                 return Failure(SynthesisFailureReason.NotEnoughMoney, quote.Recipe);
             }
 
-            AddResult(saveData, quote.Recipe);
-            return Success(quote.Recipe);
+            var resultEquipment = AddResult(saveData, quote.Recipe);
+            return quote.Recipe.ResultType == RecipeResultDataType.Equipment
+                ? Success(
+                    quote.Recipe,
+                    true,
+                    resultEquipment.Rarity,
+                    resultEquipment.RandomModifiers,
+                    resultEquipment.RandomSkillId)
+                : Success(quote.Recipe);
         }
 
         private bool ResultExists(RecipeData recipe)
@@ -182,7 +215,7 @@ namespace RPG.Synthesis
             return ownedConsumableCount + 1 > ShopPurchaseService.MaxConsumableCount;
         }
 
-        private void AddResult(RunSaveData saveData, RecipeData recipe)
+        private OwnedEquipmentSaveData AddResult(RunSaveData saveData, RecipeData recipe)
         {
             if (recipe.ResultType == RecipeResultDataType.Item)
             {
@@ -190,17 +223,98 @@ namespace RPG.Synthesis
                 if (item.ItemType == ItemDataType.Consumable)
                 {
                     saveData.AddConsumable(item.ItemId, 1);
-                    return;
+                    return null;
                 }
 
                 saveData.AddMaterial(item.ItemId, 1);
+                return null;
+            }
+
+            var equipment = equipmentDatabase.GetById(recipe.ResultItemId);
+            var rarity = RollRarity(saveData.SynthesisLevel);
+            var ownedEquipment = new OwnedEquipmentSaveData(
+                createEquipmentInstanceId(),
+                recipe.ResultItemId,
+                rarity);
+            AddRandomResults(ownedEquipment, equipment);
+            saveData.AddOwnedEquipment(ownedEquipment);
+            return ownedEquipment;
+        }
+
+        private static void AddRandomResults(
+            OwnedEquipmentSaveData ownedEquipment,
+            EquipmentData equipment)
+        {
+            if (ownedEquipment == null || equipment == null)
+            {
                 return;
             }
 
-            saveData.AddOwnedEquipment(new OwnedEquipmentSaveData(
-                createEquipmentInstanceId(),
-                recipe.ResultItemId,
-                RollRarity(saveData.SynthesisLevel)));
+            var modifierCount = RollRandomModifierCount(ownedEquipment.Rarity);
+            var candidates = equipment.AllowedRandomModifierTypes.Count > 0
+                ? equipment.AllowedRandomModifierTypes
+                : RandomModifierTypes;
+
+            for (var i = 0; i < modifierCount && candidates.Count > 0; i++)
+            {
+                var modifierType = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+                ownedEquipment.AddRandomModifier(new EquipmentModifierSaveData(
+                    modifierType,
+                    GetDefaultModifierTargetId(modifierType),
+                    RollModifierAmount(modifierType)));
+            }
+
+            if (equipment.RandomSkillPool.Count > 0 && RollRandomSkill(ownedEquipment.Rarity))
+            {
+                ownedEquipment.RandomSkillId = equipment.RandomSkillPool[UnityEngine.Random.Range(0, equipment.RandomSkillPool.Count)];
+            }
+        }
+
+        private static int RollRandomModifierCount(EquipmentRarity rarity)
+        {
+            return rarity switch
+            {
+                EquipmentRarity.Common => UnityEngine.Random.Range(0, 2),
+                EquipmentRarity.Rare => 1,
+                EquipmentRarity.Epic => UnityEngine.Random.Range(1, 3),
+                EquipmentRarity.Legendary => UnityEngine.Random.Range(2, 4),
+                _ => 0
+            };
+        }
+
+        private static bool RollRandomSkill(EquipmentRarity rarity)
+        {
+            var chance = rarity switch
+            {
+                EquipmentRarity.Rare => 30,
+                EquipmentRarity.Epic => 70,
+                EquipmentRarity.Legendary => 100,
+                _ => 0
+            };
+            return UnityEngine.Random.Range(0, 100) < chance;
+        }
+
+        private static string GetDefaultModifierTargetId(EquipmentModifierType modifierType)
+        {
+            return modifierType switch
+            {
+                EquipmentModifierType.AttributeResistance => "all",
+                EquipmentModifierType.StatusResistance => "all",
+                EquipmentModifierType.DebuffResistance => "all",
+                _ => string.Empty
+            };
+        }
+
+        private static int RollModifierAmount(EquipmentModifierType modifierType)
+        {
+            return modifierType switch
+            {
+                EquipmentModifierType.Hp => UnityEngine.Random.Range(10, 26),
+                EquipmentModifierType.AttributeResistance => 10,
+                EquipmentModifierType.StatusResistance => 10,
+                EquipmentModifierType.DebuffResistance => 10,
+                _ => UnityEngine.Random.Range(3, 9)
+            };
         }
 
         private static EquipmentRarity RollRarity(int synthesisLevel)
@@ -231,7 +345,12 @@ namespace RPG.Synthesis
             return roll < epicLimit ? EquipmentRarity.Epic : EquipmentRarity.Legendary;
         }
 
-        private static SynthesisQuote Success(RecipeData recipe)
+        private static SynthesisQuote Success(
+            RecipeData recipe,
+            bool hasResultRarity = false,
+            EquipmentRarity resultRarity = default,
+            IReadOnlyList<EquipmentModifierSaveData> resultModifiers = null,
+            string resultRandomSkillId = "")
         {
             return new SynthesisQuote(
                 true,
@@ -239,7 +358,11 @@ namespace RPG.Synthesis
                 recipe,
                 recipe.ResultItemId,
                 recipe.ResultType,
-                recipe.Cost);
+                recipe.Cost,
+                hasResultRarity,
+                resultRarity,
+                resultModifiers,
+                resultRandomSkillId);
         }
 
         private static SynthesisQuote Failure(SynthesisFailureReason reason, RecipeData recipe = null)

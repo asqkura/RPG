@@ -21,9 +21,9 @@ MonoBehaviour:
   attackAttribute: "\u7269\u7406"
   statModifiers:
     hp: 0
-    sp: 0
+    sp: 10
     attack: 0
-    magic: 0
+    magic: 5
     defense: 0
     speed: 0
     criticalRate: 0

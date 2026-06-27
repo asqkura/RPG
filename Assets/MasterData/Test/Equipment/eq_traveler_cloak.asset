@@ -20,12 +20,12 @@ MonoBehaviour:
   weaponType: 0
   attackAttribute: 
   statModifiers:
-    hp: 0
+    hp: 10
     sp: 0
     attack: 0
     magic: 0
-    defense: 0
-    speed: 0
+    defense: 1
+    speed: 1
     criticalRate: 0
   baseSkillIds: []
   randomSkillPool: []

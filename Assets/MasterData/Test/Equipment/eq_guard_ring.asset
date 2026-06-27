@@ -24,7 +24,7 @@ MonoBehaviour:
     sp: 0
     attack: 0
     magic: 0
-    defense: 0
+    defense: 2
     speed: 0
     criticalRate: 0
   baseSkillIds: []

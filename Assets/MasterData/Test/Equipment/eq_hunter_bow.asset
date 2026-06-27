@@ -22,11 +22,11 @@ MonoBehaviour:
   statModifiers:
     hp: 0
     sp: 0
-    attack: 0
+    attack: 4
     magic: 0
     defense: 0
-    speed: 0
-    criticalRate: 0
+    speed: 1
+    criticalRate: 0.03
   baseSkillIds: []
   randomSkillPool: []
   equippableBy: []

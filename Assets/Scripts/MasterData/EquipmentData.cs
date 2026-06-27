@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RPG.SaveData;
 using UnityEngine;
 
 namespace RPG.MasterData
@@ -13,6 +14,7 @@ namespace RPG.MasterData
         [SerializeField] private BattleStats statModifiers = new();
         [SerializeField] private List<string> baseSkillIds = new();
         [SerializeField] private List<string> randomSkillPool = new();
+        [SerializeField] private List<EquipmentModifierType> allowedRandomModifierTypes = new();
         [SerializeField] private List<string> equippableBy = new();
         [Min(0)]
         [SerializeField] private int price;
@@ -27,6 +29,7 @@ namespace RPG.MasterData
         public BattleStats StatModifiers => statModifiers;
         public IReadOnlyList<string> BaseSkillIds => baseSkillIds;
         public IReadOnlyList<string> RandomSkillPool => randomSkillPool;
+        public IReadOnlyList<EquipmentModifierType> AllowedRandomModifierTypes => allowedRandomModifierTypes;
         public IReadOnlyList<string> EquippableBy => equippableBy;
         public int Price => price;
         public bool Unsellable => unsellable;

@@ -16,6 +16,7 @@ public static class SynthesisScreenPrefabBuilder
     private const string TestRecipeDatabasePath = "Assets/MasterData/Test/Databases/TestRecipeDatabase.asset";
     private const string PrefabFolder = "Assets/UI/Synthesis/Prefabs";
     private const string RowPrefabPath = PrefabFolder + "/SynthesisRecipeRow.prefab";
+    private const string ResultPopupPrefabPath = PrefabFolder + "/SynthesisResultPopup.prefab";
     private const string SynthesisScreenPrefabPath = PrefabFolder + "/SynthesisScreen.prefab";
 
     private const float ScreenMargin = 70f;
@@ -27,6 +28,8 @@ public static class SynthesisScreenPrefabBuilder
     private static readonly Color TextColor = new(0.86f, 0.82f, 0.75f, 1f);
     private static readonly Color MutedTextColor = new(0.62f, 0.58f, 0.52f, 1f);
     private static readonly Color AccentTextColor = new(1f, 0.9f, 0.62f, 1f);
+    private static readonly Color PopupPanelColor = new(0.08f, 0.075f, 0.065f, 0.96f);
+    private static readonly Color PopupBackdropColor = new(0f, 0f, 0f, 0.58f);
 
     [MenuItem("Tools/RPG/Build Synthesis Screen UI")]
     public static void Build()
@@ -47,7 +50,8 @@ public static class SynthesisScreenPrefabBuilder
         }
 
         var rowPrefab = CreateRowPrefab();
-        CreateSynthesisScreenPrefab(windowSprite, hoverSprite, scrollBarSprite, scrollHandleSprite, backgroundSprite, rowPrefab);
+        var resultPopupPrefab = CreateResultPopupPrefab(windowSprite);
+        CreateSynthesisScreenPrefab(windowSprite, hoverSprite, scrollBarSprite, scrollHandleSprite, backgroundSprite, rowPrefab, resultPopupPrefab);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("Synthesis screen UI prefab was generated.");
@@ -106,13 +110,56 @@ public static class SynthesisScreenPrefabBuilder
         return saved;
     }
 
+    private static GameObject CreateResultPopupPrefab(Sprite windowSprite)
+    {
+        var root = CreateRectObject("SynthesisResultPopup");
+        Stretch(root, Vector2.zero, Vector2.zero);
+
+        var backdrop = root.gameObject.AddComponent<Image>();
+        backdrop.color = PopupBackdropColor;
+
+        var backdropButton = root.gameObject.AddComponent<Button>();
+        backdropButton.targetGraphic = backdrop;
+
+        var panel = CreateImage("Panel", root, windowSprite, Image.Type.Sliced, PopupPanelColor);
+        Anchor(panel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(520, 320));
+
+        CreateText("Title", panel.transform, "合成完了", 28, TextAlignmentOptions.Center, AccentTextColor,
+            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -34), new Vector2(440, 42));
+
+        var icon = CreateImage("ResultIcon", panel.transform, null, Image.Type.Simple, Color.white);
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+        icon.enabled = false;
+        Anchor(icon, new Vector2(0, 1), new Vector2(0, 1), new Vector2(82, -118), new Vector2(80, 80));
+
+        CreateText("ResultName", panel.transform, "作成物名", 24, TextAlignmentOptions.MidlineLeft, AccentTextColor,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(142, -96), new Vector2(-178, 36));
+        CreateText("ResultRarity", panel.transform, "入手数: 1", 20, TextAlignmentOptions.MidlineLeft, TextColor,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(142, -134), new Vector2(-178, 30));
+        CreateText("ResultDetail", panel.transform, "合成結果の説明が入ります。", 19, TextAlignmentOptions.TopLeft, TextColor,
+            Vector2.zero, Vector2.one, new Vector2(0, -42), new Vector2(-80, -180));
+
+        var closeImage = CreateImage("CloseButton", panel.transform, windowSprite, Image.Type.Sliced, new Color(0.32f, 0.25f, 0.14f, 1f));
+        Anchor(closeImage, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 36), new Vector2(160, 44));
+        var closeButton = closeImage.gameObject.AddComponent<Button>();
+        closeButton.targetGraphic = closeImage;
+        CreateText("Label", closeImage.transform, "閉じる", 22, TextAlignmentOptions.Center, AccentTextColor,
+            Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+
+        var saved = PrefabUtility.SaveAsPrefabAsset(root.gameObject, ResultPopupPrefabPath);
+        Object.DestroyImmediate(root.gameObject);
+        return saved;
+    }
+
     private static void CreateSynthesisScreenPrefab(
         Sprite windowSprite,
         Sprite hoverSprite,
         Sprite scrollBarSprite,
         Sprite scrollHandleSprite,
         Sprite backgroundSprite,
-        GameObject rowPrefab)
+        GameObject rowPrefab,
+        GameObject resultPopupPrefab)
     {
         var root = new GameObject("SynthesisScreen", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         var canvas = root.GetComponent<Canvas>();
@@ -263,6 +310,7 @@ public static class SynthesisScreenPrefabBuilder
         controllerObject.FindProperty("weaponCategoryButton").objectReferenceValue = weaponCategoryButton;
         controllerObject.FindProperty("armorCategoryButton").objectReferenceValue = armorCategoryButton;
         controllerObject.FindProperty("accessoryCategoryButton").objectReferenceValue = accessoryCategoryButton;
+        controllerObject.FindProperty("resultPopupPrefab").objectReferenceValue = resultPopupPrefab;
         controllerObject.FindProperty("recipeDatabase").objectReferenceValue = AssetDatabase.LoadAssetAtPath<RecipeDatabase>(TestRecipeDatabasePath);
         controllerObject.FindProperty("itemDatabase").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemDatabase>(TestItemDatabasePath);
         controllerObject.FindProperty("equipmentDatabase").objectReferenceValue = AssetDatabase.LoadAssetAtPath<EquipmentDatabase>(TestEquipmentDatabasePath);

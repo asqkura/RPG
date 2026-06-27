@@ -17,6 +17,8 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
     private static readonly Color TextColor = new(0.86f, 0.82f, 0.75f, 1f);
     private static readonly Color AccentTextColor = new(1f, 0.9f, 0.62f, 1f);
     private static readonly Color MissingTextColor = new(0.95f, 0.48f, 0.42f, 1f);
+    private static readonly Color PopupPanelColor = new(0.08f, 0.075f, 0.065f, 0.96f);
+    private static readonly Color PopupBackdropColor = new(0f, 0f, 0f, 0.58f);
 
     [SerializeField] private TMP_Text detailTitleText;
     [SerializeField] private Image detailIconImage;
@@ -42,9 +44,19 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
     [SerializeField] private Button weaponCategoryButton;
     [SerializeField] private Button armorCategoryButton;
     [SerializeField] private Button accessoryCategoryButton;
+    [SerializeField] private GameObject resultPopupPrefab;
+    [SerializeField] private GameObject resultPopupRoot;
+    [SerializeField] private Image resultPopupIconImage;
+    [SerializeField] private TMP_Text resultPopupTitleText;
+    [SerializeField] private TMP_Text resultPopupNameText;
+    [SerializeField] private TMP_Text resultPopupDetailText;
+    [SerializeField] private TMP_Text resultPopupRarityText;
+    [SerializeField] private Button resultPopupBackdropButton;
+    [SerializeField] private Button resultPopupCloseButton;
     [SerializeField] private RecipeDatabase recipeDatabase;
     [SerializeField] private ItemDatabase itemDatabase;
     [SerializeField] private EquipmentDatabase equipmentDatabase;
+    [SerializeField] private SkillDatabase skillDatabase;
 
     private RecipeDataType currentCategory = RecipeDataType.Consumable;
     private ShopItemRowView selectedRow;
@@ -101,6 +113,16 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         if (accessoryCategoryButton != null)
         {
             accessoryCategoryButton.onClick.RemoveListener(ShowAccessories);
+        }
+
+        if (resultPopupCloseButton != null)
+        {
+            resultPopupCloseButton.onClick.RemoveListener(HideResultPopup);
+        }
+
+        if (resultPopupBackdropButton != null)
+        {
+            resultPopupBackdropButton.onClick.RemoveListener(HideResultPopup);
         }
     }
 
@@ -172,6 +194,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         RefreshMoneyText();
         RefreshActionButtonState();
         SetHelpText($"{recipeName}を作成しました。");
+        ShowResultPopup(result);
     }
 
     private void RefreshCurrentView()
@@ -652,6 +675,20 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         {
             accessoryCategoryButton.onClick.AddListener(ShowAccessories);
         }
+
+        EnsureResultPopup();
+
+        if (resultPopupCloseButton != null)
+        {
+            resultPopupCloseButton.onClick.AddListener(HideResultPopup);
+        }
+
+        if (resultPopupBackdropButton != null)
+        {
+            resultPopupBackdropButton.onClick.AddListener(HideResultPopup);
+        }
+
+        HideResultPopup();
     }
 
     private void InitializePreviewState()
@@ -676,6 +713,322 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         {
             actionButtonLabel = FindDeep(transform, "BuyButton")?.Find("Label")?.GetComponent<TMP_Text>();
         }
+
+        if (resultPopupRoot == null)
+        {
+            resultPopupRoot = FindDeep(transform, "SynthesisResultPopup")?.gameObject;
+        }
+
+        if (resultPopupRoot != null)
+        {
+            ResolveResultPopupReferences();
+        }
+    }
+
+    private void ResolveResultPopupReferences()
+    {
+        if (resultPopupRoot == null)
+        {
+            return;
+        }
+
+        if (resultPopupIconImage == null)
+        {
+            resultPopupIconImage = FindDeep(resultPopupRoot.transform, "ResultIcon")?.GetComponent<Image>();
+        }
+
+        if (resultPopupTitleText == null)
+        {
+            resultPopupTitleText = FindDeep(resultPopupRoot.transform, "Title")?.GetComponent<TMP_Text>();
+        }
+
+        if (resultPopupNameText == null)
+        {
+            resultPopupNameText = FindDeep(resultPopupRoot.transform, "ResultName")?.GetComponent<TMP_Text>();
+        }
+
+        if (resultPopupDetailText == null)
+        {
+            resultPopupDetailText = FindDeep(resultPopupRoot.transform, "ResultDetail")?.GetComponent<TMP_Text>();
+        }
+
+        if (resultPopupRarityText == null)
+        {
+            resultPopupRarityText = FindDeep(resultPopupRoot.transform, "ResultRarity")?.GetComponent<TMP_Text>();
+        }
+
+        if (resultPopupBackdropButton == null)
+        {
+            resultPopupBackdropButton = resultPopupRoot.GetComponent<Button>();
+        }
+
+        if (resultPopupCloseButton == null)
+        {
+            resultPopupCloseButton = FindDeep(resultPopupRoot.transform, "CloseButton")?.GetComponent<Button>();
+        }
+    }
+
+    private void ShowResultPopup(SynthesisQuote result)
+    {
+        EnsureResultPopup();
+
+        if (resultPopupRoot == null || result.Recipe == null)
+        {
+            return;
+        }
+
+        var resultName = result.Recipe.DisplayName;
+        var resultDetail = string.Empty;
+        Sprite resultIcon = null;
+
+        if (result.ResultType == RecipeResultDataType.Item)
+        {
+            if (itemDatabase != null && itemDatabase.TryGetById(result.ResultId, out var item) && item != null)
+            {
+                resultName = item.DisplayName;
+                resultDetail = item.Description;
+                resultIcon = item.IconSprite;
+            }
+        }
+        else if (equipmentDatabase != null && equipmentDatabase.TryGetById(result.ResultId, out var equipment) && equipment != null)
+        {
+            resultName = equipment.DisplayName;
+            resultDetail = equipment.Description;
+            resultIcon = equipment.IconSprite;
+        }
+
+        if (resultPopupTitleText != null)
+        {
+            resultPopupTitleText.text = "合成完了";
+        }
+
+        if (resultPopupNameText != null)
+        {
+            resultPopupNameText.text = resultName;
+        }
+
+        if (resultPopupDetailText != null)
+        {
+            resultPopupDetailText.text = BuildResultPopupDetail(result, resultName, resultDetail);
+        }
+
+        if (resultPopupRarityText != null)
+        {
+            resultPopupRarityText.text = result.HasResultRarity
+                ? $"レアリティ: {FormatRarity(result.ResultRarity)}"
+                : "入手数: 1";
+        }
+
+        if (resultPopupIconImage != null)
+        {
+            resultPopupIconImage.sprite = resultIcon;
+            resultPopupIconImage.enabled = resultIcon != null;
+        }
+
+        resultPopupRoot.SetActive(true);
+
+        if (resultPopupCloseButton != null)
+        {
+            SetEventSystemSelection(resultPopupCloseButton.gameObject);
+        }
+    }
+
+    private void HideResultPopup()
+    {
+        if (resultPopupRoot != null)
+        {
+            resultPopupRoot.SetActive(false);
+        }
+    }
+
+    private void EnsureResultPopup()
+    {
+        if (resultPopupRoot != null)
+        {
+            ResolveResultPopupReferences();
+            return;
+        }
+
+        if (resultPopupPrefab != null)
+        {
+            resultPopupRoot = Instantiate(resultPopupPrefab, transform);
+            resultPopupRoot.name = resultPopupPrefab.name;
+            resultPopupRoot.transform.SetAsLastSibling();
+
+            if (resultPopupRoot.TryGetComponent<RectTransform>(out var prefabRect))
+            {
+                prefabRect.anchorMin = Vector2.zero;
+                prefabRect.anchorMax = Vector2.one;
+                prefabRect.offsetMin = Vector2.zero;
+                prefabRect.offsetMax = Vector2.zero;
+            }
+
+            ResolveResultPopupReferences();
+            return;
+        }
+
+        var root = new GameObject("SynthesisResultPopup", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        root.transform.SetParent(transform, false);
+        resultPopupRoot = root;
+
+        var rootRect = root.GetComponent<RectTransform>();
+        rootRect.anchorMin = Vector2.zero;
+        rootRect.anchorMax = Vector2.one;
+        rootRect.offsetMin = Vector2.zero;
+        rootRect.offsetMax = Vector2.zero;
+        root.transform.SetAsLastSibling();
+
+        var backdrop = root.GetComponent<Image>();
+        backdrop.color = PopupBackdropColor;
+
+        var closeBackdrop = root.AddComponent<Button>();
+        closeBackdrop.targetGraphic = backdrop;
+        resultPopupBackdropButton = closeBackdrop;
+
+        var panel = new GameObject("Panel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        panel.transform.SetParent(root.transform, false);
+        var panelRect = panel.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.sizeDelta = new Vector2(520f, 320f);
+        panelRect.anchoredPosition = Vector2.zero;
+
+        var panelImage = panel.GetComponent<Image>();
+        panelImage.color = PopupPanelColor;
+
+        resultPopupTitleText = CreatePopupText(panel.transform, "Title", "合成完了", 28, TextAlignmentOptions.Center, AccentTextColor);
+        SetRect(resultPopupTitleText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -34f), new Vector2(440f, 42f));
+
+        var iconObject = new GameObject("ResultIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        iconObject.transform.SetParent(panel.transform, false);
+        resultPopupIconImage = iconObject.GetComponent<Image>();
+        resultPopupIconImage.preserveAspect = true;
+        SetRect(iconObject.GetComponent<RectTransform>(), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(82f, -118f), new Vector2(80f, 80f));
+
+        resultPopupNameText = CreatePopupText(panel.transform, "ResultName", string.Empty, 24, TextAlignmentOptions.Left, AccentTextColor);
+        SetRect(resultPopupNameText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(142f, -96f), new Vector2(-178f, 36f));
+
+        resultPopupRarityText = CreatePopupText(panel.transform, "ResultRarity", string.Empty, 20, TextAlignmentOptions.Left, TextColor);
+        SetRect(resultPopupRarityText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(142f, -134f), new Vector2(-178f, 30f));
+
+        resultPopupDetailText = CreatePopupText(panel.transform, "ResultDetail", string.Empty, 19, TextAlignmentOptions.TopLeft, TextColor);
+        SetRect(resultPopupDetailText.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -42f), new Vector2(-80f, -180f));
+
+        var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        closeObject.transform.SetParent(panel.transform, false);
+        resultPopupCloseButton = closeObject.GetComponent<Button>();
+        var closeImage = closeObject.GetComponent<Image>();
+        closeImage.color = new Color(0.32f, 0.25f, 0.14f, 1f);
+        resultPopupCloseButton.targetGraphic = closeImage;
+        SetRect(closeObject.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 36f), new Vector2(160f, 44f));
+
+        var closeLabel = CreatePopupText(closeObject.transform, "Label", "閉じる", 22, TextAlignmentOptions.Center, AccentTextColor);
+        SetRect(closeLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+    }
+
+    private static TMP_Text CreatePopupText(
+        Transform parent,
+        string name,
+        string text,
+        float fontSize,
+        TextAlignmentOptions alignment,
+        Color color)
+    {
+        var textObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(parent, false);
+        var label = textObject.GetComponent<TMP_Text>();
+        label.text = text;
+        label.fontSize = fontSize;
+        label.alignment = alignment;
+        label.color = color;
+        label.textWrappingMode = TextWrappingModes.Normal;
+        return label;
+    }
+
+    private static void SetRect(
+        RectTransform rect,
+        Vector2 anchorMin,
+        Vector2 anchorMax,
+        Vector2 pivot,
+        Vector2 anchoredPosition,
+        Vector2 sizeDelta)
+    {
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.pivot = pivot;
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = sizeDelta;
+    }
+
+    private string BuildResultPopupDetail(SynthesisQuote result, string resultName, string resultDetail)
+    {
+        var lines = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(resultDetail))
+        {
+            lines.Add($"{resultName}を作成しました。");
+        }
+        else
+        {
+            lines.Add(resultDetail);
+        }
+
+        if (!result.HasResultRarity)
+        {
+            AppendConsumedResources(lines, result);
+            return string.Join("\n", lines);
+        }
+
+        var randomLines = new List<string>();
+        foreach (var modifier in result.ResultModifiers)
+        {
+            if (modifier == null)
+            {
+                continue;
+            }
+
+            randomLines.Add($"・{FormatModifier(modifier)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.ResultRandomSkillId))
+        {
+            randomLines.Add($"・ランダムスキル: {FormatSkillName(result.ResultRandomSkillId)}");
+        }
+
+        if (randomLines.Count == 0)
+        {
+            randomLines.Add("・なし");
+        }
+
+        lines.Add(string.Empty);
+        lines.Add("ランダム結果");
+        lines.AddRange(randomLines);
+        AppendConsumedResources(lines, result);
+        return string.Join("\n", lines);
+    }
+
+    private void AppendConsumedResources(List<string> lines, SynthesisQuote result)
+    {
+        if (result.Recipe == null)
+        {
+            return;
+        }
+
+        lines.Add(string.Empty);
+        lines.Add("消費");
+
+        foreach (var ingredient in result.Recipe.Ingredients)
+        {
+            if (ingredient == null)
+            {
+                continue;
+            }
+
+            lines.Add($"・{FormatItemName(ingredient.ItemId)} x{ingredient.Count}");
+        }
+
+        lines.Add($"・{result.Cost} G");
     }
 
     private static void SetButtonLabelColor(Button button, bool selected)
@@ -726,6 +1079,90 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
             RecipeDataType.Accessory => "アクセサリ",
             _ => recipeType.ToString()
         };
+    }
+
+    private static string FormatRarity(EquipmentRarity rarity)
+    {
+        return rarity switch
+        {
+            EquipmentRarity.Common => "コモン",
+            EquipmentRarity.Rare => "レア",
+            EquipmentRarity.Epic => "エピック",
+            EquipmentRarity.Legendary => "レジェンダリー",
+            _ => rarity.ToString()
+        };
+    }
+
+    private static string FormatModifier(EquipmentModifierSaveData modifier)
+    {
+        var sign = modifier.Amount >= 0 ? "+" : string.Empty;
+        var target = FormatModifierTarget(modifier.TargetId);
+        return string.IsNullOrWhiteSpace(target)
+            ? $"{FormatModifierType(modifier.ModifierType)} {sign}{modifier.Amount}{FormatModifierUnit(modifier.ModifierType)}"
+            : $"{target}{FormatModifierType(modifier.ModifierType)} {sign}{modifier.Amount}{FormatModifierUnit(modifier.ModifierType)}";
+    }
+
+    private static string FormatModifierType(EquipmentModifierType modifierType)
+    {
+        return modifierType switch
+        {
+            EquipmentModifierType.Hp => "HP",
+            EquipmentModifierType.Attack => "攻撃",
+            EquipmentModifierType.Magic => "魔力",
+            EquipmentModifierType.Defense => "防御",
+            EquipmentModifierType.Speed => "素早さ",
+            EquipmentModifierType.CriticalRate => "会心率",
+            EquipmentModifierType.AttributeResistance => "属性耐性",
+            EquipmentModifierType.StatusResistance => "状態異常耐性",
+            EquipmentModifierType.DebuffResistance => "弱体耐性",
+            _ => modifierType.ToString()
+        };
+    }
+
+    private static string FormatModifierUnit(EquipmentModifierType modifierType)
+    {
+        return modifierType == EquipmentModifierType.CriticalRate
+            || modifierType == EquipmentModifierType.AttributeResistance
+            || modifierType == EquipmentModifierType.StatusResistance
+            || modifierType == EquipmentModifierType.DebuffResistance
+            ? "%"
+            : string.Empty;
+    }
+
+    private static string FormatModifierTarget(string targetId)
+    {
+        if (string.IsNullOrWhiteSpace(targetId) || targetId == "all")
+        {
+            return string.Empty;
+        }
+
+        return $"{targetId} ";
+    }
+
+    private string FormatItemName(string itemId)
+    {
+        if (itemDatabase != null
+            && itemDatabase.TryGetById(itemId, out var item)
+            && item != null
+            && !string.IsNullOrWhiteSpace(item.DisplayName))
+        {
+            return item.DisplayName;
+        }
+
+        return itemId;
+    }
+
+    private string FormatSkillName(string skillId)
+    {
+        if (skillDatabase != null
+            && skillDatabase.TryGetById(skillId, out var skill)
+            && skill != null
+            && !string.IsNullOrWhiteSpace(skill.DisplayName))
+        {
+            return skill.DisplayName;
+        }
+
+        return skillId;
     }
 
     private static string FormatFailure(SynthesisFailureReason reason)
