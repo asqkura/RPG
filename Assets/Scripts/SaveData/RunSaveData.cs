@@ -184,6 +184,23 @@ namespace RPG.SaveData
             return ownedEquipments.Exists(equipment => equipment.OwnedEquipmentInstanceId == ownedEquipmentInstanceId);
         }
 
+        public bool TryRemoveOwnedEquipment(string ownedEquipmentInstanceId)
+        {
+            if (string.IsNullOrWhiteSpace(ownedEquipmentInstanceId))
+            {
+                return false;
+            }
+
+            var equipment = ownedEquipments.Find(entry => entry.OwnedEquipmentInstanceId == ownedEquipmentInstanceId);
+            if (equipment == null)
+            {
+                return false;
+            }
+
+            ownedEquipments.Remove(equipment);
+            return true;
+        }
+
         public CharacterSaveData GetOrCreateCharacter(string characterId)
         {
             var character = characters.Find(entry => entry.CharacterId == characterId);

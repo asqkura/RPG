@@ -117,7 +117,7 @@ public static class ShopScreenPrefabBuilder
         icon.preserveAspect = true;
         icon.raycastTarget = false;
         icon.enabled = false;
-        Anchor(icon, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(32, 0), new Vector2(24, 24));
+        Anchor(icon, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(33, 0), new Vector2(28, 28));
 
         CreateText("Name", root.transform, "ポーション", 24, TextAlignmentOptions.MidlineLeft, TextColor,
             new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(220, 0), new Vector2(320, 36));
@@ -183,7 +183,7 @@ public static class ShopScreenPrefabBuilder
         Anchor(moneyPanel, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-390, -70), new Vector2(300, 60));
         CreateText("Label", moneyPanel.transform, "所持金", 20, TextAlignmentOptions.MidlineLeft, MutedTextColor,
             new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(76, 10), new Vector2(120, 28));
-        CreateText("Value", moneyPanel.transform, "12,480 G", 28, TextAlignmentOptions.MidlineRight, AccentTextColor,
+        var moneyText = CreateText("Value", moneyPanel.transform, "12,480 G", 28, TextAlignmentOptions.MidlineRight, AccentTextColor,
             new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-105, -6), new Vector2(180, 38));
 
         var backButton = CreateImage("BackButton", root.transform, windowSprite, Image.Type.Sliced, WindowSpriteColor);
@@ -196,8 +196,8 @@ public static class ShopScreenPrefabBuilder
 
         var listPanel = CreateImage("ItemListPanel", root.transform, windowSprite, Image.Type.Sliced, WindowSpriteColor);
         AnchorFromLeftTop(listPanel, ItemListPanelLeft, PanelTop, ItemListPanelWidth, MainPanelHeight);
-        CreateTab(root.transform, windowSprite, hoverSprite, "BuyTab", "購入", new Vector2(ItemListPanelLeft + 90, PanelTop + 20), true);
-        CreateTab(root.transform, windowSprite, hoverSprite, "SellTab", "売却", new Vector2(ItemListPanelLeft + 230, PanelTop + 20), false);
+        var buyTabButton = CreateTab(root.transform, windowSprite, hoverSprite, "BuyTab", "購入", new Vector2(ItemListPanelLeft + 90, PanelTop + 20), true);
+        var sellTabButton = CreateTab(root.transform, windowSprite, hoverSprite, "SellTab", "売却", new Vector2(ItemListPanelLeft + 230, PanelTop + 20), false);
         CreateText("PanelTitle", listPanel.transform, "商品一覧", 24, TextAlignmentOptions.MidlineLeft, TextColor,
             new Vector2(0, 1), new Vector2(0, 1), new Vector2(100, -40), new Vector2(150, 34));
         CreateText("CategoryLabel", listPanel.transform, "分類", 24, TextAlignmentOptions.MidlineLeft, MutedTextColor,
@@ -278,7 +278,7 @@ public static class ShopScreenPrefabBuilder
         Anchor(buyButton, new Vector2(1, 0), new Vector2(1, 0), new Vector2(-146, 58), new Vector2(210, 58));
         buyButton.gameObject.AddComponent<Button>();
         AddWindowHover(buyButton.gameObject, buyButton, windowSprite, hoverSprite);
-        CreateText("Label", buyButton.transform, "購入", 30, TextAlignmentOptions.Center, AccentTextColor,
+        var actionButtonLabel = CreateText("Label", buyButton.transform, "購入", 30, TextAlignmentOptions.Center, AccentTextColor,
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(150, 44));
 
         var helpPanel = CreateImage("HelpPanel", root.transform, windowSprite, Image.Type.Sliced, WindowSpriteColor);
@@ -296,10 +296,15 @@ public static class ShopScreenPrefabBuilder
         controllerObject.FindProperty("detailOwnedText").objectReferenceValue = detailOwned;
         controllerObject.FindProperty("detailPriceText").objectReferenceValue = detailPrice;
         controllerObject.FindProperty("helpText").objectReferenceValue = helpText;
+        controllerObject.FindProperty("moneyText").objectReferenceValue = moneyText;
+        controllerObject.FindProperty("buyButton").objectReferenceValue = buyButton.GetComponent<Button>();
+        controllerObject.FindProperty("actionButtonLabel").objectReferenceValue = actionButtonLabel;
         controllerObject.FindProperty("itemRowPrefab").objectReferenceValue = rowPrefab.GetComponent<ShopItemRowView>();
         controllerObject.FindProperty("itemScrollRect").objectReferenceValue = scrollRect;
         controllerObject.FindProperty("itemRowViewport").objectReferenceValue = rowViewport;
         controllerObject.FindProperty("itemRowContent").objectReferenceValue = rowContent;
+        controllerObject.FindProperty("buyTabButton").objectReferenceValue = buyTabButton;
+        controllerObject.FindProperty("sellTabButton").objectReferenceValue = sellTabButton;
         controllerObject.FindProperty("consumableCategoryButton").objectReferenceValue = consumableCategoryButton;
         controllerObject.FindProperty("materialCategoryButton").objectReferenceValue = materialCategoryButton;
         controllerObject.FindProperty("equipmentCategoryButton").objectReferenceValue = equipmentCategoryButton;
@@ -315,7 +320,7 @@ public static class ShopScreenPrefabBuilder
         Object.DestroyImmediate(root);
     }
 
-    private static void CreateTab(
+    private static Button CreateTab(
         Transform parent,
         Sprite windowSprite,
         Sprite hoverSprite,
@@ -326,10 +331,11 @@ public static class ShopScreenPrefabBuilder
     {
         var tab = CreateImage(name, parent, selected ? hoverSprite : windowSprite, Image.Type.Sliced, WindowSpriteColor);
         Anchor(tab, new Vector2(0, 1), new Vector2(0, 1), anchoredPosition, new Vector2(130, 50));
-        tab.gameObject.AddComponent<Button>();
+        var button = tab.gameObject.AddComponent<Button>();
         AddWindowHover(tab.gameObject, tab, windowSprite, hoverSprite);
         CreateText("Label", tab.transform, label, 24, TextAlignmentOptions.Center, selected ? AccentTextColor : TextColor,
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(100, 38));
+        return button;
     }
 
     private static Button CreateCategoryButton(

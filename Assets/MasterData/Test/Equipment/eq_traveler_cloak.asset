@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eq_traveler_cloak
   displayName: "\u65C5\u4EBA\u306E\u5916\u5957"
   description: "\u65C5\u306E\u6C5A\u308C\u306B\u5F37\u3044\u8EFD\u3044\u5916\u5957\u3002"
-  iconSprite: {fileID: -1521353396, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  iconSprite: {fileID: 578512880, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
   equipmentType: 1
   weaponType: 0
   attackAttribute: 

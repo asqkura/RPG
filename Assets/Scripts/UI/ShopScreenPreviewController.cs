@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using RPG.MasterData;
+using RPG.SaveData;
+using RPG.Shop;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,28 +22,45 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
     [SerializeField] private TMP_Text detailOwnedText;
     [SerializeField] private TMP_Text detailPriceText;
     [SerializeField] private TMP_Text helpText;
+    [SerializeField] private TMP_Text moneyText;
+    [SerializeField] private Button buyButton;
+    [SerializeField] private TMP_Text actionButtonLabel;
     [SerializeField] private ShopItemRowView itemRowPrefab;
     [SerializeField] private ScrollRect itemScrollRect;
     [SerializeField] private RectTransform itemRowViewport;
     [SerializeField] private RectTransform itemRowContent;
+    [SerializeField] private Button buyTabButton;
+    [SerializeField] private Button sellTabButton;
     [SerializeField] private Button consumableCategoryButton;
     [SerializeField] private Button materialCategoryButton;
     [SerializeField] private Button equipmentCategoryButton;
     [SerializeField] private ShopItemDatabase shopItemDatabase;
     [SerializeField] private ItemDatabase itemDatabase;
     [SerializeField] private EquipmentDatabase equipmentDatabase;
+    [Min(0)]
+    [SerializeField] private int previewMoney = 12480;
 
     private ShopCategory currentCategory = ShopCategory.Consumable;
-    private ShopItemRowView currentRow;
+    private ShopMode currentMode = ShopMode.Buy;
+    private ShopItemRowView selectedRow;
+    private ShopItemRowView previewRow;
+    private RunSaveData previewSaveData;
+    private ShopPurchaseService purchaseService;
+    private ShopSellService sellService;
     private readonly List<ShopDisplayEntry> displayEntries = new();
     private readonly List<ShopItemRowView> itemRows = new();
 
     private void Awake()
     {
+        InitializePreviewState();
+        ResolveOptionalReferences();
         RegisterCategoryButtons();
+        RegisterModeButtons();
+        RefreshModeButtons();
         RefreshCategoryButtons();
         PopulateRows();
         SelectFirstRow();
+        RefreshMoneyText();
     }
 
     private void OnDestroy()
@@ -60,18 +79,62 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         {
             equipmentCategoryButton.onClick.RemoveListener(ShowEquipment);
         }
+
+        if (buyButton != null)
+        {
+            buyButton.onClick.RemoveListener(SubmitCurrentItem);
+        }
+
+        if (buyTabButton != null)
+        {
+            buyTabButton.onClick.RemoveListener(ShowBuyMode);
+        }
+
+        if (sellTabButton != null)
+        {
+            sellTabButton.onClick.RemoveListener(ShowSellMode);
+        }
     }
 
     public void Hover(ShopItemRowView row)
     {
-        if (row == null || currentRow == row)
+        if (row == null || previewRow == row)
         {
             return;
         }
 
-        ClearCurrentRow();
-        currentRow = row;
-        currentRow.SetHighlighted(true);
+        previewRow = row;
+        ShowDetail(row);
+    }
+
+    public void Select(ShopItemRowView row)
+    {
+        if (row == null)
+        {
+            return;
+        }
+
+        if (selectedRow == row)
+        {
+            previewRow = row;
+            ShowDetail(row);
+            return;
+        }
+
+        ClearSelectedRow();
+        selectedRow = row;
+        selectedRow.SetHighlighted(true);
+        previewRow = row;
+        ShowDetail(row);
+    }
+
+    private void ShowDetail(ShopItemRowView row)
+    {
+        if (row == null)
+        {
+            ClearDetail();
+            return;
+        }
 
         if (detailTitleText != null)
         {
@@ -112,11 +175,115 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 
     public void Clear(ShopItemRowView row)
     {
+        if (row == null || previewRow != row)
+        {
+            return;
+        }
+
+        previewRow = selectedRow;
+
+        if (selectedRow != null)
+        {
+            ShowDetail(selectedRow);
+            return;
+        }
+
+        ClearDetail();
     }
 
     public void Refresh()
     {
-        ClearCurrentRow();
+        ClearSelectedRow();
+        previewRow = null;
+        PopulateRows();
+        SelectFirstRow();
+        RefreshMoneyText();
+    }
+
+    public void SubmitCurrentItem()
+    {
+        if (currentMode == ShopMode.Sell)
+        {
+            SellCurrentItem();
+            return;
+        }
+
+        PurchaseCurrentItem();
+    }
+
+    public void PurchaseCurrentItem()
+    {
+        if (selectedRow == null || purchaseService == null || previewSaveData == null)
+        {
+            SetHelpText("購入する商品を選んでください。");
+            return;
+        }
+
+        var purchasedShopItemId = selectedRow.ShopItemId;
+        var purchasedItemName = selectedRow.ItemName;
+        var result = purchaseService.TryPurchase(previewSaveData, purchasedShopItemId);
+        if (!result.CanPurchase)
+        {
+            SetHelpText(FormatPurchaseFailure(result.FailureReason));
+            return;
+        }
+
+        PopulateRows();
+        ClearSelectedRow();
+        previewRow = null;
+        SelectRowByShopItemId(purchasedShopItemId);
+        RefreshMoneyText();
+        SetHelpText($"{purchasedItemName}を購入しました。");
+    }
+
+    public void SellCurrentItem()
+    {
+        if (selectedRow == null || sellService == null || previewSaveData == null)
+        {
+            SetHelpText("売却する所持品を選んでください。");
+            return;
+        }
+
+        var soldEntryId = selectedRow.ShopItemId;
+        var soldItemName = selectedRow.ItemName;
+        var result = currentCategory == ShopCategory.Equipment
+            ? sellService.TrySellEquipment(previewSaveData, soldEntryId)
+            : sellService.TrySellItem(previewSaveData, soldEntryId);
+        if (!result.CanSell)
+        {
+            SetHelpText(FormatSellFailure(result.FailureReason));
+            return;
+        }
+
+        PopulateRows();
+        ClearSelectedRow();
+        previewRow = null;
+        SelectRowByShopItemId(soldEntryId);
+        RefreshMoneyText();
+        SetHelpText($"{soldItemName}を売却しました。");
+    }
+
+    private void ShowBuyMode()
+    {
+        ShowMode(ShopMode.Buy);
+    }
+
+    private void ShowSellMode()
+    {
+        ShowMode(ShopMode.Sell);
+    }
+
+    private void ShowMode(ShopMode mode)
+    {
+        if (currentMode == mode)
+        {
+            return;
+        }
+
+        currentMode = mode;
+        ClearSelectedRow();
+        previewRow = null;
+        RefreshModeButtons();
         PopulateRows();
         SelectFirstRow();
     }
@@ -144,7 +311,8 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         }
 
         currentCategory = category;
-        ClearCurrentRow();
+        ClearSelectedRow();
+        previewRow = null;
         RefreshCategoryButtons();
         PopulateRows();
         SelectFirstRow();
@@ -154,22 +322,23 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
     {
         displayEntries.Clear();
 
-        if (shopItemDatabase == null || itemDatabase == null || currentCategory == ShopCategory.Equipment && equipmentDatabase == null)
+        if (shopItemDatabase == null
+            || itemDatabase == null
+            || purchaseService == null
+            || previewSaveData == null
+            || currentCategory == ShopCategory.Equipment && equipmentDatabase == null)
         {
             ClearRows();
             return;
         }
 
-        foreach (var shopItem in shopItemDatabase.Entries
-            .Where(entry => entry != null && entry.AvailablePhase <= PreviewPhase)
-            .OrderBy(entry => entry.SortOrder))
+        if (currentMode == ShopMode.Sell)
         {
-            if (!TryCreateEntry(shopItem, out var entry))
-            {
-                continue;
-            }
-
-            displayEntries.Add(entry);
+            PopulateSellEntries();
+        }
+        else
+        {
+            PopulateBuyEntries();
         }
 
         EnsureRowCount(displayEntries.Count);
@@ -186,6 +355,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
             {
                 var entry = displayEntries[i];
                 row.Configure(
+                    entry.ShopItemId,
                     entry.Icon,
                     entry.Name,
                     entry.Detail,
@@ -201,6 +371,64 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         }
 
         RefreshScrollArea();
+    }
+
+    private void PopulateBuyEntries()
+    {
+        foreach (var shopItem in shopItemDatabase.Entries
+            .Where(entry => entry != null && entry.AvailablePhase <= PreviewPhase)
+            .OrderBy(entry => entry.SortOrder))
+        {
+            if (!TryCreateEntry(shopItem, out var entry))
+            {
+                continue;
+            }
+
+            displayEntries.Add(entry);
+        }
+    }
+
+    private void PopulateSellEntries()
+    {
+        if (currentCategory == ShopCategory.Consumable)
+        {
+            foreach (var stack in previewSaveData.ConsumableItems.Where(stack => stack.Count > 0))
+            {
+                if (itemDatabase.TryGetById(stack.ItemId, out var item) && item.ItemType == ItemDataType.Consumable)
+                {
+                    displayEntries.Add(CreateSellItemEntry(item, stack.Count));
+                }
+            }
+
+            displayEntries.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
+            return;
+        }
+
+        if (currentCategory == ShopCategory.Material)
+        {
+            foreach (var stack in previewSaveData.Materials.Where(stack => stack.Count > 0))
+            {
+                if (itemDatabase.TryGetById(stack.ItemId, out var item) && item.ItemType == ItemDataType.Material)
+                {
+                    displayEntries.Add(CreateSellItemEntry(item, stack.Count));
+                }
+            }
+
+            displayEntries.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
+            return;
+        }
+
+        foreach (var ownedEquipment in previewSaveData.OwnedEquipments)
+        {
+            if (!equipmentDatabase.TryGetById(ownedEquipment.EquipmentId, out var equipment))
+            {
+                continue;
+            }
+
+            displayEntries.Add(CreateSellEquipmentEntry(ownedEquipment, equipment));
+        }
+
+        displayEntries.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
     }
 
     private bool TryCreateEntry(ShopItemData shopItem, out ShopDisplayEntry entry)
@@ -233,12 +461,13 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         }
 
         entry = new ShopDisplayEntry(
+            shopItem.ShopItemId,
             item.IconSprite,
             item.DisplayName,
             BuildItemDetail(item),
             $"{item.DisplayName}を購入します。",
             FormatStock(shopItem),
-            "0",
+            GetOwnedItemCount(item).ToString(),
             $"{item.Price} G");
         return true;
     }
@@ -256,14 +485,43 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         }
 
         entry = new ShopDisplayEntry(
+            shopItem.ShopItemId,
             equipment.IconSprite,
             equipment.DisplayName,
             BuildEquipmentDetail(equipment),
             $"{equipment.DisplayName}を購入します。",
             FormatStock(shopItem),
-            "0",
+            GetOwnedEquipmentCount(equipment.EquipmentId).ToString(),
             $"{equipment.Price} G");
         return true;
+    }
+
+    private static ShopDisplayEntry CreateSellItemEntry(ItemData item, int ownedCount)
+    {
+        var sellPrice = item.Unsellable ? "不可" : $"{ShopSellService.CalculateSellPrice(item.Price)} G";
+        return new ShopDisplayEntry(
+            item.ItemId,
+            item.IconSprite,
+            item.DisplayName,
+            BuildItemDetail(item),
+            $"{item.DisplayName}を売却します。",
+            UnlimitedStockText,
+            ownedCount.ToString(),
+            sellPrice);
+    }
+
+    private static ShopDisplayEntry CreateSellEquipmentEntry(OwnedEquipmentSaveData ownedEquipment, EquipmentData equipment)
+    {
+        var sellPrice = equipment.Unsellable ? "不可" : $"{ShopSellService.CalculateSellPrice(equipment.Price)} G";
+        return new ShopDisplayEntry(
+            ownedEquipment.OwnedEquipmentInstanceId,
+            equipment.IconSprite,
+            equipment.DisplayName,
+            BuildEquipmentDetail(equipment),
+            $"{equipment.DisplayName}を売却します。",
+            UnlimitedStockText,
+            "1",
+            sellPrice);
     }
 
     private static string BuildItemDetail(ItemData item)
@@ -307,11 +565,69 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         };
     }
 
-    private static string FormatStock(ShopItemData shopItem)
+    private string FormatStock(ShopItemData shopItem)
     {
         return shopItem.StockType == ShopStockDataType.Unlimited
             ? UnlimitedStockText
-            : shopItem.StockCount.ToString();
+            : purchaseService.GetRemainingStock(previewSaveData, shopItem).ToString();
+    }
+
+    private int GetOwnedItemCount(ItemData item)
+    {
+        if (previewSaveData == null || item == null)
+        {
+            return 0;
+        }
+
+        return item.ItemType == ItemDataType.Consumable
+            ? previewSaveData.GetConsumableCount(item.ItemId)
+            : previewSaveData.GetMaterialCount(item.ItemId);
+    }
+
+    private int GetOwnedEquipmentCount(string equipmentId)
+    {
+        if (previewSaveData == null || string.IsNullOrWhiteSpace(equipmentId))
+        {
+            return 0;
+        }
+
+        return previewSaveData.OwnedEquipments.Count(equipment => equipment.EquipmentId == equipmentId);
+    }
+
+    private void InitializePreviewState()
+    {
+        previewSaveData = RunSaveData.CreateNew();
+        previewSaveData.AddMoney(previewMoney);
+        purchaseService = new ShopPurchaseService(shopItemDatabase, itemDatabase, equipmentDatabase);
+        sellService = new ShopSellService(itemDatabase, equipmentDatabase);
+    }
+
+    private void ResolveOptionalReferences()
+    {
+        if (buyButton == null)
+        {
+            buyButton = FindDeep(transform, "BuyButton")?.GetComponent<Button>();
+        }
+
+        if (moneyText == null)
+        {
+            moneyText = FindDeep(transform, "MoneyPanel")?.Find("Value")?.GetComponent<TMP_Text>();
+        }
+
+        if (buyTabButton == null)
+        {
+            buyTabButton = FindDeep(transform, "BuyTab")?.GetComponent<Button>();
+        }
+
+        if (sellTabButton == null)
+        {
+            sellTabButton = FindDeep(transform, "SellTab")?.GetComponent<Button>();
+        }
+
+        if (actionButtonLabel == null)
+        {
+            actionButtonLabel = FindDeep(transform, "BuyButton")?.Find("Label")?.GetComponent<TMP_Text>();
+        }
     }
 
     private void RegisterCategoryButtons()
@@ -330,6 +646,24 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         {
             equipmentCategoryButton.onClick.AddListener(ShowEquipment);
         }
+
+        if (buyButton != null)
+        {
+            buyButton.onClick.AddListener(SubmitCurrentItem);
+        }
+    }
+
+    private void RegisterModeButtons()
+    {
+        if (buyTabButton != null)
+        {
+            buyTabButton.onClick.AddListener(ShowBuyMode);
+        }
+
+        if (sellTabButton != null)
+        {
+            sellTabButton.onClick.AddListener(ShowSellMode);
+        }
     }
 
     private void RefreshCategoryButtons()
@@ -337,6 +671,17 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         SetCategoryButtonState(consumableCategoryButton, currentCategory == ShopCategory.Consumable);
         SetCategoryButtonState(materialCategoryButton, currentCategory == ShopCategory.Material);
         SetCategoryButtonState(equipmentCategoryButton, currentCategory == ShopCategory.Equipment);
+    }
+
+    private void RefreshModeButtons()
+    {
+        SetCategoryButtonState(buyTabButton, currentMode == ShopMode.Buy);
+        SetCategoryButtonState(sellTabButton, currentMode == ShopMode.Sell);
+
+        if (actionButtonLabel != null)
+        {
+            actionButtonLabel.text = currentMode == ShopMode.Buy ? "購入" : "売却";
+        }
     }
 
     private static void SetCategoryButtonState(Button button, bool selected)
@@ -436,20 +781,36 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         var firstActiveRow = itemRows.FirstOrDefault(row => row != null && row.gameObject.activeSelf);
         if (firstActiveRow != null)
         {
-            Hover(firstActiveRow);
+            Select(firstActiveRow);
         }
         else
         {
+            previewRow = null;
             ClearDetail();
         }
     }
 
-    private void ClearCurrentRow()
+    private void SelectRowByShopItemId(string shopItemId)
     {
-        if (currentRow != null)
+        var row = itemRows.FirstOrDefault(entry => entry != null
+            && entry.gameObject.activeSelf
+            && entry.ShopItemId == shopItemId);
+
+        if (row != null)
         {
-            currentRow.SetHighlighted(false);
-            currentRow = null;
+            Select(row);
+            return;
+        }
+
+        SelectFirstRow();
+    }
+
+    private void ClearSelectedRow()
+    {
+        if (selectedRow != null)
+        {
+            selectedRow.SetHighlighted(false);
+            selectedRow = null;
         }
     }
 
@@ -492,9 +853,74 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         }
     }
 
+    private void RefreshMoneyText()
+    {
+        if (moneyText != null && previewSaveData != null)
+        {
+            moneyText.text = $"{previewSaveData.Money:N0} G";
+        }
+    }
+
+    private void SetHelpText(string message)
+    {
+        if (helpText != null)
+        {
+            helpText.text = message;
+        }
+    }
+
+    private static string FormatPurchaseFailure(ShopPurchaseFailureReason reason)
+    {
+        return reason switch
+        {
+            ShopPurchaseFailureReason.ShopItemNotFound => "商品データが見つかりません。",
+            ShopPurchaseFailureReason.ProductNotFound => "商品内容のデータが見つかりません。",
+            ShopPurchaseFailureReason.NotAvailableInCurrentPhase => "この商品はまだ購入できません。",
+            ShopPurchaseFailureReason.SoldOut => "在庫がありません。",
+            ShopPurchaseFailureReason.NotEnoughMoney => "所持金が足りません。",
+            _ => "購入できません。"
+        };
+    }
+
+    private static string FormatSellFailure(ShopSellFailureReason reason)
+    {
+        return reason switch
+        {
+            ShopSellFailureReason.ProductNotFound => "所持品のデータが見つかりません。",
+            ShopSellFailureReason.NotOwned => "所持していません。",
+            ShopSellFailureReason.Unsellable => "この所持品は売却できません。",
+            _ => "売却できません。"
+        };
+    }
+
+    private static Transform FindDeep(Transform root, string targetName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        if (root.name == targetName)
+        {
+            return root;
+        }
+
+        foreach (Transform child in root)
+        {
+            var result = FindDeep(child, targetName);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
     private readonly struct ShopDisplayEntry
     {
         public ShopDisplayEntry(
+            string shopItemId,
             Sprite icon,
             string name,
             string detail,
@@ -503,6 +929,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
             string owned,
             string price)
         {
+            ShopItemId = shopItemId ?? string.Empty;
             Icon = icon;
             Name = name;
             Detail = detail;
@@ -512,6 +939,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
             Price = price;
         }
 
+        public string ShopItemId { get; }
         public Sprite Icon { get; }
         public string Name { get; }
         public string Detail { get; }
@@ -526,5 +954,11 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         Consumable,
         Material,
         Equipment
+    }
+
+    private enum ShopMode
+    {
+        Buy,
+        Sell
     }
 }

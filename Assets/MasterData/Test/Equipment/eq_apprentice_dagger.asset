@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eq_apprentice_dagger
   displayName: "\u898B\u7FD2\u3044\u306E\u77ED\u5263"
   description: "\u6271\u3044\u3084\u3059\u3044\u77ED\u5263\u3002\u7D20\u65E9\u3044\u4EF2\u9593\u5411\u3051\u3002"
-  iconSprite: {fileID: -127614092, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  iconSprite: {fileID: -3299837, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
   equipmentType: 0
   weaponType: 2
   attackAttribute: "\u7269\u7406"

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: item_spirit_tea
   displayName: "\u7CBE\u970A\u8336"
   description: "\u5C11\u91CF\u306ESP\u3092\u6574\u3048\u308B\u9999\u8349\u8336\u3002"
-  iconSprite: {fileID: 1525182236, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
+  iconSprite: {fileID: -759355303, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
   itemType: 0
   category: "SP\u56DE\u5FA9"
   rank: 0

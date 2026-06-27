@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mat_beast_hide
   displayName: "\u7363\u306E\u76AE"
   description: "\u8EFD\u88C5\u5099\u306B\u4F7F\u3046\u306A\u3081\u3057\u524D\u306E\u76AE\u3002"
-  iconSprite: {fileID: -1521353396, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  iconSprite: {fileID: -1927463720, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
   itemType: 1
   category: "\u76AE/\u5E03\u7CFB"
   rank: 1

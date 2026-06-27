@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mat_magic_shard
   displayName: "\u9B54\u77F3\u306E\u6B20\u7247"
   description: "\u5FAE\u304B\u306A\u9B54\u529B\u3092\u5E2F\u3073\u305F\u6B20\u7247\u3002"
-  iconSprite: {fileID: -157780727, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
+  iconSprite: {fileID: -469701901, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
   itemType: 1
   category: "\u9B54\u77F3\u7CFB"
   rank: 1

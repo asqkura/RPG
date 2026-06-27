@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eq_swift_boots
   displayName: "\u75BE\u98A8\u306E\u9774"
   description: "\u7D20\u65E9\u3055\u3092\u88DC\u3046\u8EFD\u3044\u9774\u3002"
-  iconSprite: {fileID: -1294726763, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
+  iconSprite: {fileID: 1122087084, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
   equipmentType: 2
   weaponType: 0
   attackAttribute: 

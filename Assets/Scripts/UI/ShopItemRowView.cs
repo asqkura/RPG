@@ -3,11 +3,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
+public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ISelectHandler, IDeselectHandler
 {
     [SerializeField] private string itemName;
     [SerializeField] private string detailText;
     [SerializeField] private string helpText;
+    [SerializeField] private string shopItemId;
     [SerializeField] private string stockText;
     [SerializeField] private string ownedText;
     [SerializeField] private string priceText;
@@ -31,12 +32,14 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     public string ItemName => itemName;
     public string DetailText => detailText;
     public string HelpText => helpText;
+    public string ShopItemId => shopItemId;
     public string StockText => stockText;
     public string OwnedText => ownedText;
     public string PriceText => priceText;
     public Sprite IconSprite => iconImage != null ? iconImage.sprite : null;
 
     public void Configure(
+        string shopItemId,
         Sprite icon,
         string displayName,
         string detail,
@@ -45,6 +48,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         string owned,
         string price)
     {
+        this.shopItemId = shopItemId ?? string.Empty;
         itemName = displayName;
         detailText = detail;
         helpText = help;
@@ -72,6 +76,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         itemName = string.Empty;
         detailText = string.Empty;
         helpText = string.Empty;
+        shopItemId = string.Empty;
         stockText = string.Empty;
         ownedText = string.Empty;
         priceText = string.Empty;
@@ -105,11 +110,17 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        controller?.Clear(this);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        controller?.Select(this);
     }
 
     public void OnSelect(BaseEventData eventData)
     {
-        controller?.Hover(this);
+        controller?.Select(this);
     }
 
     public void OnDeselect(BaseEventData eventData)

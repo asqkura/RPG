@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mat_steel_ore
   displayName: "\u92FC\u9271\u77F3"
   description: "\u5F37\u5316\u88C5\u5099\u306B\u4F7F\u3046\u786C\u3044\u9271\u77F3\u3002"
-  iconSprite: {fileID: 311158094, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
+  iconSprite: {fileID: -926306127, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
   itemType: 1
   category: "\u9271\u77F3\u7CFB"
   rank: 2

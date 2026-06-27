@@ -15,7 +15,7 @@ MonoBehaviour:
   id: item_guard_salve
   displayName: "\u5B88\u308A\u306E\u8EDF\u818F"
   description: "\u50B7\u53E3\u3092\u4FDD\u8B77\u3059\u308B\u5FDC\u6025\u85AC\u3002"
-  iconSprite: {fileID: -1563789612, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
+  iconSprite: {fileID: 951786658, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
   itemType: 0
   category: "HP\u56DE\u5FA9"
   rank: 0
