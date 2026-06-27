@@ -214,9 +214,9 @@ public static class ShopScreenPrefabBuilder
         headerLine.raycastTarget = false;
 
         CreateColumnHeader(listPanel.transform, "商品名", 108, -116, 140);
-        CreateColumnHeader(listPanel.transform, "在庫", 512, -116, 70);
-        CreateColumnHeader(listPanel.transform, "所持", 598, -116, 70);
-        CreateColumnHeader(listPanel.transform, "価格", 688, -116, 80);
+        var stockHeader = CreateColumnHeader(listPanel.transform, "在庫", 512, -116, 70);
+        var ownedHeader = CreateColumnHeader(listPanel.transform, "所持", 598, -116, 70);
+        var priceHeader = CreateColumnHeader(listPanel.transform, "価格", 688, -116, 80);
 
         var rowViewport = CreateRectObject("ItemRowViewport");
         rowViewport.transform.SetParent(listPanel.transform, false);
@@ -267,15 +267,8 @@ public static class ShopScreenPrefabBuilder
         var detailOwned = CreateDetailStat(detailPanel.transform, "所持", "3", new Vector2(244, -394));
         var detailPrice = CreateDetailStat(detailPanel.transform, "価格", "80 G", new Vector2(416, -394));
 
-        var quantityPanel = CreateImage("QuantityPanel", detailPanel.transform, windowSprite, Image.Type.Sliced, WindowSpriteColor);
-        Anchor(quantityPanel, new Vector2(0, 0), new Vector2(0, 0), new Vector2(136, 58), new Vector2(190, 58));
-        CreateText("Label", quantityPanel.transform, "数量", 20, TextAlignmentOptions.MidlineLeft, MutedTextColor,
-            new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(56, 0), new Vector2(70, 30));
-        CreateText("Value", quantityPanel.transform, "1", 28, TextAlignmentOptions.MidlineRight, TextColor,
-            new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-48, 0), new Vector2(70, 36));
-
         var buyButton = CreateImage("BuyButton", detailPanel.transform, windowSprite, Image.Type.Sliced, WindowSpriteColor);
-        Anchor(buyButton, new Vector2(1, 0), new Vector2(1, 0), new Vector2(-146, 58), new Vector2(210, 58));
+        Anchor(buyButton, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 58), new Vector2(250, 58));
         buyButton.gameObject.AddComponent<Button>();
         AddWindowHover(buyButton.gameObject, buyButton, windowSprite, hoverSprite);
         var actionButtonLabel = CreateText("Label", buyButton.transform, "購入", 30, TextAlignmentOptions.Center, AccentTextColor,
@@ -299,6 +292,9 @@ public static class ShopScreenPrefabBuilder
         controllerObject.FindProperty("moneyText").objectReferenceValue = moneyText;
         controllerObject.FindProperty("buyButton").objectReferenceValue = buyButton.GetComponent<Button>();
         controllerObject.FindProperty("actionButtonLabel").objectReferenceValue = actionButtonLabel;
+        controllerObject.FindProperty("stockHeaderText").objectReferenceValue = stockHeader;
+        controllerObject.FindProperty("ownedHeaderText").objectReferenceValue = ownedHeader;
+        controllerObject.FindProperty("priceHeaderText").objectReferenceValue = priceHeader;
         controllerObject.FindProperty("itemRowPrefab").objectReferenceValue = rowPrefab.GetComponent<ShopItemRowView>();
         controllerObject.FindProperty("itemScrollRect").objectReferenceValue = scrollRect;
         controllerObject.FindProperty("itemRowViewport").objectReferenceValue = rowViewport;
@@ -382,9 +378,9 @@ public static class ShopScreenPrefabBuilder
         return scrollbar;
     }
 
-    private static void CreateColumnHeader(Transform parent, string label, float x, float y, float width)
+    private static TMP_Text CreateColumnHeader(Transform parent, string label, float x, float y, float width)
     {
-        CreateText(label + "Header", parent, label, 18, TextAlignmentOptions.MidlineLeft, MutedTextColor,
+        return CreateText(label + "Header", parent, label, 18, TextAlignmentOptions.MidlineLeft, MutedTextColor,
             new Vector2(0, 1), new Vector2(0, 1), new Vector2(x, y), new Vector2(width, 28));
     }
 

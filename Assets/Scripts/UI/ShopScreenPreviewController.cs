@@ -25,6 +25,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
     [SerializeField] private TMP_Text moneyText;
     [SerializeField] private Button buyButton;
     [SerializeField] private TMP_Text actionButtonLabel;
+    [SerializeField] private TMP_Text stockHeaderText;
+    [SerializeField] private TMP_Text ownedHeaderText;
+    [SerializeField] private TMP_Text priceHeaderText;
     [SerializeField] private ShopItemRowView itemRowPrefab;
     [SerializeField] private ScrollRect itemScrollRect;
     [SerializeField] private RectTransform itemRowViewport;
@@ -57,6 +60,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         RegisterCategoryButtons();
         RegisterModeButtons();
         RefreshModeButtons();
+        RefreshColumnHeaders();
         RefreshCategoryButtons();
         PopulateRows();
         SelectFirstRow();
@@ -169,8 +173,10 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 
         if (helpText != null)
         {
-            helpText.text = row.HelpText;
+            helpText.text = FormatDetailHelp(row);
         }
+
+        RefreshActionButtonState();
     }
 
     public void Clear(ShopItemRowView row)
@@ -198,6 +204,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         PopulateRows();
         SelectFirstRow();
         RefreshMoneyText();
+        RefreshActionButtonState();
     }
 
     public void SubmitCurrentItem()
@@ -233,6 +240,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         previewRow = null;
         SelectRowByShopItemId(purchasedShopItemId);
         RefreshMoneyText();
+        RefreshActionButtonState();
         SetHelpText($"{purchasedItemName}を購入しました。");
     }
 
@@ -260,6 +268,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         previewRow = null;
         SelectRowByShopItemId(soldEntryId);
         RefreshMoneyText();
+        RefreshActionButtonState();
         SetHelpText($"{soldItemName}を売却しました。");
     }
 
@@ -286,6 +295,8 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         RefreshModeButtons();
         PopulateRows();
         SelectFirstRow();
+        RefreshColumnHeaders();
+        RefreshActionButtonState();
     }
 
     private void ShowConsumables()
@@ -316,6 +327,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         RefreshCategoryButtons();
         PopulateRows();
         SelectFirstRow();
+        RefreshActionButtonState();
     }
 
     private void PopulateRows()
@@ -371,6 +383,8 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         }
 
         RefreshScrollArea();
+        RefreshColumnHeaders();
+        RefreshActionButtonState();
     }
 
     private void PopulateBuyEntries()
@@ -396,7 +410,10 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
             {
                 if (itemDatabase.TryGetById(stack.ItemId, out var item) && item.ItemType == ItemDataType.Consumable)
                 {
-                    displayEntries.Add(CreateSellItemEntry(item, stack.Count));
+                    for (var i = 0; i < stack.Count; i++)
+                    {
+                        displayEntries.Add(CreateSellItemEntry(item, stack.Count));
+                    }
                 }
             }
 
@@ -628,6 +645,27 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         {
             actionButtonLabel = FindDeep(transform, "BuyButton")?.Find("Label")?.GetComponent<TMP_Text>();
         }
+
+        if (stockHeaderText == null)
+        {
+            stockHeaderText = FindDeep(transform, "在庫Header")?.GetComponent<TMP_Text>();
+        }
+
+        if (ownedHeaderText == null)
+        {
+            ownedHeaderText = FindDeep(transform, "所持Header")?.GetComponent<TMP_Text>();
+        }
+
+        if (priceHeaderText == null)
+        {
+            priceHeaderText = FindDeep(transform, "価格Header")?.GetComponent<TMP_Text>();
+        }
+
+        var quantityPanel = FindDeep(transform, "QuantityPanel");
+        if (quantityPanel != null)
+        {
+            quantityPanel.gameObject.SetActive(false);
+        }
     }
 
     private void RegisterCategoryButtons()
@@ -681,6 +719,26 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         if (actionButtonLabel != null)
         {
             actionButtonLabel.text = currentMode == ShopMode.Buy ? "購入" : "売却";
+        }
+
+        RefreshActionButtonState();
+    }
+
+    private void RefreshColumnHeaders()
+    {
+        if (stockHeaderText != null)
+        {
+            stockHeaderText.text = currentMode == ShopMode.Buy ? "在庫" : string.Empty;
+        }
+
+        if (ownedHeaderText != null)
+        {
+            ownedHeaderText.text = "所持";
+        }
+
+        if (priceHeaderText != null)
+        {
+            priceHeaderText.text = currentMode == ShopMode.Buy ? "価格" : "売値";
         }
     }
 
@@ -812,6 +870,8 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
             selectedRow.SetHighlighted(false);
             selectedRow = null;
         }
+
+        RefreshActionButtonState();
     }
 
     private void ClearDetail()
@@ -861,6 +921,75 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         }
     }
 
+    private void RefreshActionButtonState()
+    {
+        if (buyButton == null)
+        {
+            return;
+        }
+
+        var canSubmit = CanSubmitSelectedItem();
+        buyButton.interactable = canSubmit;
+
+        if (actionButtonLabel != null)
+        {
+            actionButtonLabel.color = canSubmit ? AccentTextColor : TextColor;
+        }
+    }
+
+    private bool CanSubmitSelectedItem()
+    {
+        if (selectedRow == null || previewSaveData == null)
+        {
+            return false;
+        }
+
+        if (currentMode == ShopMode.Buy)
+        {
+            return purchaseService != null
+                && purchaseService.GetQuote(previewSaveData, selectedRow.ShopItemId).CanPurchase;
+        }
+
+        if (sellService == null)
+        {
+            return false;
+        }
+
+        return currentCategory == ShopCategory.Equipment
+            ? sellService.GetEquipmentQuote(previewSaveData, selectedRow.ShopItemId).CanSell
+            : sellService.GetItemQuote(previewSaveData, selectedRow.ShopItemId).CanSell;
+    }
+
+    private string FormatDetailHelp(ShopItemRowView row)
+    {
+        if (row == null)
+        {
+            return string.Empty;
+        }
+
+        if (row != selectedRow)
+        {
+            return $"{row.ItemName}の詳細です。クリックで対象にします。";
+        }
+
+        if (currentMode == ShopMode.Buy)
+        {
+            var quote = purchaseService != null && previewSaveData != null
+                ? purchaseService.GetQuote(previewSaveData, row.ShopItemId)
+                : default;
+            return quote.CanPurchase
+                ? $"{row.ItemName}を購入対象にしています。"
+                : FormatPurchaseFailure(quote.FailureReason);
+        }
+
+        var sellQuote = currentCategory == ShopCategory.Equipment
+            ? sellService?.GetEquipmentQuote(previewSaveData, row.ShopItemId) ?? default
+            : sellService?.GetItemQuote(previewSaveData, row.ShopItemId) ?? default;
+        return sellQuote.CanSell
+            ? $"{row.ItemName}を売却対象にしています。"
+            : FormatSellFailure(sellQuote.FailureReason);
+    }
+
     private void SetHelpText(string message)
     {
         if (helpText != null)
@@ -878,6 +1007,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
             ShopPurchaseFailureReason.NotAvailableInCurrentPhase => "この商品はまだ購入できません。",
             ShopPurchaseFailureReason.SoldOut => "在庫がありません。",
             ShopPurchaseFailureReason.NotEnoughMoney => "所持金が足りません。",
+            ShopPurchaseFailureReason.InventoryFull => $"消耗品は{ShopPurchaseService.MaxConsumableCount}個まで所持できます。",
             _ => "購入できません。"
         };
     }

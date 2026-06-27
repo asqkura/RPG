@@ -12,7 +12,8 @@ namespace RPG.Shop
         ProductNotFound,
         NotAvailableInCurrentPhase,
         SoldOut,
-        NotEnoughMoney
+        NotEnoughMoney,
+        InventoryFull
     }
 
     public readonly struct ShopPurchaseQuote
@@ -52,6 +53,8 @@ namespace RPG.Shop
 
     public sealed class ShopPurchaseService
     {
+        public const int MaxConsumableCount = 20;
+
         private readonly ShopItemDatabase shopItemDatabase;
         private readonly ItemDatabase itemDatabase;
         private readonly EquipmentDatabase equipmentDatabase;
@@ -92,6 +95,11 @@ namespace RPG.Shop
             if (!TryGetProductPrice(shopItem, out var price))
             {
                 return Failure(ShopPurchaseFailureReason.ProductNotFound, shopItem, quantity);
+            }
+
+            if (WouldExceedConsumableLimit(saveData, shopItem, quantity))
+            {
+                return Failure(ShopPurchaseFailureReason.InventoryFull, shopItem, quantity, price, GetRemainingStock(saveData, shopItem));
             }
 
             var remainingStock = GetRemainingStock(saveData, shopItem);
@@ -197,6 +205,27 @@ namespace RPG.Shop
 
             price = equipment.Price;
             return true;
+        }
+
+        private bool WouldExceedConsumableLimit(RunSaveData saveData, ShopItemData shopItem, int quantity)
+        {
+            if (shopItem == null
+                || shopItem.ProductType != ShopProductDataType.Item
+                || itemDatabase == null
+                || !itemDatabase.TryGetById(shopItem.ProductId, out var item)
+                || item == null
+                || item.ItemType != ItemDataType.Consumable)
+            {
+                return false;
+            }
+
+            var ownedConsumableCount = 0;
+            foreach (var stack in saveData.ConsumableItems)
+            {
+                ownedConsumableCount += stack.Count;
+            }
+
+            return ownedConsumableCount + quantity > MaxConsumableCount;
         }
 
         private void AddProductToInventory(RunSaveData saveData, ShopItemData shopItem, int quantity)
