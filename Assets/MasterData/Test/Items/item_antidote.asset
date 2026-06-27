@@ -17,7 +17,6 @@ MonoBehaviour:
   description: "\u6BD2\u3092\u89E3\u9664\u3059\u308B\u82E6\u3044\u85AC\u3002"
   iconSprite: {fileID: -1230680934, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
   itemType: 0
-  category: "\u6BD2\u56DE\u5FA9"
   rank: 0
   price: 60
   unsellable: 0

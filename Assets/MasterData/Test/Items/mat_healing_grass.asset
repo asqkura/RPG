@@ -17,7 +17,6 @@ MonoBehaviour:
   description: "\u52B9\u80FD\u306E\u9AD8\u3044\u56DE\u5FA9\u7D20\u6750\u3002"
   iconSprite: {fileID: 203830185, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
   itemType: 1
-  category: "\u85AC\u8349\u7CFB"
   rank: 2
   price: 95
   unsellable: 0

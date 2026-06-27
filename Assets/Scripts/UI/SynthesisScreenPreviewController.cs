@@ -73,7 +73,6 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
     {
         InitializePreviewState();
         ResolveOptionalReferences();
-        HideDetailSummaryStats();
         RegisterButtons();
         RefreshColumnHeaders();
         RefreshCategoryButtons();
@@ -278,7 +277,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
             if (i < displayEntries.Count)
             {
                 var entry = displayEntries[i];
-                row.Configure(entry.RecipeId, entry.Icon, entry.Name, entry.Detail, entry.Help, entry.Level, entry.Owned, entry.Cost);
+                row.Configure(entry.RecipeId, entry.Icon, entry.Name, entry.Detail, entry.Detail, entry.Help, entry.Level, entry.Owned, entry.Cost);
             }
             else
             {
@@ -427,10 +426,18 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
 
         if (equipmentDetailsByRecipeId.TryGetValue(row.ShopItemId, out var equipmentDetail))
         {
-            EnsureEquipmentDetailPanelView()?.Show(equipmentDetail);
-            if (detailBodyText != null)
+            if (equipmentDetailPanelView != null)
             {
-                detailBodyText.gameObject.SetActive(false);
+                equipmentDetailPanelView.Show(equipmentDetail);
+                if (detailBodyText != null)
+                {
+                    detailBodyText.gameObject.SetActive(false);
+                }
+            }
+            else if (detailBodyText != null)
+            {
+                detailBodyText.gameObject.SetActive(true);
+                detailBodyText.text = row.DetailText;
             }
         }
         else if (detailBodyText != null)
@@ -785,6 +792,11 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
             actionButtonLabel = FindDeep(transform, "BuyButton")?.Find("Label")?.GetComponent<TMP_Text>();
         }
 
+        if (equipmentDetailPanelView == null)
+        {
+            equipmentDetailPanelView = FindDeep(transform, "EquipmentDetailPanel")?.GetComponent<EquipmentDetailPanelView>();
+        }
+
         if (resultPopupRoot == null)
         {
             resultPopupRoot = FindDeep(transform, "SynthesisResultPopup")?.gameObject;
@@ -794,50 +806,6 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         {
             ResolveResultPopupReferences();
         }
-    }
-
-    private EquipmentDetailPanelView EnsureEquipmentDetailPanelView()
-    {
-        if (equipmentDetailPanelView != null)
-        {
-            return equipmentDetailPanelView;
-        }
-
-        if (detailBodyText == null)
-        {
-            return null;
-        }
-
-        var root = new GameObject("EquipmentDetailPanel", typeof(RectTransform), typeof(EquipmentDetailPanelView));
-        var rect = root.GetComponent<RectTransform>();
-        rect.SetParent(detailBodyText.transform.parent, false);
-        rect.anchorMin = detailBodyText.rectTransform.anchorMin;
-        rect.anchorMax = detailBodyText.rectTransform.anchorMax;
-        rect.offsetMin = detailBodyText.rectTransform.offsetMin;
-        rect.offsetMax = detailBodyText.rectTransform.offsetMax;
-        equipmentDetailPanelView = root.GetComponent<EquipmentDetailPanelView>();
-        equipmentDetailPanelView.Hide();
-        return equipmentDetailPanelView;
-    }
-
-    private void HideDetailSummaryStats()
-    {
-        SetDetailSummaryStatVisible(detailStockText, false);
-        SetDetailSummaryStatVisible(detailOwnedText, false);
-        SetDetailSummaryStatVisible(detailPriceText, false);
-    }
-
-    private static void SetDetailSummaryStatVisible(TMP_Text valueText, bool visible)
-    {
-        if (valueText == null)
-        {
-            return;
-        }
-
-        var target = valueText.transform.parent != null
-            ? valueText.transform.parent.gameObject
-            : valueText.gameObject;
-        target.SetActive(visible);
     }
 
     private void ResolveResultPopupReferences()

@@ -17,7 +17,6 @@ MonoBehaviour:
   description: "HP\u3092\u4E2D\u56DE\u5FA9\u3059\u308B\u4E0A\u7B49\u306A\u85AC\u3002"
   iconSprite: {fileID: -82991728, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
   itemType: 0
-  category: "HP\u56DE\u5FA9"
   rank: 0
   price: 180
   unsellable: 0

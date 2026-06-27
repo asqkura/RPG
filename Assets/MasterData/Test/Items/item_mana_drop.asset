@@ -17,7 +17,6 @@ MonoBehaviour:
   description: "SP\u3092\u5C0F\u56DE\u5FA9\u3059\u308B\u6F84\u3093\u3060\u96EB\u3002"
   iconSprite: {fileID: 576446072, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
   itemType: 0
-  category: "SP\u56DE\u5FA9"
   rank: 0
   price: 120
   unsellable: 0

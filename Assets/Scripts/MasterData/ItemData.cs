@@ -8,7 +8,6 @@ namespace RPG.MasterData
     {
         [SerializeField] private Sprite iconSprite;
         [SerializeField] private ItemDataType itemType;
-        [SerializeField] private string category = string.Empty;
         [Min(0)]
         [SerializeField] private int rank;
         [Min(0)]
@@ -22,7 +21,6 @@ namespace RPG.MasterData
         public string ItemId => Id;
         public Sprite IconSprite => iconSprite;
         public ItemDataType ItemType => itemType;
-        public string Category => category;
         public int Rank => rank;
         public int Price => price;
         public bool Unsellable => unsellable;

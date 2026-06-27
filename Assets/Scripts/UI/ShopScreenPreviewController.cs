@@ -19,6 +19,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
 
     [SerializeField] private TMP_Text detailTitleText;
     [SerializeField] private Image detailIconImage;
+    [SerializeField] private TMP_Text detailDescriptionText;
     [SerializeField] private TMP_Text detailBodyText;
     [SerializeField] private EquipmentDetailPanelView equipmentDetailPanelView;
     [SerializeField] private TMP_Text detailStockText;
@@ -66,7 +67,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     {
         InitializeGameState();
         ResolveOptionalReferences();
-        HideDetailSummaryStats();
         RegisterCategoryButtons();
         RegisterModeButtons();
         RefreshModeButtons();
@@ -194,6 +194,11 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         {
             detailIconImage.sprite = row.IconSprite;
             detailIconImage.enabled = row.IconSprite != null;
+        }
+
+        if (detailDescriptionText != null)
+        {
+            detailDescriptionText.text = row.DescriptionText;
         }
 
         if (equipmentDetailsByEntryId.TryGetValue(row.ShopItemId, out var equipmentDetail))
@@ -459,6 +464,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
                     entry.ShopItemId,
                     entry.Icon,
                     entry.Name,
+                    entry.Description,
                     entry.Detail,
                     entry.Help,
                     entry.Stock,
@@ -585,11 +591,12 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             shopItem.ShopItemId,
             item.IconSprite,
             item.DisplayName,
+            item.Description,
             BuildItemDetail(item),
             $"{item.DisplayName}を購入します。",
             FormatStock(shopItem),
-            GetOwnedItemCount(item).ToString(),
-            $"{item.Price} G");
+            FormatOwnedCount(GetOwnedItemCount(item)),
+            item.Price.ToString());
         return true;
     }
 
@@ -614,40 +621,43 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             shopItem.ShopItemId,
             equipment.IconSprite,
             equipment.DisplayName,
+            equipment.Description,
             BuildEquipmentDetail(equipment, null),
             $"{equipment.DisplayName}を購入します。",
             FormatStock(shopItem),
-            GetOwnedEquipmentCount(equipment.EquipmentId).ToString(),
-            $"{equipment.Price} G");
+            FormatOwnedCount(GetOwnedEquipmentCount(equipment.EquipmentId)),
+            equipment.Price.ToString());
         equipmentDetailsByEntryId[shopItem.ShopItemId] = BuildEquipmentDetailData(equipment, null);
         return true;
     }
 
     private static ShopDisplayEntry CreateSellItemEntry(ItemData item, int ownedCount)
     {
-        var sellPrice = item.Unsellable ? "不可" : $"{ShopSellService.CalculateSellPrice(item.Price)} G";
+        var sellPrice = item.Unsellable ? "不可" : ShopSellService.CalculateSellPrice(item.Price).ToString();
         return new ShopDisplayEntry(
             item.ItemId,
             item.IconSprite,
             item.DisplayName,
+            item.Description,
             BuildItemDetail(item),
             $"{item.DisplayName}を売却します。",
-            UnlimitedStockText,
-            ownedCount.ToString(),
+            string.Empty,
+            FormatOwnedCount(ownedCount),
             sellPrice);
     }
 
     private ShopDisplayEntry CreateSellEquipmentEntry(OwnedEquipmentSaveData ownedEquipment, EquipmentData equipment)
     {
-        var sellPrice = equipment.Unsellable ? "不可" : $"{ShopSellService.CalculateSellPrice(equipment.Price)} G";
+        var sellPrice = equipment.Unsellable ? "不可" : ShopSellService.CalculateSellPrice(equipment.Price).ToString();
         var entry = new ShopDisplayEntry(
             ownedEquipment.OwnedEquipmentInstanceId,
             equipment.IconSprite,
             equipment.DisplayName,
+            equipment.Description,
             BuildEquipmentDetail(equipment, ownedEquipment),
             $"{equipment.DisplayName}を売却します。",
-            UnlimitedStockText,
-            "1",
+            string.Empty,
+            FormatOwnedCount(1),
             sellPrice);
         equipmentDetailsByEntryId[ownedEquipment.OwnedEquipmentInstanceId] = BuildEquipmentDetailData(equipment, ownedEquipment);
         return entry;
@@ -655,26 +665,14 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
 
     private static string BuildItemDetail(ItemData item)
     {
-        var detail = item.Description;
         var typeText = item.ItemType == ItemDataType.Consumable ? "消耗品" : "素材";
 
-        if (!string.IsNullOrWhiteSpace(item.Category))
-        {
-            typeText += $" / {item.Category}";
-        }
-
-        return $"{detail}\n\n種別: {typeText}";
+        return $"種別: {typeText}";
     }
 
     private string BuildEquipmentDetail(EquipmentData equipment, OwnedEquipmentSaveData ownedEquipment)
     {
         var lines = new List<string>();
-
-        if (!string.IsNullOrWhiteSpace(equipment.Description))
-        {
-            lines.Add(equipment.Description);
-            lines.Add(string.Empty);
-        }
 
         lines.Add("ステータス");
         AppendStatLines(lines, equipment.StatModifiers, ownedEquipment?.RandomModifiers);
@@ -688,10 +686,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
 
     private EquipmentDetailData BuildEquipmentDetailData(EquipmentData equipment, OwnedEquipmentSaveData ownedEquipment)
     {
-        var detail = new EquipmentDetailData
-        {
-            Description = equipment.Description
-        };
+        var detail = new EquipmentDetailData();
 
         AddStatData(detail.Stats, "HP", (equipment.StatModifiers?.Hp ?? 0) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.Hp));
         AddStatData(detail.Stats, "SP", equipment.StatModifiers?.Sp ?? 0);
@@ -881,6 +876,11 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             : purchaseService.GetRemainingStock(runSaveData, shopItem).ToString();
     }
 
+    private static string FormatOwnedCount(int count)
+    {
+        return count <= 0 ? "-" : count.ToString();
+    }
+
     private int GetOwnedItemCount(ItemData item)
     {
         if (runSaveData == null || item == null)
@@ -992,31 +992,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             equipmentDetailPanelView = FindDeep(transform, "EquipmentDetailPanel")?.GetComponent<EquipmentDetailPanelView>();
         }
 
-        var quantityPanel = FindDeep(transform, "QuantityPanel");
-        if (quantityPanel != null)
-        {
-            quantityPanel.gameObject.SetActive(false);
-        }
-    }
-
-    private void HideDetailSummaryStats()
-    {
-        SetDetailSummaryStatVisible(detailStockText, false);
-        SetDetailSummaryStatVisible(detailOwnedText, false);
-        SetDetailSummaryStatVisible(detailPriceText, false);
-    }
-
-    private static void SetDetailSummaryStatVisible(TMP_Text valueText, bool visible)
-    {
-        if (valueText == null)
-        {
-            return;
-        }
-
-        var target = valueText.transform.parent != null
-            ? valueText.transform.parent.gameObject
-            : valueText.gameObject;
-        target.SetActive(visible);
     }
 
     private void RegisterCategoryButtons()
@@ -1274,6 +1249,11 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             detailBodyText.text = string.Empty;
         }
 
+        if (detailDescriptionText != null)
+        {
+            detailDescriptionText.text = string.Empty;
+        }
+
         equipmentDetailPanelView?.Hide();
 
         if (detailStockText != null)
@@ -1488,6 +1468,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             string shopItemId,
             Sprite icon,
             string name,
+            string description,
             string detail,
             string help,
             string stock,
@@ -1497,6 +1478,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             ShopItemId = shopItemId ?? string.Empty;
             Icon = icon;
             Name = name;
+            Description = description ?? string.Empty;
             Detail = detail;
             Help = help;
             Stock = stock;
@@ -1507,6 +1489,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         public string ShopItemId { get; }
         public Sprite Icon { get; }
         public string Name { get; }
+        public string Description { get; }
         public string Detail { get; }
         public string Help { get; }
         public string Stock { get; }

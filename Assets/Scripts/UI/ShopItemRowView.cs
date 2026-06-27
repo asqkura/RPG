@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ISelectHandler, IDeselectHandler
 {
     [SerializeField] private string itemName;
+    [SerializeField] private string descriptionText;
     [SerializeField] private string detailText;
     [SerializeField] private string helpText;
     [SerializeField] private string shopItemId;
@@ -31,6 +32,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     private Image hitAreaImage;
 
     public string ItemName => itemName;
+    public string DescriptionText => descriptionText;
     public string DetailText => detailText;
     public string HelpText => helpText;
     public string ShopItemId => shopItemId;
@@ -43,6 +45,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         string shopItemId,
         Sprite icon,
         string displayName,
+        string description,
         string detail,
         string help,
         string stock,
@@ -51,6 +54,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     {
         this.shopItemId = shopItemId ?? string.Empty;
         itemName = displayName;
+        descriptionText = description;
         detailText = detail;
         helpText = help;
         stockText = stock;
@@ -75,6 +79,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     public void ClearRow()
     {
         itemName = string.Empty;
+        descriptionText = string.Empty;
         detailText = string.Empty;
         helpText = string.Empty;
         shopItemId = string.Empty;

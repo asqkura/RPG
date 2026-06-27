@@ -47,16 +47,16 @@ public static class TestShopDataBuilder
     {
         var specs = new[]
         {
-            new ItemSpec("item_potion", "ポーション", "HPを小回復する基本の薬。", "HP回復", 80, "icon-1_2_0", Icon12Path, true, true, ItemEffectDataType.RecoverHp, 50),
-            new ItemSpec("item_high_potion", "ハイポーション", "HPを中回復する上等な薬。", "HP回復", 180, "icon-1_2_1", Icon12Path, true, true, ItemEffectDataType.RecoverHp, 120),
-            new ItemSpec("item_mana_drop", "マナの雫", "SPを小回復する澄んだ雫。", "SP回復", 120, "icon-2_1_0", Icon21Path, true, true, ItemEffectDataType.RecoverSp, 30),
-            new ItemSpec("item_mana_vial", "マナ小瓶", "SPを中回復する魔力の小瓶。", "SP回復", 260, "icon-2_1_1", Icon21Path, true, true, ItemEffectDataType.RecoverSp, 70),
-            new ItemSpec("item_antidote", "毒消し", "毒を解除する苦い薬。", "毒回復", 60, "icon-1_1_140", Icon11Path, true, false, ItemEffectDataType.CurePoison, 1),
-            new ItemSpec("item_clear_herb", "清めの薬草", "状態異常を解除する薬草。", "状態異常回復", 150, "icon-3_1_80", Icon31Path, true, false, ItemEffectDataType.CureStatus, 1),
-            new ItemSpec("item_smoke_ball", "煙玉", "戦闘から逃げやすくする道具。", "逃走補助", 100, "icon-3_1_81", Icon31Path, true, false, ItemEffectDataType.Escape, 1),
-            new ItemSpec("item_guard_salve", "守りの軟膏", "傷口を保護する応急薬。", "HP回復", 140, "icon-1_2_2", Icon12Path, true, true, ItemEffectDataType.RecoverHp, 80),
-            new ItemSpec("item_spirit_tea", "精霊茶", "少量のSPを整える香草茶。", "SP回復", 90, "icon-2_1_2", Icon21Path, true, true, ItemEffectDataType.RecoverSp, 20),
-            new ItemSpec("item_bitter_tonic", "苦い強壮薬", "HPを少し回復する安価な薬。", "HP回復", 45, "icon-1_2_3", Icon12Path, true, true, ItemEffectDataType.RecoverHp, 30),
+            new ItemSpec("item_potion", "ポーション", "HPを小回復する基本の薬。", 80, "icon-1_2_0", Icon12Path, true, true, ItemEffectDataType.RecoverHp, 50),
+            new ItemSpec("item_high_potion", "ハイポーション", "HPを中回復する上等な薬。", 180, "icon-1_2_1", Icon12Path, true, true, ItemEffectDataType.RecoverHp, 120),
+            new ItemSpec("item_mana_drop", "マナの雫", "SPを小回復する澄んだ雫。", 120, "icon-2_1_0", Icon21Path, true, true, ItemEffectDataType.RecoverSp, 30),
+            new ItemSpec("item_mana_vial", "マナ小瓶", "SPを中回復する魔力の小瓶。", 260, "icon-2_1_1", Icon21Path, true, true, ItemEffectDataType.RecoverSp, 70),
+            new ItemSpec("item_antidote", "毒消し", "毒を解除する苦い薬。", 60, "icon-1_1_140", Icon11Path, true, false, ItemEffectDataType.CurePoison, 1),
+            new ItemSpec("item_clear_herb", "清めの薬草", "状態異常を解除する薬草。", 150, "icon-3_1_80", Icon31Path, true, false, ItemEffectDataType.CureStatus, 1),
+            new ItemSpec("item_smoke_ball", "煙玉", "戦闘から逃げやすくする道具。", 100, "icon-3_1_81", Icon31Path, true, false, ItemEffectDataType.Escape, 1),
+            new ItemSpec("item_guard_salve", "守りの軟膏", "傷口を保護する応急薬。", 140, "icon-1_2_2", Icon12Path, true, true, ItemEffectDataType.RecoverHp, 80),
+            new ItemSpec("item_spirit_tea", "精霊茶", "少量のSPを整える香草茶。", 90, "icon-2_1_2", Icon21Path, true, true, ItemEffectDataType.RecoverSp, 20),
+            new ItemSpec("item_bitter_tonic", "苦い強壮薬", "HPを少し回復する安価な薬。", 45, "icon-1_2_3", Icon12Path, true, true, ItemEffectDataType.RecoverHp, 30),
         };
 
         return specs.Select((spec, index) => CreateOrUpdateItem(spec, ItemDataType.Consumable, 0, index)).ToList();
@@ -66,16 +66,16 @@ public static class TestShopDataBuilder
     {
         var specs = new[]
         {
-            new MaterialSpec("mat_iron_ore", "鉄鉱石", "武器や防具の合成に使う基本鉱石。", "鉱石系", 1, 60, "icon-1_1_140", Icon11Path),
-            new MaterialSpec("mat_steel_ore", "鋼鉱石", "強化装備に使う硬い鉱石。", "鉱石系", 2, 140, "icon-1_1_141", Icon11Path),
-            new MaterialSpec("mat_sturdy_wood", "丈夫な木材", "道具や杖に使う扱いやすい木材。", "木材系", 1, 40, "icon-3_1_80", Icon31Path),
-            new MaterialSpec("mat_hard_wood", "硬い木材", "弓や杖の芯材に使う木材。", "木材系", 2, 110, "icon-3_1_81", Icon31Path),
-            new MaterialSpec("mat_beast_hide", "獣の皮", "軽装備に使うなめし前の皮。", "皮/布系", 1, 50, "icon-3_1_94", Icon31Path),
-            new MaterialSpec("mat_fine_leather", "上質な革", "防具やアクセサリに使う革。", "皮/布系", 2, 130, "icon-3_1_95", Icon31Path),
-            new MaterialSpec("mat_magic_shard", "魔石の欠片", "微かな魔力を帯びた欠片。", "魔石系", 1, 90, "icon-2_1_0", Icon21Path),
-            new MaterialSpec("mat_magic_stone", "魔石", "合成に使う安定した魔石。", "魔石系", 2, 220, "icon-2_1_1", Icon21Path),
-            new MaterialSpec("mat_herb", "薬草", "回復アイテムの基本素材。", "薬草系", 1, 30, "icon-3_1_80", Icon31Path),
-            new MaterialSpec("mat_healing_grass", "癒し草", "効能の高い回復素材。", "薬草系", 2, 95, "icon-3_1_82", Icon31Path),
+            new MaterialSpec("mat_iron_ore", "鉄鉱石", "武器や防具の合成に使う基本鉱石。", 1, 60, "icon-1_1_140", Icon11Path),
+            new MaterialSpec("mat_steel_ore", "鋼鉱石", "強化装備に使う硬い鉱石。", 2, 140, "icon-1_1_141", Icon11Path),
+            new MaterialSpec("mat_sturdy_wood", "丈夫な木材", "道具や杖に使う扱いやすい木材。", 1, 40, "icon-3_1_80", Icon31Path),
+            new MaterialSpec("mat_hard_wood", "硬い木材", "弓や杖の芯材に使う木材。", 2, 110, "icon-3_1_81", Icon31Path),
+            new MaterialSpec("mat_beast_hide", "獣の皮", "軽装備に使うなめし前の皮。", 1, 50, "icon-3_1_94", Icon31Path),
+            new MaterialSpec("mat_fine_leather", "上質な革", "防具やアクセサリに使う革。", 2, 130, "icon-3_1_95", Icon31Path),
+            new MaterialSpec("mat_magic_shard", "魔石の欠片", "微かな魔力を帯びた欠片。", 1, 90, "icon-2_1_0", Icon21Path),
+            new MaterialSpec("mat_magic_stone", "魔石", "合成に使う安定した魔石。", 2, 220, "icon-2_1_1", Icon21Path),
+            new MaterialSpec("mat_herb", "薬草", "回復アイテムの基本素材。", 1, 30, "icon-3_1_80", Icon31Path),
+            new MaterialSpec("mat_healing_grass", "癒し草", "効能の高い回復素材。", 2, 95, "icon-3_1_82", Icon31Path),
         };
 
         return specs.Select((spec, index) => CreateOrUpdateMaterial(spec, index + 100)).ToList();
@@ -134,7 +134,6 @@ public static class TestShopDataBuilder
         SetMasterFields(serialized, spec.Id, spec.Name, spec.Description);
         SetIcon(serialized, spec.IconPath, spec.IconName);
         serialized.FindProperty("itemType").enumValueIndex = (int)itemType;
-        serialized.FindProperty("category").stringValue = spec.Category;
         serialized.FindProperty("rank").intValue = rank;
         serialized.FindProperty("price").intValue = spec.Price;
         serialized.FindProperty("unsellable").boolValue = false;
@@ -154,7 +153,6 @@ public static class TestShopDataBuilder
         SetMasterFields(serialized, spec.Id, spec.Name, spec.Description);
         SetIcon(serialized, spec.IconPath, spec.IconName);
         serialized.FindProperty("itemType").enumValueIndex = (int)ItemDataType.Material;
-        serialized.FindProperty("category").stringValue = spec.Category;
         serialized.FindProperty("rank").intValue = spec.Rank;
         serialized.FindProperty("price").intValue = spec.Price;
         serialized.FindProperty("unsellable").boolValue = false;
@@ -365,12 +363,11 @@ public static class TestShopDataBuilder
 
     private readonly struct ItemSpec
     {
-        public ItemSpec(string id, string name, string description, string category, int price, string iconName, string iconPath, bool usableInBattle, bool usableInField, ItemEffectDataType effectType, int effectAmount)
+        public ItemSpec(string id, string name, string description, int price, string iconName, string iconPath, bool usableInBattle, bool usableInField, ItemEffectDataType effectType, int effectAmount)
         {
             Id = id;
             Name = name;
             Description = description;
-            Category = category;
             Price = price;
             IconName = iconName;
             IconPath = iconPath;
@@ -383,7 +380,6 @@ public static class TestShopDataBuilder
         public string Id { get; }
         public string Name { get; }
         public string Description { get; }
-        public string Category { get; }
         public int Price { get; }
         public string IconName { get; }
         public string IconPath { get; }
@@ -395,12 +391,11 @@ public static class TestShopDataBuilder
 
     private readonly struct MaterialSpec
     {
-        public MaterialSpec(string id, string name, string description, string category, int rank, int price, string iconName, string iconPath)
+        public MaterialSpec(string id, string name, string description, int rank, int price, string iconName, string iconPath)
         {
             Id = id;
             Name = name;
             Description = description;
-            Category = category;
             Rank = rank;
             Price = price;
             IconName = iconName;
@@ -410,7 +405,6 @@ public static class TestShopDataBuilder
         public string Id { get; }
         public string Name { get; }
         public string Description { get; }
-        public string Category { get; }
         public int Rank { get; }
         public int Price { get; }
         public string IconName { get; }
