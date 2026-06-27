@@ -4,180 +4,60 @@ using UnityEngine;
 
 namespace RPG.MasterData
 {
-    [CreateAssetMenu(menuName = "RPG/Master Data/Skill", fileName = "SkillData")]
-    public sealed class SkillData : MasterDataAsset
+    public enum ItemDataType
     {
-        [SerializeField] private Sprite iconSprite;
-
-        public string SkillId => Id;
-        public Sprite IconSprite => iconSprite;
+        Consumable,
+        Material
     }
 
-    [CreateAssetMenu(menuName = "RPG/Master Data/Item", fileName = "ItemData")]
-    public sealed class ItemData : MasterDataAsset
+    public enum ItemEffectDataType
     {
-        [SerializeField] private Sprite iconSprite;
-
-        public string ItemId => Id;
-        public Sprite IconSprite => iconSprite;
+        RecoverHp,
+        RecoverSp,
+        CurePoison,
+        CureStatus,
+        Escape
     }
 
-    [CreateAssetMenu(menuName = "RPG/Master Data/Equipment", fileName = "EquipmentData")]
-    public sealed class EquipmentData : MasterDataAsset
+    public enum EquipmentDataType
     {
-        [SerializeField] private Sprite iconSprite;
-
-        public string EquipmentId => Id;
-        public Sprite IconSprite => iconSprite;
+        Weapon,
+        Armor,
+        Accessory
     }
 
-    [CreateAssetMenu(menuName = "RPG/Master Data/Enemy", fileName = "EnemyData")]
-    public sealed class EnemyData : MasterDataAsset
+    public enum WeaponDataType
     {
-        [SerializeField] private int level = 1;
-        [SerializeField] private BattleStats stats = new();
-        [SerializeField] private List<string> skillIds = new();
-        [SerializeField] private List<EnemyAction> actions = new();
+        None,
+        Sword,
+        Dagger,
+        Axe,
+        Spear,
+        Bow,
+        Staff
+    }
+
+    public enum ShopProductDataType
+    {
+        Item,
+        Equipment
+    }
+
+    public enum ShopStockDataType
+    {
+        Unlimited,
+        Limited
+    }
+
+    [Serializable]
+    public sealed class ItemEffectData
+    {
+        [SerializeField] private ItemEffectDataType effectType;
         [Min(0)]
-        [SerializeField] private int exp;
-        [Min(0)]
-        [SerializeField] private int money;
-        [SerializeField] private List<EnemyDrop> drops = new();
-        [SerializeField] private Sprite enemySprite;
-        [SerializeField] private Vector2 displayScale = Vector2.one;
-        [SerializeField] private Vector2 displayOffset;
-        [SerializeField] private string defaultAttackSkillId = string.Empty;
+        [SerializeField] private int amount;
 
-        public string EnemyId => Id;
-        public int Level => level;
-        public BattleStats Stats => stats;
-        public IReadOnlyList<string> SkillIds => skillIds;
-        public IReadOnlyList<EnemyAction> Actions => actions;
-        public int Exp => exp;
-        public int Money => money;
-        public IReadOnlyList<EnemyDrop> Drops => drops;
-        public Sprite EnemySprite => enemySprite;
-        public Vector2 DisplayScale => displayScale;
-        public Vector2 DisplayOffset => displayOffset;
-        public string DefaultAttackSkillId => defaultAttackSkillId;
-    }
-
-    [CreateAssetMenu(menuName = "RPG/Master Data/Battle", fileName = "BattleData")]
-    public sealed class BattleData : MasterDataAsset
-    {
-        [SerializeField] private List<BattleEnemyEntry> enemyEntries = new();
-        [SerializeField] private Sprite battleBackgroundSprite;
-        [SerializeField] private string battleBgmId = string.Empty;
-        [SerializeField] private bool canEscape = true;
-        [SerializeField] private bool escapeCountsAsClear = true;
-        [SerializeField] private bool escapeSuccessItemAllowed = true;
-        [SerializeField] private bool isBoss;
-        [SerializeField] private bool gameOverOnDefeat;
-        [SerializeField] private DefeatResultType defeatResultType;
-        [SerializeField] private string victoryEventId = string.Empty;
-        [SerializeField] private string defeatEventId = string.Empty;
-
-        public string BattleId => Id;
-        public IReadOnlyList<BattleEnemyEntry> EnemyEntries => enemyEntries;
-        public Sprite BattleBackgroundSprite => battleBackgroundSprite;
-        public string BattleBgmId => battleBgmId;
-        public bool CanEscape => canEscape;
-        public bool EscapeCountsAsClear => escapeCountsAsClear;
-        public bool EscapeSuccessItemAllowed => escapeSuccessItemAllowed;
-        public bool IsBoss => isBoss;
-        public bool GameOverOnDefeat => gameOverOnDefeat;
-        public DefeatResultType DefeatResultType => defeatResultType;
-        public string VictoryEventId => victoryEventId;
-        public string DefeatEventId => defeatEventId;
-    }
-
-    [CreateAssetMenu(menuName = "RPG/Master Data/Quest", fileName = "QuestData")]
-    public sealed class QuestData : MasterDataAsset
-    {
-        [SerializeField] private QuestType questType;
-        [SerializeField] private ConditionGroup unlockConditions = new();
-        [SerializeField] private QuestRetryPolicy retryPolicy = QuestRetryPolicy.Repeatable;
-        [Min(0)]
-        [SerializeField] private int difficulty;
-        [SerializeField] private int sortOrder;
-        [SerializeField] private string startNodeId = string.Empty;
-        [SerializeField] private string clearEventId = string.Empty;
-        [SerializeField] private string failureEventId = string.Empty;
-        [SerializeField] private List<QuestNodeData> nodes = new();
-
-        public string QuestId => Id;
-        public QuestType QuestType => questType;
-        public ConditionGroup UnlockConditions => unlockConditions;
-        public QuestRetryPolicy RetryPolicy => retryPolicy;
-        public int Difficulty => difficulty;
-        public int SortOrder => sortOrder;
-        public string StartNodeId => startNodeId;
-        public string ClearEventId => clearEventId;
-        public string FailureEventId => failureEventId;
-        public IReadOnlyList<QuestNodeData> Nodes => nodes;
-    }
-
-    [CreateAssetMenu(menuName = "RPG/Master Data/Event", fileName = "EventData")]
-    public sealed class EventData : MasterDataAsset
-    {
-        [SerializeField] private EventType eventType;
-        [SerializeField] private ConditionGroup conditions = new();
-        [SerializeField] private EventPriorityCategory priorityCategory = EventPriorityCategory.Normal;
-        [Min(0)]
-        [SerializeField] private int weight = 1;
-        [SerializeField] private List<EventStep> steps = new();
-        [SerializeField] private List<EventEffect> effects = new();
-        [SerializeField] private string nextEventId = string.Empty;
-        [SerializeField] private Sprite backgroundSprite;
-        [SerializeField] private string bgmId = string.Empty;
-
-        public string EventId => Id;
-        public EventType EventType => eventType;
-        public ConditionGroup Conditions => conditions;
-        public EventPriorityCategory PriorityCategory => priorityCategory;
-        public int Weight => weight;
-        public IReadOnlyList<EventStep> Steps => steps;
-        public IReadOnlyList<EventEffect> Effects => effects;
-        public string NextEventId => nextEventId;
-        public Sprite BackgroundSprite => backgroundSprite;
-        public string BgmId => bgmId;
-    }
-
-    [CreateAssetMenu(menuName = "RPG/Master Data/Wander Location", fileName = "WanderLocationData")]
-    public sealed class WanderLocationData : MasterDataAsset
-    {
-        [SerializeField] private ConditionGroup unlockConditions = new();
-        [SerializeField] private List<string> eventCandidateIds = new();
-        [SerializeField] private string fallbackEventId = string.Empty;
-        [SerializeField] private int sortOrder;
-
-        public string LocationId => Id;
-        public ConditionGroup UnlockConditions => unlockConditions;
-        public IReadOnlyList<string> EventCandidateIds => eventCandidateIds;
-        public string FallbackEventId => fallbackEventId;
-        public int SortOrder => sortOrder;
-    }
-
-    [CreateAssetMenu(menuName = "RPG/Master Data/Character", fileName = "CharacterData")]
-    public sealed class CharacterData : MasterDataAsset
-    {
-        [SerializeField] private Sprite iconSprite;
-        [SerializeField] private BattleStats baseStats = new();
-
-        public string CharacterId => Id;
-        public Sprite IconSprite => iconSprite;
-        public BattleStats BaseStats => baseStats;
-    }
-
-    [CreateAssetMenu(menuName = "RPG/Master Data/Recipe", fileName = "RecipeData")]
-    public sealed class RecipeData : MasterDataAsset
-    {
-        [SerializeField] private string resultEquipmentId = string.Empty;
-        [SerializeField] private List<RewardEntry> costs = new();
-
-        public string RecipeId => Id;
-        public string ResultEquipmentId => resultEquipmentId;
-        public IReadOnlyList<RewardEntry> Costs => costs;
+        public ItemEffectDataType EffectType => effectType;
+        public int Amount => amount;
     }
 
     [Serializable]
