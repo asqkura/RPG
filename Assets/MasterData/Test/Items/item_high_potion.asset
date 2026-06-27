@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b774296a9b8b3408b3a81bc5eb3081, type: 3}
+  m_Name: item_high_potion
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.ItemData
+  id: item_high_potion
+  displayName: "\u30CF\u30A4\u30DD\u30FC\u30B7\u30E7\u30F3"
+  description: "HP\u3092\u4E2D\u56DE\u5FA9\u3059\u308B\u4E0A\u7B49\u306A\u85AC\u3002"
+  iconSprite: {fileID: 953142079, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
+  itemType: 0
+  category: "HP\u56DE\u5FA9"
+  rank: 0
+  price: 180
+  unsellable: 0
+  usableInBattle: 1
+  usableInField: 1
+  effects:
+  - effectType: 0
+    amount: 120
+  sortOrder: 1

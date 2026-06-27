@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b774296a9b8b3408b3a81bc5eb3081, type: 3}
+  m_Name: item_antidote
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.ItemData
+  id: item_antidote
+  displayName: "\u6BD2\u6D88\u3057"
+  description: "\u6BD2\u3092\u89E3\u9664\u3059\u308B\u82E6\u3044\u85AC\u3002"
+  iconSprite: {fileID: -1294726763, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
+  itemType: 0
+  category: "\u6BD2\u56DE\u5FA9"
+  rank: 0
+  price: 60
+  unsellable: 0
+  usableInBattle: 1
+  usableInField: 0
+  effects:
+  - effectType: 2
+    amount: 1
+  sortOrder: 4

@@ -16,6 +16,11 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     [SerializeField] private Sprite normalWindowSprite;
     [SerializeField] private Sprite highlightedWindowSprite;
     [SerializeField] private TMP_Text[] labelTexts = { };
+    [SerializeField] private Image iconImage;
+    [SerializeField] private TMP_Text nameLabel;
+    [SerializeField] private TMP_Text stockLabel;
+    [SerializeField] private TMP_Text ownedLabel;
+    [SerializeField] private TMP_Text priceLabel;
     [SerializeField] private Color normalTextColor = new(0.86f, 0.82f, 0.75f, 1f);
     [SerializeField] private Color highlightedTextColor = new(1f, 0.96f, 0.84f, 1f);
 
@@ -27,6 +32,63 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     public string StockText => stockText;
     public string OwnedText => ownedText;
     public string PriceText => priceText;
+    public Sprite IconSprite => iconImage != null ? iconImage.sprite : null;
+
+    public void Configure(
+        Sprite icon,
+        string displayName,
+        string detail,
+        string help,
+        string stock,
+        string owned,
+        string price)
+    {
+        itemName = displayName;
+        detailText = detail;
+        helpText = help;
+        stockText = stock;
+        ownedText = owned;
+        priceText = price;
+
+        if (iconImage != null)
+        {
+            iconImage.sprite = icon;
+            iconImage.enabled = icon != null;
+        }
+
+        SetLabelText(nameLabel, 0, displayName);
+        SetLabelText(stockLabel, 1, stock);
+        SetLabelText(ownedLabel, 2, owned);
+        SetLabelText(priceLabel, 3, price);
+
+        gameObject.SetActive(true);
+        SetHighlighted(false);
+    }
+
+    public void ClearRow()
+    {
+        itemName = string.Empty;
+        detailText = string.Empty;
+        helpText = string.Empty;
+        stockText = string.Empty;
+        ownedText = string.Empty;
+        priceText = string.Empty;
+        gameObject.SetActive(false);
+    }
+
+    private void SetLabelText(TMP_Text label, int fallbackIndex, string value)
+    {
+        if (label != null)
+        {
+            label.text = value;
+            return;
+        }
+
+        if (fallbackIndex >= 0 && fallbackIndex < labelTexts.Length && labelTexts[fallbackIndex] != null)
+        {
+            labelTexts[fallbackIndex].text = value;
+        }
+    }
 
     public void Initialize(ShopScreenPreviewController owner)
     {

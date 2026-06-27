@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
+using RPG.MasterData;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -11,10 +10,9 @@ public static class ShopScreenPrefabBuilder
     private const string WindowHoverSpritePath = "Assets/UI/Windows/Sprites/Window_Hover.png";
     private const string BackgroundPath = "Assets/UI/Shop/Backgrounds/ShopInteriorBackground.png";
     private const string FontPath = "Assets/Fonts/NotoSansJP/NotoSansCJKjp-Regular SDF.asset";
-    private const string Icon11Path = "Assets/UI/Icons/icon-1_1.png";
-    private const string Icon12Path = "Assets/UI/Icons/icon-1_2.png";
-    private const string Icon21Path = "Assets/UI/Icons/icon-2_1.png";
-    private const string Icon31Path = "Assets/UI/Icons/icon-3_1.png";
+    private const string TestItemDatabasePath = "Assets/MasterData/Test/Databases/TestItemDatabase.asset";
+    private const string TestEquipmentDatabasePath = "Assets/MasterData/Test/Databases/TestEquipmentDatabase.asset";
+    private const string TestShopItemDatabasePath = "Assets/MasterData/Test/Databases/TestShopItemDatabase.asset";
     private const string PrefabFolder = "Assets/UI/Shop/Prefabs";
     private const string RowPrefabPath = PrefabFolder + "/ShopItemRow.prefab";
     private const string ShopScreenPrefabPath = PrefabFolder + "/ShopScreen.prefab";
@@ -42,7 +40,7 @@ public static class ShopScreenPrefabBuilder
             return;
         }
 
-        var rowPrefab = CreateRowPrefab(windowSprite, font, LoadSprite(Icon12Path, "icon-1_2_0"));
+        var rowPrefab = CreateRowPrefab(windowSprite, font);
         CreateShopScreenPrefab(windowSprite, hoverSprite, backgroundSprite, font, rowPrefab);
 
         AssetDatabase.SaveAssets();
@@ -91,7 +89,7 @@ public static class ShopScreenPrefabBuilder
         importer.SaveAndReimport();
     }
 
-    private static GameObject CreateRowPrefab(Sprite windowSprite, TMP_FontAsset font, Sprite defaultIcon)
+    private static GameObject CreateRowPrefab(Sprite windowSprite, TMP_FontAsset font)
     {
         var root = CreateRectObject("ShopItemRow");
         SetSize(root, 710, 56);
@@ -100,9 +98,10 @@ public static class ShopScreenPrefabBuilder
         image.type = Image.Type.Simple;
         image.color = Color.clear;
 
-        var icon = CreateImage("Icon", root.transform, defaultIcon, Image.Type.Simple, Color.white);
+        var icon = CreateImage("Icon", root.transform, null, Image.Type.Simple, Color.white);
         icon.preserveAspect = true;
         icon.raycastTarget = false;
+        icon.enabled = false;
         Anchor(icon, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(34, 0), new Vector2(26, 26));
 
         var marker = CreateImage("SelectionMarker", root.transform, null, Image.Type.Simple, AccentTextColor);
@@ -118,6 +117,25 @@ public static class ShopScreenPrefabBuilder
             new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-170, 0), new Vector2(80, 32));
         CreateText("Price", root.transform, font, "80 G", 23, TextAlignmentOptions.MidlineRight, AccentTextColor,
             new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-70, 0), new Vector2(100, 34));
+
+        var view = root.gameObject.AddComponent<ShopItemRowView>();
+        var viewObject = new SerializedObject(view);
+        viewObject.FindProperty("windowImage").objectReferenceValue = image;
+        viewObject.FindProperty("selectionMarker").objectReferenceValue = marker;
+        viewObject.FindProperty("normalWindowSprite").objectReferenceValue = null;
+        viewObject.FindProperty("highlightedWindowSprite").objectReferenceValue = null;
+        viewObject.FindProperty("iconImage").objectReferenceValue = icon;
+        viewObject.FindProperty("nameLabel").objectReferenceValue = root.transform.Find("Name").GetComponent<TMP_Text>();
+        viewObject.FindProperty("stockLabel").objectReferenceValue = root.transform.Find("Stock").GetComponent<TMP_Text>();
+        viewObject.FindProperty("ownedLabel").objectReferenceValue = root.transform.Find("Owned").GetComponent<TMP_Text>();
+        viewObject.FindProperty("priceLabel").objectReferenceValue = root.transform.Find("Price").GetComponent<TMP_Text>();
+        var labelsProperty = viewObject.FindProperty("labelTexts");
+        labelsProperty.arraySize = 4;
+        labelsProperty.GetArrayElementAtIndex(0).objectReferenceValue = root.transform.Find("Name").GetComponent<TMP_Text>();
+        labelsProperty.GetArrayElementAtIndex(1).objectReferenceValue = root.transform.Find("Stock").GetComponent<TMP_Text>();
+        labelsProperty.GetArrayElementAtIndex(2).objectReferenceValue = root.transform.Find("Owned").GetComponent<TMP_Text>();
+        labelsProperty.GetArrayElementAtIndex(3).objectReferenceValue = root.transform.Find("Price").GetComponent<TMP_Text>();
+        viewObject.ApplyModifiedPropertiesWithoutUndo();
 
         var saved = PrefabUtility.SaveAsPrefabAsset(root.gameObject, RowPrefabPath);
         Object.DestroyImmediate(root.gameObject);
@@ -172,9 +190,9 @@ public static class ShopScreenPrefabBuilder
             new Vector2(0, 1), new Vector2(0, 1), new Vector2(102, -40), new Vector2(150, 34));
         CreateText("CategoryLabel", listPanel.transform, font, "分類", 17, TextAlignmentOptions.MidlineLeft, MutedTextColor,
             new Vector2(0, 1), new Vector2(0, 1), new Vector2(472, -42), new Vector2(70, 26));
-        CreateCategoryButton(listPanel.transform, font, windowSprite, hoverSprite, "ConsumableCategory", "消耗品", new Vector2(562, -42), true);
-        CreateCategoryButton(listPanel.transform, font, windowSprite, hoverSprite, "MaterialCategory", "素材", new Vector2(666, -42), false);
-        CreateCategoryButton(listPanel.transform, font, windowSprite, hoverSprite, "EquipmentCategory", "装備", new Vector2(770, -42), false);
+        var consumableCategoryButton = CreateCategoryButton(listPanel.transform, font, windowSprite, hoverSprite, "ConsumableCategory", "消耗品", new Vector2(562, -42), true);
+        var materialCategoryButton = CreateCategoryButton(listPanel.transform, font, windowSprite, hoverSprite, "MaterialCategory", "素材", new Vector2(666, -42), false);
+        var equipmentCategoryButton = CreateCategoryButton(listPanel.transform, font, windowSprite, hoverSprite, "EquipmentCategory", "装備", new Vector2(770, -42), false);
 
         var headerLine = CreateImage("HeaderLine", listPanel.transform, null, Image.Type.Simple, new Color(0.45f, 0.36f, 0.25f, 0.75f));
         Anchor(headerLine, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -96), Vector2.zero);
@@ -188,15 +206,42 @@ public static class ShopScreenPrefabBuilder
         CreateColumnHeader(listPanel.transform, font, "所持", 596, -116, 70);
         CreateColumnHeader(listPanel.transform, font, "価格", 686, -116, 80);
 
-        var rows = CreateRows(listPanel.transform, rowPrefab, windowSprite, hoverSprite);
+        var rowViewport = CreateRectObject("ItemRowViewport");
+        rowViewport.transform.SetParent(listPanel.transform, false);
+        Stretch(rowViewport, new Vector2(52, 36), new Vector2(-52, -148));
+        var viewportImage = rowViewport.gameObject.AddComponent<Image>();
+        viewportImage.color = Color.clear;
+        rowViewport.gameObject.AddComponent<RectMask2D>();
+
+        var rowContent = CreateRectObject("ItemRowContent");
+        rowContent.transform.SetParent(rowViewport, false);
+        rowContent.anchorMin = new Vector2(0, 1);
+        rowContent.anchorMax = new Vector2(1, 1);
+        rowContent.pivot = new Vector2(0.5f, 1f);
+        rowContent.anchoredPosition = Vector2.zero;
+
+        rowContent.sizeDelta = Vector2.zero;
+
+        var scrollRect = rowViewport.gameObject.AddComponent<ScrollRect>();
+        scrollRect.viewport = rowViewport;
+        scrollRect.content = rowContent;
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped;
+        scrollRect.scrollSensitivity = 24f;
 
         var detailPanel = CreateImage("DetailPanel", root.transform, windowSprite, Image.Type.Sliced, WindowSpriteColor);
         Anchor(detailPanel, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-432, -536), new Vector2(660, 608));
 
         CreateText("PanelTitle", detailPanel.transform, font, "詳細", 22, TextAlignmentOptions.MidlineLeft, MutedTextColor,
             new Vector2(0, 1), new Vector2(0, 1), new Vector2(76, -36), new Vector2(100, 32));
+        var detailIcon = CreateImage("DetailIcon", detailPanel.transform, null, Image.Type.Simple, Color.white);
+        detailIcon.preserveAspect = true;
+        detailIcon.enabled = false;
+        detailIcon.raycastTarget = false;
+        Anchor(detailIcon, new Vector2(0, 1), new Vector2(0, 1), new Vector2(98, -106), new Vector2(34, 34));
         var detailTitle = CreateText("DetailTitle", detailPanel.transform, font, "", 32, TextAlignmentOptions.MidlineLeft, TextColor,
-            new Vector2(0, 1), new Vector2(0, 1), new Vector2(230, -82), new Vector2(420, 48));
+            new Vector2(0, 1), new Vector2(0, 1), new Vector2(258, -82), new Vector2(392, 48));
         var detailBody = CreateText("DetailBody", detailPanel.transform, font, "", 21, TextAlignmentOptions.TopLeft, TextColor,
             new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 0), new Vector2(0, 0));
         Stretch(detailBody, new Vector2(48, -332), new Vector2(-48, -172));
@@ -228,91 +273,29 @@ public static class ShopScreenPrefabBuilder
         var controller = root.AddComponent<ShopScreenPreviewController>();
         var controllerObject = new SerializedObject(controller);
         controllerObject.FindProperty("detailTitleText").objectReferenceValue = detailTitle;
+        controllerObject.FindProperty("detailIconImage").objectReferenceValue = detailIcon;
         controllerObject.FindProperty("detailBodyText").objectReferenceValue = detailBody;
         controllerObject.FindProperty("detailStockText").objectReferenceValue = detailStock;
         controllerObject.FindProperty("detailOwnedText").objectReferenceValue = detailOwned;
         controllerObject.FindProperty("detailPriceText").objectReferenceValue = detailPrice;
         controllerObject.FindProperty("helpText").objectReferenceValue = helpText;
-        var rowsProperty = controllerObject.FindProperty("itemRows");
-        rowsProperty.arraySize = rows.Count;
-        for (var i = 0; i < rows.Count; i++)
-        {
-            rowsProperty.GetArrayElementAtIndex(i).objectReferenceValue = rows[i];
-        }
+        controllerObject.FindProperty("itemRowPrefab").objectReferenceValue = rowPrefab.GetComponent<ShopItemRowView>();
+        controllerObject.FindProperty("itemScrollRect").objectReferenceValue = scrollRect;
+        controllerObject.FindProperty("itemRowViewport").objectReferenceValue = rowViewport;
+        controllerObject.FindProperty("itemRowContent").objectReferenceValue = rowContent;
+        controllerObject.FindProperty("consumableCategoryButton").objectReferenceValue = consumableCategoryButton;
+        controllerObject.FindProperty("materialCategoryButton").objectReferenceValue = materialCategoryButton;
+        controllerObject.FindProperty("equipmentCategoryButton").objectReferenceValue = equipmentCategoryButton;
+        controllerObject.FindProperty("shopItemDatabase").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<ShopItemDatabase>(TestShopItemDatabasePath);
+        controllerObject.FindProperty("itemDatabase").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<ItemDatabase>(TestItemDatabasePath);
+        controllerObject.FindProperty("equipmentDatabase").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<EquipmentDatabase>(TestEquipmentDatabasePath);
         controllerObject.ApplyModifiedPropertiesWithoutUndo();
 
         PrefabUtility.SaveAsPrefabAsset(root, ShopScreenPrefabPath);
         Object.DestroyImmediate(root);
-    }
-
-    private static List<ShopItemRowView> CreateRows(Transform parent, GameObject rowPrefab, Sprite windowSprite, Sprite hoverSprite)
-    {
-        var items = new[]
-        {
-            new ShopPreviewItem("ポーション", "-", "3", "80 G", Icon12Path, "icon-1_2_0",
-                "HPを小回復する基本の薬。\n\n種別: 消耗品\n効果: HP +50\n購入制限: 消耗品の合計所持数 20 個まで",
-                "ポーションを購入します。消耗品の所持上限に注意してください。"),
-            new ShopPreviewItem("マナの雫", "-", "1", "120 G", Icon21Path, "icon-2_1_0",
-                "SPを小回復する澄んだ雫。\n\n種別: 消耗品\n効果: SP +30\n購入制限: 消耗品の合計所持数 20 個まで",
-                "マナの雫を購入します。探索や長期戦の保険になります。"),
-            new ShopPreviewItem("鉄鉱石", "8", "12", "60 G", Icon11Path, "icon-1_1_140",
-                "武器や防具の合成に使う扱いやすい鉱石。\n\n種別: 素材\n用途: 装備合成\n在庫: フェーズ開始時に補充",
-                "合成素材を購入します。素材と装備は店舗在庫がなくなると購入できません。"),
-            new ShopPreviewItem("薬草束", "5", "4", "45 G", Icon31Path, "icon-3_1_80",
-                "調合や簡易手当に使える薬草の束。\n\n種別: 素材\n用途: 消耗品作成、合成\n在庫: フェーズ開始時に補充",
-                "薬草束を購入します。回復系の準備に使います。"),
-            new ShopPreviewItem("見習いの短剣", "1", "0", "620 G", Icon31Path, "icon-3_1_6",
-                "扱いやすい短剣。素早い仲間向け。\n\n種別: 武器 / 短剣\n基本性能: 攻撃 +8 / 速度 +2\n固定スキル: クイックスタブ",
-                "装備品を購入します。装備可能者や固定スキルを確認してください。"),
-            new ShopPreviewItem("旅人の外套", "2", "1", "480 G", Icon31Path, "icon-3_1_94",
-                "旅の汚れに強い軽い外套。\n\n種別: 防具\n基本性能: 防御 +5 / 速度 +1\n固定スキル: なし",
-                "装備品を購入します。売却不可の装備は売却側で選択できません。"),
-        };
-
-        var rows = new List<ShopItemRowView>();
-        for (var i = 0; i < items.Length; i++)
-        {
-            var row = (GameObject)PrefabUtility.InstantiatePrefab(rowPrefab, parent);
-            row.name = "ItemRow_" + (i + 1).ToString("00");
-            Anchor(row.GetComponent<RectTransform>(), new Vector2(0, 1), new Vector2(0, 1), new Vector2(404, -158 - i * 62), new Vector2(710, 56));
-
-            row.transform.Find("Icon").GetComponent<Image>().sprite = LoadSprite(items[i].IconPath, items[i].IconName);
-            row.transform.Find("Name").GetComponent<TMP_Text>().text = items[i].Name;
-            row.transform.Find("Stock").GetComponent<TMP_Text>().text = items[i].Stock;
-            row.transform.Find("Owned").GetComponent<TMP_Text>().text = items[i].Owned;
-            row.transform.Find("Price").GetComponent<TMP_Text>().text = items[i].Price;
-            var view = row.AddComponent<ShopItemRowView>();
-            var viewObject = new SerializedObject(view);
-            viewObject.FindProperty("itemName").stringValue = items[i].Name;
-            viewObject.FindProperty("detailText").stringValue = items[i].Detail;
-            viewObject.FindProperty("helpText").stringValue = items[i].Help;
-            viewObject.FindProperty("stockText").stringValue = items[i].Stock;
-            viewObject.FindProperty("ownedText").stringValue = items[i].Owned;
-            viewObject.FindProperty("priceText").stringValue = items[i].Price;
-            viewObject.FindProperty("windowImage").objectReferenceValue = row.GetComponent<Image>();
-            viewObject.FindProperty("selectionMarker").objectReferenceValue = row.transform.Find("SelectionMarker").GetComponent<Graphic>();
-            viewObject.FindProperty("normalWindowSprite").objectReferenceValue = null;
-            viewObject.FindProperty("highlightedWindowSprite").objectReferenceValue = null;
-
-            var labels = new[]
-            {
-                row.transform.Find("Name").GetComponent<TMP_Text>(),
-                row.transform.Find("Stock").GetComponent<TMP_Text>(),
-                row.transform.Find("Owned").GetComponent<TMP_Text>(),
-                row.transform.Find("Price").GetComponent<TMP_Text>(),
-            };
-            var labelsProperty = viewObject.FindProperty("labelTexts");
-            labelsProperty.arraySize = labels.Length;
-            for (var labelIndex = 0; labelIndex < labels.Length; labelIndex++)
-            {
-                labelsProperty.GetArrayElementAtIndex(labelIndex).objectReferenceValue = labels[labelIndex];
-            }
-            viewObject.ApplyModifiedPropertiesWithoutUndo();
-
-            rows.Add(view);
-        }
-
-        return rows;
     }
 
     private static void CreateTab(
@@ -333,7 +316,7 @@ public static class ShopScreenPrefabBuilder
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(90, 32));
     }
 
-    private static void CreateCategoryButton(
+    private static Button CreateCategoryButton(
         Transform parent,
         TMP_FontAsset font,
         Sprite windowSprite,
@@ -345,10 +328,11 @@ public static class ShopScreenPrefabBuilder
     {
         var button = CreateImage(name, parent, selected ? hoverSprite : windowSprite, Image.Type.Sliced, WindowSpriteColor);
         Anchor(button, new Vector2(0, 1), new Vector2(0, 1), anchoredPosition, new Vector2(92, 44));
-        button.gameObject.AddComponent<Button>();
+        var buttonComponent = button.gameObject.AddComponent<Button>();
         AddWindowHover(button.gameObject, button, windowSprite, hoverSprite);
         CreateText("Label", button.transform, font, label, 19, TextAlignmentOptions.Center, selected ? AccentTextColor : TextColor,
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(76, 30));
+        return buttonComponent;
     }
 
     private static void CreateColumnHeader(Transform parent, TMP_FontAsset font, string label, float x, float y, float width)
@@ -422,13 +406,6 @@ public static class ShopScreenPrefabBuilder
         return text;
     }
 
-    private static Sprite LoadSprite(string path, string spriteName)
-    {
-        return AssetDatabase.LoadAllAssetsAtPath(path)
-            .OfType<Sprite>()
-            .FirstOrDefault(sprite => sprite.name == spriteName);
-    }
-
     private static void Stretch(Component component, Vector2 offsetMin, Vector2 offsetMax)
     {
         var rect = component.GetComponent<RectTransform>();
@@ -465,35 +442,4 @@ public static class ShopScreenPrefabBuilder
         component.GetComponent<RectTransform>().sizeDelta = new Vector2(width, height);
     }
 
-    private readonly struct ShopPreviewItem
-    {
-        public ShopPreviewItem(
-            string name,
-            string stock,
-            string owned,
-            string price,
-            string iconPath,
-            string iconName,
-            string detail,
-            string help)
-        {
-            Name = name;
-            Stock = stock;
-            Owned = owned;
-            Price = price;
-            IconPath = iconPath;
-            IconName = iconName;
-            Detail = detail;
-            Help = help;
-        }
-
-        public string Name { get; }
-        public string Stock { get; }
-        public string Owned { get; }
-        public string Price { get; }
-        public string IconPath { get; }
-        public string IconName { get; }
-        public string Detail { get; }
-        public string Help { get; }
-    }
 }

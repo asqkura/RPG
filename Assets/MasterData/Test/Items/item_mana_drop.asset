@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b774296a9b8b3408b3a81bc5eb3081, type: 3}
+  m_Name: item_mana_drop
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.ItemData
+  id: item_mana_drop
+  displayName: "\u30DE\u30CA\u306E\u96EB"
+  description: "SP\u3092\u5C0F\u56DE\u5FA9\u3059\u308B\u6F84\u3093\u3060\u96EB\u3002"
+  iconSprite: {fileID: -157780727, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
+  itemType: 0
+  category: "SP\u56DE\u5FA9"
+  rank: 0
+  price: 120
+  unsellable: 0
+  usableInBattle: 1
+  usableInField: 1
+  effects:
+  - effectType: 1
+    amount: 30
+  sortOrder: 2

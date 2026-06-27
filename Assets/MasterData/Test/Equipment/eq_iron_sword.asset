@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b401961f9e3d14e4c96a74c5347196aa, type: 3}
+  m_Name: eq_iron_sword
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.EquipmentData
+  id: eq_iron_sword
+  displayName: "\u9244\u306E\u5263"
+  description: "\u6A19\u6E96\u7684\u306A\u9244\u88FD\u306E\u5263\u3002"
+  iconSprite: {fileID: -1391045229, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  equipmentType: 0
+  weaponType: 1
+  attackAttribute: "\u7269\u7406"
+  statModifiers:
+    hp: 0
+    sp: 0
+    attack: 0
+    magic: 0
+    defense: 0
+    speed: 0
+    criticalRate: 0
+  baseSkillIds: []
+  randomSkillPool: []
+  equippableBy: []
+  price: 760
+  unsellable: 0
+  sortOrder: 1

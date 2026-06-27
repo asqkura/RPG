@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b774296a9b8b3408b3a81bc5eb3081, type: 3}
+  m_Name: mat_steel_ore
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.ItemData
+  id: mat_steel_ore
+  displayName: "\u92FC\u9271\u77F3"
+  description: "\u5F37\u5316\u88C5\u5099\u306B\u4F7F\u3046\u786C\u3044\u9271\u77F3\u3002"
+  iconSprite: {fileID: 311158094, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
+  itemType: 1
+  category: "\u9271\u77F3\u7CFB"
+  rank: 2
+  price: 140
+  unsellable: 0
+  usableInBattle: 0
+  usableInField: 0
+  effects: []
+  sortOrder: 101

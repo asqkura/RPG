@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b774296a9b8b3408b3a81bc5eb3081, type: 3}
+  m_Name: mat_sturdy_wood
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.ItemData
+  id: mat_sturdy_wood
+  displayName: "\u4E08\u592B\u306A\u6728\u6750"
+  description: "\u9053\u5177\u3084\u6756\u306B\u4F7F\u3046\u6271\u3044\u3084\u3059\u3044\u6728\u6750\u3002"
+  iconSprite: {fileID: 1134075073, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  itemType: 1
+  category: "\u6728\u6750\u7CFB"
+  rank: 1
+  price: 40
+  unsellable: 0
+  usableInBattle: 0
+  usableInField: 0
+  effects: []
+  sortOrder: 102

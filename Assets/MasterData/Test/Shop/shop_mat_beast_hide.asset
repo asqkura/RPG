@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a986c28bd366d224eb582d5c0aee32e3, type: 3}
+  m_Name: shop_mat_beast_hide
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.ShopItemData
+  id: shop_mat_beast_hide
+  displayName: shop_mat_beast_hide
+  description: 
+  availablePhase: 1
+  productType: 0
+  productId: mat_beast_hide
+  stockType: 1
+  stockCount: 8
+  sortOrder: 14

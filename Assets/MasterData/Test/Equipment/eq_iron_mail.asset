@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b401961f9e3d14e4c96a74c5347196aa, type: 3}
+  m_Name: eq_iron_mail
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.EquipmentData
+  id: eq_iron_mail
+  displayName: "\u9244\u306E\u80F8\u5F53\u3066"
+  description: "\u9632\u5FA1\u3092\u56FA\u3081\u308B\u91D1\u5C5E\u9632\u5177\u3002"
+  iconSprite: {fileID: 962435930, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  equipmentType: 1
+  weaponType: 0
+  attackAttribute: 
+  statModifiers:
+    hp: 0
+    sp: 0
+    attack: 0
+    magic: 0
+    defense: 0
+    speed: 0
+    criticalRate: 0
+  baseSkillIds: []
+  randomSkillPool: []
+  equippableBy: []
+  price: 920
+  unsellable: 0
+  sortOrder: 6

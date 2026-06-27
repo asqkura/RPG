@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b401961f9e3d14e4c96a74c5347196aa, type: 3}
+  m_Name: eq_apprentice_dagger
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.EquipmentData
+  id: eq_apprentice_dagger
+  displayName: "\u898B\u7FD2\u3044\u306E\u77ED\u5263"
+  description: "\u6271\u3044\u3084\u3059\u3044\u77ED\u5263\u3002\u7D20\u65E9\u3044\u4EF2\u9593\u5411\u3051\u3002"
+  iconSprite: {fileID: -127614092, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  equipmentType: 0
+  weaponType: 2
+  attackAttribute: "\u7269\u7406"
+  statModifiers:
+    hp: 0
+    sp: 0
+    attack: 0
+    magic: 0
+    defense: 0
+    speed: 0
+    criticalRate: 0
+  baseSkillIds: []
+  randomSkillPool: []
+  equippableBy: []
+  price: 620
+  unsellable: 0
+  sortOrder: 0

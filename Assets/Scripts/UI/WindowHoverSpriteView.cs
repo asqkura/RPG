@@ -8,9 +8,17 @@ public sealed class WindowHoverSpriteView : MonoBehaviour, IPointerEnterHandler,
     [SerializeField] private Sprite normalWindowSprite;
     [SerializeField] private Sprite highlightedWindowSprite;
 
+    private bool selected;
+
     private void Awake()
     {
-        SetHighlighted(false);
+        SetHighlighted(selected);
+    }
+
+    public void SetSelected(bool value)
+    {
+        selected = value;
+        SetHighlighted(selected);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -20,7 +28,7 @@ public sealed class WindowHoverSpriteView : MonoBehaviour, IPointerEnterHandler,
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        SetHighlighted(false);
+        SetHighlighted(selected);
     }
 
     public void OnSelect(BaseEventData eventData)
@@ -30,7 +38,7 @@ public sealed class WindowHoverSpriteView : MonoBehaviour, IPointerEnterHandler,
 
     public void OnDeselect(BaseEventData eventData)
     {
-        SetHighlighted(false);
+        SetHighlighted(selected);
     }
 
     private void SetHighlighted(bool highlighted)

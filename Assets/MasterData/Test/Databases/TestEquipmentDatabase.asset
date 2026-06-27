@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9a8b0d909223fa42b6a808052feea44, type: 3}
+  m_Name: TestEquipmentDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.EquipmentDatabase
+  entries:
+  - {fileID: 11400000, guid: adcdf79f0a0f18940a9e584d00bf6b27, type: 2}
+  - {fileID: 11400000, guid: a5e93160e3df7cd4db9d16233992a04d, type: 2}
+  - {fileID: 11400000, guid: 39fd1d81e022551429505374630558dc, type: 2}
+  - {fileID: 11400000, guid: e0b4f24c1163d5241b6443d9d3ce9fe3, type: 2}
+  - {fileID: 11400000, guid: 0c9f29de03a03ff4482c884b2e0e11ed, type: 2}
+  - {fileID: 11400000, guid: 222cebad2bd613742aa136dbcf7c1fdf, type: 2}
+  - {fileID: 11400000, guid: dc62ac88ef9a1dd47881b0ca47dda796, type: 2}
+  - {fileID: 11400000, guid: e2e3875199bd7e842801e3179925a39e, type: 2}
+  - {fileID: 11400000, guid: 528a2c480d0ff6b4db79f5c8b2a88964, type: 2}
+  - {fileID: 11400000, guid: 4deebb6f25f271c48b97381891b5367b, type: 2}

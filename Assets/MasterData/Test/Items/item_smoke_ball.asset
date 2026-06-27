@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91b774296a9b8b3408b3a81bc5eb3081, type: 3}
+  m_Name: item_smoke_ball
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.ItemData
+  id: item_smoke_ball
+  displayName: "\u7159\u7389"
+  description: "\u6226\u95D8\u304B\u3089\u9003\u3052\u3084\u3059\u304F\u3059\u308B\u9053\u5177\u3002"
+  iconSprite: {fileID: -1642624732, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
+  itemType: 0
+  category: "\u9003\u8D70\u88DC\u52A9"
+  rank: 0
+  price: 100
+  unsellable: 0
+  usableInBattle: 1
+  usableInField: 0
+  effects:
+  - effectType: 4
+    amount: 1
+  sortOrder: 6
