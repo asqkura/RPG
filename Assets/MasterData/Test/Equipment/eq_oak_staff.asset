@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eq_oak_staff
   displayName: "\u6A2B\u306E\u6756"
   description: "\u9B54\u529B\u3092\u901A\u3057\u3084\u3059\u3044\u6728\u6756\u3002"
-  iconSprite: {fileID: -1235664807, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
+  iconSprite: {fileID: -626651585, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
   equipmentType: 0
   weaponType: 6
   attackAttribute: "\u7269\u7406"

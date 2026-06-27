@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mat_magic_stone
   displayName: "\u9B54\u77F3"
   description: "\u5408\u6210\u306B\u4F7F\u3046\u5B89\u5B9A\u3057\u305F\u9B54\u77F3\u3002"
-  iconSprite: {fileID: -902442727, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
+  iconSprite: {fileID: -1230680934, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
   itemType: 1
   category: "\u9B54\u77F3\u7CFB"
   rank: 2

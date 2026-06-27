@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mat_herb
   displayName: "\u85AC\u8349"
   description: "\u56DE\u5FA9\u30A2\u30A4\u30C6\u30E0\u306E\u57FA\u672C\u7D20\u6750\u3002"
-  iconSprite: {fileID: 777661465, guid: 53bc556a4bfcc6e4eb1e9e25d92f5677, type: 3}
+  iconSprite: {fileID: 1134075073, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
   itemType: 1
   category: "\u85AC\u8349\u7CFB"
   rank: 1

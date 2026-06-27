@@ -15,7 +15,7 @@ MonoBehaviour:
   id: item_smoke_ball
   displayName: "\u7159\u7389"
   description: "\u6226\u95D8\u304B\u3089\u9003\u3052\u3084\u3059\u304F\u3059\u308B\u9053\u5177\u3002"
-  iconSprite: {fileID: 888561186, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
+  iconSprite: {fileID: -1642624732, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
   itemType: 0
   category: "\u9003\u8D70\u88DC\u52A9"
   rank: 0

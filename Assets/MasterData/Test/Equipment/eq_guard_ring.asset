@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eq_guard_ring
   displayName: "\u5B88\u308A\u306E\u6307\u8F2A"
   description: "\u9632\u5FA1\u3092\u5C11\u3057\u9AD8\u3081\u308B\u6307\u8F2A\u3002"
-  iconSprite: {fileID: 722883516, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
+  iconSprite: {fileID: -1605806345, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
   equipmentType: 2
   weaponType: 0
   attackAttribute: 

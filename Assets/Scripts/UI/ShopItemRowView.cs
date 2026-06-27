@@ -27,7 +27,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     [SerializeField] private Color normalBackgroundColor = Color.clear;
     [SerializeField] private Color highlightedBackgroundColor = new(0.42f, 0.34f, 0.23f, 0.45f);
 
-    private ShopScreenPreviewController controller;
+    private IItemRowViewController controller;
 
     public string ItemName => itemName;
     public string DetailText => detailText;
@@ -97,7 +97,7 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         }
     }
 
-    public void Initialize(ShopScreenPreviewController owner)
+    public void Initialize(IItemRowViewController owner)
     {
         controller = owner;
         SetHighlighted(false);

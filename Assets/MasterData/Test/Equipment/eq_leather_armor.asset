@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eq_leather_armor
   displayName: "\u9769\u306E\u93A7"
   description: "\u52D5\u304D\u3084\u3059\u3055\u3092\u91CD\u8996\u3057\u305F\u9632\u5177\u3002"
-  iconSprite: {fileID: 478110623, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
+  iconSprite: {fileID: -1101395494, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
   equipmentType: 1
   weaponType: 0
   attackAttribute: 

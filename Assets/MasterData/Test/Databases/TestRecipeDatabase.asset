@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25837369bd72f8546a4383172d83fa56, type: 3}
+  m_Name: TestRecipeDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.RecipeDatabase
+  entries:
+  - {fileID: 11400000, guid: a08173705d259c1448a03b58ba0ac91f, type: 2}
+  - {fileID: 11400000, guid: 35ac14d9bf50f3b4dbd47045e23ddea5, type: 2}
+  - {fileID: 11400000, guid: b9ab50e349bf644428b1d016026cbb2e, type: 2}
+  - {fileID: 11400000, guid: 90431634e72d41e4bb238403217f330f, type: 2}
+  - {fileID: 11400000, guid: fea25f763a240684e9e87a1aecf2f84c, type: 2}
+  - {fileID: 11400000, guid: b4a856c79b8cd94459077657f11f905c, type: 2}
+  - {fileID: 11400000, guid: 01f6e35258d1f63499a9404c5f65bc83, type: 2}

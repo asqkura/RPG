@@ -1,13 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
+using RPG.Game;
 using RPG.MasterData;
 using RPG.SaveData;
 using RPG.Shop;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class ShopScreenPreviewController : MonoBehaviour
+public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewController
 {
     private const int PreviewPhase = 1;
     private const string UnlimitedStockText = "-";
@@ -40,22 +42,21 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
     [SerializeField] private ShopItemDatabase shopItemDatabase;
     [SerializeField] private ItemDatabase itemDatabase;
     [SerializeField] private EquipmentDatabase equipmentDatabase;
-    [Min(0)]
-    [SerializeField] private int previewMoney = 12480;
 
     private ShopCategory currentCategory = ShopCategory.Consumable;
     private ShopMode currentMode = ShopMode.Buy;
     private ShopItemRowView selectedRow;
     private ShopItemRowView previewRow;
-    private RunSaveData previewSaveData;
+    private RunSaveData runSaveData;
     private ShopPurchaseService purchaseService;
     private ShopSellService sellService;
     private readonly List<ShopDisplayEntry> displayEntries = new();
     private readonly List<ShopItemRowView> itemRows = new();
+    private bool initialized;
 
     private void Awake()
     {
-        InitializePreviewState();
+        InitializeGameState();
         ResolveOptionalReferences();
         RegisterCategoryButtons();
         RegisterModeButtons();
@@ -65,6 +66,15 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         PopulateRows();
         SelectFirstRow();
         RefreshMoneyText();
+        initialized = true;
+    }
+
+    private void OnEnable()
+    {
+        if (initialized)
+        {
+            Refresh();
+        }
     }
 
     private void OnDestroy()
@@ -128,6 +138,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         ClearSelectedRow();
         selectedRow = row;
         selectedRow.SetHighlighted(true);
+        SetEventSystemSelection(selectedRow.gameObject);
         previewRow = row;
         ShowDetail(row);
     }
@@ -220,7 +231,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 
     public void PurchaseCurrentItem()
     {
-        if (selectedRow == null || purchaseService == null || previewSaveData == null)
+        if (selectedRow == null || purchaseService == null || runSaveData == null)
         {
             SetHelpText("購入する商品を選んでください。");
             return;
@@ -228,7 +239,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 
         var purchasedShopItemId = selectedRow.ShopItemId;
         var purchasedItemName = selectedRow.ItemName;
-        var result = purchaseService.TryPurchase(previewSaveData, purchasedShopItemId);
+        var result = purchaseService.TryPurchase(runSaveData, purchasedShopItemId);
         if (!result.CanPurchase)
         {
             SetHelpText(FormatPurchaseFailure(result.FailureReason));
@@ -246,7 +257,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 
     public void SellCurrentItem()
     {
-        if (selectedRow == null || sellService == null || previewSaveData == null)
+        if (selectedRow == null || sellService == null || runSaveData == null)
         {
             SetHelpText("売却する所持品を選んでください。");
             return;
@@ -255,8 +266,8 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         var soldEntryId = selectedRow.ShopItemId;
         var soldItemName = selectedRow.ItemName;
         var result = currentCategory == ShopCategory.Equipment
-            ? sellService.TrySellEquipment(previewSaveData, soldEntryId)
-            : sellService.TrySellItem(previewSaveData, soldEntryId);
+            ? sellService.TrySellEquipment(runSaveData, soldEntryId)
+            : sellService.TrySellItem(runSaveData, soldEntryId);
         if (!result.CanSell)
         {
             SetHelpText(FormatSellFailure(result.FailureReason));
@@ -337,7 +348,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         if (shopItemDatabase == null
             || itemDatabase == null
             || purchaseService == null
-            || previewSaveData == null
+            || runSaveData == null
             || currentCategory == ShopCategory.Equipment && equipmentDatabase == null)
         {
             ClearRows();
@@ -406,7 +417,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
     {
         if (currentCategory == ShopCategory.Consumable)
         {
-            foreach (var stack in previewSaveData.ConsumableItems.Where(stack => stack.Count > 0))
+            foreach (var stack in runSaveData.ConsumableItems.Where(stack => stack.Count > 0))
             {
                 if (itemDatabase.TryGetById(stack.ItemId, out var item) && item.ItemType == ItemDataType.Consumable)
                 {
@@ -423,7 +434,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 
         if (currentCategory == ShopCategory.Material)
         {
-            foreach (var stack in previewSaveData.Materials.Where(stack => stack.Count > 0))
+            foreach (var stack in runSaveData.Materials.Where(stack => stack.Count > 0))
             {
                 if (itemDatabase.TryGetById(stack.ItemId, out var item) && item.ItemType == ItemDataType.Material)
                 {
@@ -435,7 +446,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
             return;
         }
 
-        foreach (var ownedEquipment in previewSaveData.OwnedEquipments)
+        foreach (var ownedEquipment in runSaveData.OwnedEquipments)
         {
             if (!equipmentDatabase.TryGetById(ownedEquipment.EquipmentId, out var equipment))
             {
@@ -586,35 +597,34 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
     {
         return shopItem.StockType == ShopStockDataType.Unlimited
             ? UnlimitedStockText
-            : purchaseService.GetRemainingStock(previewSaveData, shopItem).ToString();
+            : purchaseService.GetRemainingStock(runSaveData, shopItem).ToString();
     }
 
     private int GetOwnedItemCount(ItemData item)
     {
-        if (previewSaveData == null || item == null)
+        if (runSaveData == null || item == null)
         {
             return 0;
         }
 
         return item.ItemType == ItemDataType.Consumable
-            ? previewSaveData.GetConsumableCount(item.ItemId)
-            : previewSaveData.GetMaterialCount(item.ItemId);
+            ? runSaveData.GetConsumableCount(item.ItemId)
+            : runSaveData.GetMaterialCount(item.ItemId);
     }
 
     private int GetOwnedEquipmentCount(string equipmentId)
     {
-        if (previewSaveData == null || string.IsNullOrWhiteSpace(equipmentId))
+        if (runSaveData == null || string.IsNullOrWhiteSpace(equipmentId))
         {
             return 0;
         }
 
-        return previewSaveData.OwnedEquipments.Count(equipment => equipment.EquipmentId == equipmentId);
+        return runSaveData.OwnedEquipments.Count(equipment => equipment.EquipmentId == equipmentId);
     }
 
-    private void InitializePreviewState()
+    private void InitializeGameState()
     {
-        previewSaveData = RunSaveData.CreateNew();
-        previewSaveData.AddMoney(previewMoney);
+        runSaveData = GameSession.GetOrCreate().RunSaveData;
         purchaseService = new ShopPurchaseService(shopItemDatabase, itemDatabase, equipmentDatabase);
         sellService = new ShopSellService(itemDatabase, equipmentDatabase);
     }
@@ -915,9 +925,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 
     private void RefreshMoneyText()
     {
-        if (moneyText != null && previewSaveData != null)
+        if (moneyText != null && runSaveData != null)
         {
-            moneyText.text = $"{previewSaveData.Money:N0} G";
+            moneyText.text = $"{runSaveData.Money:N0} G";
         }
     }
 
@@ -939,7 +949,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 
     private bool CanSubmitSelectedItem()
     {
-        if (selectedRow == null || previewSaveData == null)
+        if (selectedRow == null || runSaveData == null)
         {
             return false;
         }
@@ -947,7 +957,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         if (currentMode == ShopMode.Buy)
         {
             return purchaseService != null
-                && purchaseService.GetQuote(previewSaveData, selectedRow.ShopItemId).CanPurchase;
+                && purchaseService.GetQuote(runSaveData, selectedRow.ShopItemId).CanPurchase;
         }
 
         if (sellService == null)
@@ -956,8 +966,8 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         }
 
         return currentCategory == ShopCategory.Equipment
-            ? sellService.GetEquipmentQuote(previewSaveData, selectedRow.ShopItemId).CanSell
-            : sellService.GetItemQuote(previewSaveData, selectedRow.ShopItemId).CanSell;
+            ? sellService.GetEquipmentQuote(runSaveData, selectedRow.ShopItemId).CanSell
+            : sellService.GetItemQuote(runSaveData, selectedRow.ShopItemId).CanSell;
     }
 
     private string FormatDetailHelp(ShopItemRowView row)
@@ -974,8 +984,8 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
 
         if (currentMode == ShopMode.Buy)
         {
-            var quote = purchaseService != null && previewSaveData != null
-                ? purchaseService.GetQuote(previewSaveData, row.ShopItemId)
+            var quote = purchaseService != null && runSaveData != null
+                ? purchaseService.GetQuote(runSaveData, row.ShopItemId)
                 : default;
             return quote.CanPurchase
                 ? $"{row.ItemName}を購入対象にしています。"
@@ -983,8 +993,8 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
         }
 
         var sellQuote = currentCategory == ShopCategory.Equipment
-            ? sellService?.GetEquipmentQuote(previewSaveData, row.ShopItemId) ?? default
-            : sellService?.GetItemQuote(previewSaveData, row.ShopItemId) ?? default;
+            ? sellService?.GetEquipmentQuote(runSaveData, row.ShopItemId) ?? default
+            : sellService?.GetItemQuote(runSaveData, row.ShopItemId) ?? default;
         return sellQuote.CanSell
             ? $"{row.ItemName}を売却対象にしています。"
             : FormatSellFailure(sellQuote.FailureReason);
@@ -1090,5 +1100,16 @@ public sealed class ShopScreenPreviewController : MonoBehaviour
     {
         Buy,
         Sell
+    }
+
+    private static void SetEventSystemSelection(GameObject target)
+    {
+        if (EventSystem.current != null
+            && target != null
+            && EventSystem.current.currentSelectedGameObject != target
+            && !EventSystem.current.alreadySelecting)
+        {
+            EventSystem.current.SetSelectedGameObject(target);
+        }
     }
 }

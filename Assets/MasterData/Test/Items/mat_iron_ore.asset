@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mat_iron_ore
   displayName: "\u9244\u9271\u77F3"
   description: "\u6B66\u5668\u3084\u9632\u5177\u306E\u5408\u6210\u306B\u4F7F\u3046\u57FA\u672C\u9271\u77F3\u3002"
-  iconSprite: {fileID: 982329312, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
+  iconSprite: {fileID: -1294726763, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
   itemType: 1
   category: "\u9271\u77F3\u7CFB"
   rank: 1

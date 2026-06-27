@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 893372623484f0c4fb37568f4fde87f8, type: 3}
+  m_Name: recipe_potion
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.RecipeData
+  id: recipe_potion
+  displayName: ポーション
+  description: 薬草から基本の回復薬を作成します。
+  recipeType: 0
+  requiredSynthesisLevel: 1
+  ingredients:
+  - itemId: mat_herb
+    count: 2
+  cost: 20
+  resultType: 0
+  resultItemId: item_potion
+  sortOrder: 0

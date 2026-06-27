@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eq_lucky_charm
   displayName: "\u5E78\u904B\u306E\u304A\u5B88\u308A"
   description: "\u5C0F\u3055\u306A\u5E78\u904B\u3092\u547C\u3076\u30A2\u30AF\u30BB\u30B5\u30EA\u3002"
-  iconSprite: {fileID: -2114099944, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
+  iconSprite: {fileID: 1947732015, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
   equipmentType: 2
   weaponType: 0
   attackAttribute: 
