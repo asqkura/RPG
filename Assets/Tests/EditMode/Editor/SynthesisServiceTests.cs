@@ -120,9 +120,9 @@ public sealed class SynthesisServiceTests
         SetDatabaseEntries(equipmentDatabase, sword);
         SetDatabaseEntries(
             recipeDatabase,
-            CreateRecipe("syn_potion", SynthesisProductDataType.Consumable, "item_potion", 2, 1, 30, "mat_herb", 2),
-            CreateRecipe("syn_sword", SynthesisProductDataType.Equipment, "eq_iron_sword", 1, 1, 120, "mat_herb", 2),
-            CreateRecipe("syn_late", SynthesisProductDataType.Consumable, "item_potion", 1, 2, 30, "mat_herb", 2));
+            CreateRecipe("syn_potion", SynthesisProductDataType.Consumable, potion, null, 2, 1, 30, herb, 2),
+            CreateRecipe("syn_sword", SynthesisProductDataType.Equipment, null, sword, 1, 1, 120, herb, 2),
+            CreateRecipe("syn_late", SynthesisProductDataType.Consumable, potion, null, 1, 2, 30, herb, 2));
 
         return new TestContext(
             RunSaveData.CreateNew(),
@@ -152,24 +152,26 @@ public sealed class SynthesisServiceTests
     private static SynthesisRecipeData CreateRecipe(
         string id,
         SynthesisProductDataType productType,
-        string productId,
+        ItemData productItem,
+        EquipmentData productEquipment,
         int resultCount,
         int availablePhase,
         int moneyCost,
-        string materialId,
+        ItemData material,
         int materialCount)
     {
         var recipe = ScriptableObject.CreateInstance<SynthesisRecipeData>();
         var serialized = new SerializedObject(recipe);
         SetMasterFields(serialized, id, id, string.Empty);
         serialized.FindProperty("productType").enumValueIndex = (int)productType;
-        serialized.FindProperty("productId").stringValue = productId;
+        serialized.FindProperty("productItem").objectReferenceValue = productItem;
+        serialized.FindProperty("productEquipment").objectReferenceValue = productEquipment;
         serialized.FindProperty("resultCount").intValue = resultCount;
         serialized.FindProperty("availablePhase").intValue = availablePhase;
         serialized.FindProperty("moneyCost").intValue = moneyCost;
         var costs = serialized.FindProperty("materialCosts");
         costs.arraySize = 1;
-        costs.GetArrayElementAtIndex(0).FindPropertyRelative("itemId").stringValue = materialId;
+        costs.GetArrayElementAtIndex(0).FindPropertyRelative("item").objectReferenceValue = material;
         costs.GetArrayElementAtIndex(0).FindPropertyRelative("count").intValue = materialCount;
         serialized.ApplyModifiedPropertiesWithoutUndo();
         return recipe;

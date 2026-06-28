@@ -13,16 +13,17 @@ MonoBehaviour:
   m_Name: syn_guard_ring
   m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.SynthesisRecipeData
   id: syn_guard_ring
-  displayName: "\u5B88\u308A\u306E\u6307\u8F2A\u5408\u6210"
-  description: "\u9B54\u77F3\u3092\u52A0\u5DE5\u3057\u3066\u5B88\u308A\u306E\u6307\u8F2A\u3092\u5408\u6210\u3057\u307E\u3059\u3002"
+  displayName: 
+  description: 
   availablePhase: 2
   productType: 1
-  productId: eq_guard_ring
+  productItem: {fileID: 0}
+  productEquipment: {fileID: 11400000, guid: 528a2c480d0ff6b4db79f5c8b2a88964, type: 2}
   resultCount: 1
   moneyCost: 220
   materialCosts:
-  - itemId: mat_magic_stone
+  - item: {fileID: 11400000, guid: 9aa17c0fa5e55d84ab85025b49dd9cfb, type: 2}
     count: 1
-  - itemId: mat_fine_leather
+  - item: {fileID: 11400000, guid: 1dd891becc3710a45a0358c8c669e22c, type: 2}
     count: 1
   sortOrder: 12

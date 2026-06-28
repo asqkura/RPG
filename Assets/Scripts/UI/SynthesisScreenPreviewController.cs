@@ -362,9 +362,8 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
                 return false;
             }
 
-            if (itemDatabase == null
-                || !itemDatabase.TryGetById(recipe.ProductId, out var item)
-                || item == null
+            var item = recipe.ProductItem;
+            if (item == null
                 || item.ItemType != ItemDataType.Consumable)
             {
                 return false;
@@ -381,9 +380,8 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             return true;
         }
 
-        if (equipmentDatabase == null
-            || !equipmentDatabase.TryGetById(recipe.ProductId, out var equipment)
-            || equipment == null
+        var equipment = recipe.ProductEquipment;
+        if (equipment == null
             || !MatchesEquipmentCategory(equipment, currentCategory))
         {
             return false;
@@ -632,7 +630,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             }
 
             var ownedCount = runSaveData?.GetMaterialCount(cost.ItemId) ?? 0;
-            var materialName = FormatMaterialName(cost.ItemId);
+            var materialName = FormatMaterialName(cost);
             var shortage = ownedCount < cost.Count ? " 不足" : string.Empty;
             lines.Add($"{materialName} {ownedCount}/{cost.Count}{shortage}");
         }
@@ -677,14 +675,17 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             : runSaveData.OwnedEquipments.Count(equipment => equipment != null && equipment.EquipmentId == equipmentId);
     }
 
-    private string FormatMaterialName(string itemId)
+    private static string FormatMaterialName(SynthesisMaterialCostData cost)
     {
-        return itemDatabase != null
-            && itemDatabase.TryGetById(itemId, out var item)
-            && item != null
-            && !string.IsNullOrWhiteSpace(item.DisplayName)
-            ? item.DisplayName
-            : itemId;
+        if (cost == null)
+        {
+            return string.Empty;
+        }
+
+        return cost.Item != null
+            && !string.IsNullOrWhiteSpace(cost.Item.DisplayName)
+            ? cost.Item.DisplayName
+            : cost.ItemId;
     }
 
     private void RefreshMoneyText()

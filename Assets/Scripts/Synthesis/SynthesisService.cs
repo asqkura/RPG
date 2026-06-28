@@ -66,8 +66,6 @@ namespace RPG.Synthesis
     public sealed class SynthesisService
     {
         private readonly SynthesisRecipeDatabase recipeDatabase;
-        private readonly ItemDatabase itemDatabase;
-        private readonly EquipmentDatabase equipmentDatabase;
 
         public SynthesisService(
             SynthesisRecipeDatabase recipeDatabase,
@@ -75,8 +73,6 @@ namespace RPG.Synthesis
             EquipmentDatabase equipmentDatabase)
         {
             this.recipeDatabase = recipeDatabase;
-            this.itemDatabase = itemDatabase;
-            this.equipmentDatabase = equipmentDatabase;
         }
 
         public SynthesisQuote GetQuote(RunSaveData saveData, string recipeId)
@@ -163,15 +159,11 @@ namespace RPG.Synthesis
 
             if (recipe.ProductType == SynthesisProductDataType.Consumable)
             {
-                return itemDatabase != null
-                    && itemDatabase.TryGetById(recipe.ProductId, out var item)
-                    && item != null
-                    && item.ItemType == ItemDataType.Consumable;
+                return recipe.ProductItem != null
+                    && recipe.ProductItem.ItemType == ItemDataType.Consumable;
             }
 
-            return equipmentDatabase != null
-                && equipmentDatabase.TryGetById(recipe.ProductId, out var equipment)
-                && equipment != null;
+            return recipe.ProductEquipment != null;
         }
 
         private static List<SynthesisMaterialShortage> GetMaterialShortages(RunSaveData saveData, SynthesisRecipeData recipe)

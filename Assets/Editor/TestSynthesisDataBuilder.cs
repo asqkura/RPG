@@ -24,8 +24,6 @@ public static class TestSynthesisDataBuilder
         {
             CreateOrUpdateRecipe(
                 "syn_potion",
-                "ポーション合成",
-                "薬草からポーションを合成します。",
                 SynthesisProductDataType.Consumable,
                 "item_potion",
                 2,
@@ -35,8 +33,6 @@ public static class TestSynthesisDataBuilder
                 0),
             CreateOrUpdateRecipe(
                 "syn_high_potion",
-                "ハイポーション合成",
-                "癒し草と魔石の欠片からハイポーションを合成します。",
                 SynthesisProductDataType.Consumable,
                 "item_high_potion",
                 1,
@@ -46,8 +42,6 @@ public static class TestSynthesisDataBuilder
                 1),
             CreateOrUpdateRecipe(
                 "syn_iron_sword",
-                "鉄の剣合成",
-                "鉄鉱石と丈夫な木材から鉄の剣を合成します。",
                 SynthesisProductDataType.Equipment,
                 "eq_iron_sword",
                 1,
@@ -57,8 +51,6 @@ public static class TestSynthesisDataBuilder
                 10),
             CreateOrUpdateRecipe(
                 "syn_leather_armor",
-                "革の鎧合成",
-                "獣の皮を加工して革の鎧を合成します。",
                 SynthesisProductDataType.Equipment,
                 "eq_leather_armor",
                 1,
@@ -68,8 +60,6 @@ public static class TestSynthesisDataBuilder
                 11),
             CreateOrUpdateRecipe(
                 "syn_guard_ring",
-                "守りの指輪合成",
-                "魔石を加工して守りの指輪を合成します。",
                 SynthesisProductDataType.Equipment,
                 "eq_guard_ring",
                 1,
@@ -88,8 +78,6 @@ public static class TestSynthesisDataBuilder
 
     private static SynthesisRecipeData CreateOrUpdateRecipe(
         string id,
-        string displayName,
-        string description,
         SynthesisProductDataType productType,
         string productId,
         int resultCount,
@@ -101,11 +89,14 @@ public static class TestSynthesisDataBuilder
         var recipe = LoadOrCreate<SynthesisRecipeData>(SynthesisFolder + "/" + id + ".asset");
         var serialized = new SerializedObject(recipe);
         serialized.FindProperty("id").stringValue = id;
-        serialized.FindProperty("displayName").stringValue = displayName;
-        serialized.FindProperty("description").stringValue = description;
         serialized.FindProperty("availablePhase").intValue = availablePhase;
         serialized.FindProperty("productType").enumValueIndex = (int)productType;
-        serialized.FindProperty("productId").stringValue = productId;
+        serialized.FindProperty("productItem").objectReferenceValue = productType == SynthesisProductDataType.Consumable
+            ? LoadMasterAsset<ItemData>("Items", productId)
+            : null;
+        serialized.FindProperty("productEquipment").objectReferenceValue = productType == SynthesisProductDataType.Equipment
+            ? LoadMasterAsset<EquipmentData>("Equipment", productId)
+            : null;
         serialized.FindProperty("resultCount").intValue = resultCount;
         serialized.FindProperty("moneyCost").intValue = moneyCost;
         serialized.FindProperty("sortOrder").intValue = sortOrder;
@@ -121,9 +112,14 @@ public static class TestSynthesisDataBuilder
         for (var i = 0; i < materialCosts.Count; i++)
         {
             var cost = property.GetArrayElementAtIndex(i);
-            cost.FindPropertyRelative("itemId").stringValue = materialCosts[i].ItemId;
+            cost.FindPropertyRelative("item").objectReferenceValue = LoadMasterAsset<ItemData>("Items", materialCosts[i].ItemId);
             cost.FindPropertyRelative("count").intValue = materialCosts[i].Count;
         }
+    }
+
+    private static T LoadMasterAsset<T>(string folderName, string id) where T : MasterDataAsset
+    {
+        return AssetDatabase.LoadAssetAtPath<T>($"{TestFolder}/{folderName}/{id}.asset");
     }
 
     private static void CreateOrUpdateDatabase(string path, SynthesisRecipeData[] entries)

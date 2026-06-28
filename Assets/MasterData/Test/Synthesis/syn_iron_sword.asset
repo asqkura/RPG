@@ -12,13 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d6c4fa9f7e6bd645aea35783019cf6e, type: 3}
   m_Name: syn_iron_sword
   m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.SynthesisRecipeData
-  id: 
+  id: syn_iron_sword
   displayName: 
   description: 
   availablePhase: 1
-  productType: 0
-  productId: 
+  productType: 1
+  productItem: {fileID: 0}
+  productEquipment: {fileID: 11400000, guid: a5e93160e3df7cd4db9d16233992a04d, type: 2}
   resultCount: 1
-  moneyCost: 0
-  materialCosts: []
-  sortOrder: 0
+  moneyCost: 180
+  materialCosts:
+  - item: {fileID: 11400000, guid: 6ab27ddb54aba9e498fbf2e8a5f5e2b1, type: 2}
+    count: 3
+  - item: {fileID: 11400000, guid: f29733404b61c424e9da00a3d927f22e, type: 2}
+    count: 1
+  sortOrder: 10

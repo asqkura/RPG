@@ -12,13 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d6c4fa9f7e6bd645aea35783019cf6e, type: 3}
   m_Name: syn_potion
   m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.SynthesisRecipeData
-  id: 
+  id: syn_potion
   displayName: 
   description: 
   availablePhase: 1
   productType: 0
-  productId: 
-  resultCount: 1
-  moneyCost: 0
-  materialCosts: []
+  productItem: {fileID: 11400000, guid: 991ef9c839c56744981231460162d4a2, type: 2}
+  productEquipment: {fileID: 0}
+  resultCount: 2
+  moneyCost: 30
+  materialCosts:
+  - item: {fileID: 11400000, guid: cec545c2207366f47873bd512c113be1, type: 2}
+    count: 2
   sortOrder: 0

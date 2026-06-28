@@ -7,11 +7,12 @@ namespace RPG.MasterData
     [Serializable]
     public sealed class SynthesisMaterialCostData
     {
-        [SerializeField] private string itemId = string.Empty;
+        [SerializeField] private ItemData item;
         [Min(1)]
         [SerializeField] private int count = 1;
 
-        public string ItemId => itemId;
+        public ItemData Item => item;
+        public string ItemId => item != null ? item.ItemId : string.Empty;
         public int Count => count;
     }
 
@@ -21,7 +22,8 @@ namespace RPG.MasterData
         [Range(1, 4)]
         [SerializeField] private int availablePhase = 1;
         [SerializeField] private SynthesisProductDataType productType;
-        [SerializeField] private string productId = string.Empty;
+        [SerializeField] private ItemData productItem;
+        [SerializeField] private EquipmentData productEquipment;
         [Min(1)]
         [SerializeField] private int resultCount = 1;
         [Min(0)]
@@ -32,7 +34,11 @@ namespace RPG.MasterData
         public string RecipeId => Id;
         public int AvailablePhase => availablePhase;
         public SynthesisProductDataType ProductType => productType;
-        public string ProductId => productId;
+        public ItemData ProductItem => productItem;
+        public EquipmentData ProductEquipment => productEquipment;
+        public string ProductId => productType == SynthesisProductDataType.Equipment
+            ? (productEquipment != null ? productEquipment.EquipmentId : string.Empty)
+            : (productItem != null ? productItem.ItemId : string.Empty);
         public int ResultCount => productType == SynthesisProductDataType.Equipment ? 1 : resultCount;
         public int MoneyCost => moneyCost;
         public IReadOnlyList<SynthesisMaterialCostData> MaterialCosts => materialCosts;
