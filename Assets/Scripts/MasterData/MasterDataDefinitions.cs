@@ -49,31 +49,6 @@ namespace RPG.MasterData
         Limited
     }
 
-    public enum RecipeDataType
-    {
-        Consumable,
-        Weapon,
-        Armor,
-        Accessory
-    }
-
-    public enum RecipeResultDataType
-    {
-        Item,
-        Equipment
-    }
-
-    [Serializable]
-    public sealed class RecipeIngredientData
-    {
-        [SerializeField] private string itemId = string.Empty;
-        [Min(1)]
-        [SerializeField] private int count = 1;
-
-        public string ItemId => itemId;
-        public int Count => count;
-    }
-
     [Serializable]
     public sealed class ItemEffectData
     {
@@ -338,8 +313,6 @@ namespace RPG.MasterData
         RemoveMoney,
         AddEquipment,
         StartBattle,
-        SetSynthesisLevel,
-        UnlockRecipe,
         UnlockEpilogue
     }
 

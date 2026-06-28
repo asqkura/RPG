@@ -18,7 +18,6 @@ namespace RPG.MasterData
         CharacterEventStage,
         ItemCount,
         EquipmentOwned,
-        SynthesisLevel,
         BattleResult,
         EventOccurred
     }

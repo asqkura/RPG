@@ -8,8 +8,6 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     [SerializeField] private string itemName;
     [SerializeField] private string tagText;
     [SerializeField] private string descriptionText;
-    [SerializeField] private string detailPanelText;
-    [SerializeField] private string helpText;
     [SerializeField] private string shopItemId;
     [SerializeField] private string stockText;
     [SerializeField] private string ownedText;
@@ -35,8 +33,6 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     public string ItemName => itemName;
     public string TagText => tagText;
     public string DescriptionText => descriptionText;
-    public string DetailPanelText => detailPanelText;
-    public string HelpText => helpText;
     public string ShopItemId => shopItemId;
     public string StockText => stockText;
     public string OwnedText => ownedText;
@@ -49,8 +45,6 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         string displayName,
         string tag,
         string description,
-        string detailPanel,
-        string help,
         string stock,
         string owned,
         string price)
@@ -59,8 +53,6 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         itemName = displayName;
         tagText = tag;
         descriptionText = description;
-        detailPanelText = detailPanel;
-        helpText = help;
         stockText = stock;
         ownedText = owned;
         priceText = price;
@@ -85,8 +77,6 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         itemName = string.Empty;
         tagText = string.Empty;
         descriptionText = string.Empty;
-        detailPanelText = string.Empty;
-        helpText = string.Empty;
         shopItemId = string.Empty;
         stockText = string.Empty;
         ownedText = string.Empty;
@@ -185,7 +175,8 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         hitAreaImage = GetComponent<Image>();
         if (hitAreaImage == null)
         {
-            hitAreaImage = gameObject.AddComponent<Image>();
+            Debug.LogError($"{nameof(ShopItemRowView)} requires an Image component for pointer input.", this);
+            return;
         }
 
         hitAreaImage.sprite = null;

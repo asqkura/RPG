@@ -11,7 +11,6 @@ using UnityEngine.UI;
 
 public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewController
 {
-    private const int PreviewPhase = 1;
     private const string UnlimitedStockText = "-";
     private const float RowStride = 54f;
     private static readonly Color TextColor = new(0.86f, 0.82f, 0.75f, 1f);
@@ -416,8 +415,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
                     entry.Name,
                     entry.Tag,
                     entry.Description,
-                    entry.EquipmentDetail,
-                    entry.Help,
                     entry.Stock,
                     entry.Owned,
                     entry.Price);
@@ -436,7 +433,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     private void PopulateBuyEntries()
     {
         foreach (var shopItem in shopItemDatabase.Entries
-            .Where(entry => entry != null && entry.AvailablePhase <= PreviewPhase)
+            .Where(entry => entry != null && entry.AvailablePhase <= (int)runSaveData.CurrentPhase)
             .OrderBy(entry => entry.SortOrder))
         {
             if (!TryCreateEntry(shopItem, out var entry))
@@ -456,10 +453,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             {
                 if (itemDatabase.TryGetById(stack.ItemId, out var item) && item.ItemType == ItemDataType.Consumable)
                 {
-                    for (var i = 0; i < stack.Count; i++)
-                    {
-                        displayEntries.Add(CreateSellItemEntry(item, stack.Count));
-                    }
+                    displayEntries.Add(CreateSellItemEntry(item, stack.Count));
                 }
             }
 
@@ -544,8 +538,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             item.DisplayName,
             BuildItemTag(item),
             item.Description,
-            string.Empty,
-            $"{item.DisplayName}を購入します。",
             FormatStock(shopItem),
             FormatOwnedCount(GetOwnedItemCount(item)),
             item.Price.ToString());
@@ -575,8 +567,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             equipment.DisplayName,
             BuildEquipmentTag(equipment, EquipmentRarity.Common),
             equipment.Description,
-            string.Empty,
-            $"{equipment.DisplayName}を購入します。",
             FormatStock(shopItem),
             FormatOwnedCount(GetOwnedEquipmentCount(equipment.EquipmentId)),
             equipment.Price.ToString());
@@ -594,8 +584,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             BuildItemTag(item),
             item.Description,
             string.Empty,
-            $"{item.DisplayName}を売却します。",
-            string.Empty,
             FormatOwnedCount(ownedCount),
             sellPrice);
     }
@@ -609,8 +597,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             equipment.DisplayName,
             BuildEquipmentTag(equipment, ownedEquipment.Rarity),
             equipment.Description,
-            string.Empty,
-            $"{equipment.DisplayName}を売却します。",
             string.Empty,
             FormatOwnedCount(1),
             sellPrice);
@@ -1255,8 +1241,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             string name,
             string tag,
             string description,
-            string equipmentDetail,
-            string help,
             string stock,
             string owned,
             string price)
@@ -1266,8 +1250,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             Name = name;
             Tag = tag ?? string.Empty;
             Description = description ?? string.Empty;
-            EquipmentDetail = equipmentDetail;
-            Help = help;
             Stock = stock;
             Owned = owned;
             Price = price;
@@ -1278,8 +1260,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         public string Name { get; }
         public string Tag { get; }
         public string Description { get; }
-        public string EquipmentDetail { get; }
-        public string Help { get; }
         public string Stock { get; }
         public string Owned { get; }
         public string Price { get; }

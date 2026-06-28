@@ -19,18 +19,6 @@ public static class MasterDataDisplayLabels
         };
     }
 
-    public static string FormatRecipeType(RecipeDataType recipeType)
-    {
-        return recipeType switch
-        {
-            RecipeDataType.Consumable => Consumable,
-            RecipeDataType.Weapon => Weapon,
-            RecipeDataType.Armor => Armor,
-            RecipeDataType.Accessory => Accessory,
-            _ => recipeType.ToString()
-        };
-    }
-
     public static string FormatEquipmentType(EquipmentData equipment)
     {
         if (equipment == null)

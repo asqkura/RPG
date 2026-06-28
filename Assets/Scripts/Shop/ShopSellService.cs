@@ -30,9 +30,9 @@ namespace RPG.Shop
             ProductId = productId ?? string.Empty;
             OwnedEquipmentInstanceId = ownedEquipmentInstanceId ?? string.Empty;
             ProductType = productType;
-            UnitPrice = Math.Max(0, unitPrice);
-            Quantity = Math.Max(0, quantity);
-            TotalPrice = Math.Max(0, totalPrice);
+            UnitPrice = unitPrice;
+            Quantity = quantity;
+            TotalPrice = totalPrice;
         }
 
         public bool CanSell { get; }
@@ -82,6 +82,11 @@ namespace RPG.Shop
             }
 
             var unitPrice = CalculateSellPrice(item.Price);
+            if (!TryCalculateTotalPrice(unitPrice, quantity, out _))
+            {
+                return Failure(ShopSellFailureReason.InvalidRequest, itemId, string.Empty, ShopProductDataType.Item, quantity);
+            }
+
             return Success(item.ItemId, string.Empty, ShopProductDataType.Item, unitPrice, quantity);
         }
 
@@ -181,6 +186,10 @@ namespace RPG.Shop
             int unitPrice,
             int quantity)
         {
+            var totalPrice = TryCalculateTotalPrice(unitPrice, quantity, out var calculatedTotalPrice)
+                ? calculatedTotalPrice
+                : 0;
+
             return new ShopSellQuote(
                 true,
                 ShopSellFailureReason.None,
@@ -189,7 +198,7 @@ namespace RPG.Shop
                 productType,
                 unitPrice,
                 quantity,
-                unitPrice * Math.Max(0, quantity));
+                totalPrice);
         }
 
         private static ShopSellQuote Failure(
@@ -213,6 +222,24 @@ namespace RPG.Shop
                 quote.UnitPrice,
                 quote.Quantity,
                 quote.TotalPrice);
+        }
+
+        private static bool TryCalculateTotalPrice(int unitPrice, int quantity, out int totalPrice)
+        {
+            totalPrice = 0;
+            if (unitPrice < 0 || quantity <= 0)
+            {
+                return false;
+            }
+
+            var total = (long)unitPrice * quantity;
+            if (total > int.MaxValue)
+            {
+                return false;
+            }
+
+            totalPrice = (int)total;
+            return true;
         }
     }
 }

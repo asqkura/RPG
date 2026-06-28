@@ -34,10 +34,10 @@ namespace RPG.Shop
             ShopItem = shopItem;
             ProductId = productId ?? string.Empty;
             ProductType = productType;
-            UnitPrice = Math.Max(0, unitPrice);
-            Quantity = Math.Max(0, quantity);
-            TotalPrice = Math.Max(0, totalPrice);
-            RemainingStock = Math.Max(0, remainingStock);
+            UnitPrice = unitPrice;
+            Quantity = quantity;
+            TotalPrice = totalPrice;
+            RemainingStock = remainingStock;
         }
 
         public bool CanPurchase { get; }
@@ -79,7 +79,7 @@ namespace RPG.Shop
                 || string.IsNullOrWhiteSpace(shopItemId)
                 || quantity <= 0)
             {
-                return Failure(ShopPurchaseFailureReason.InvalidRequest, quantity);
+                return Failure(ShopPurchaseFailureReason.InvalidRequest);
             }
 
             if (!shopItemDatabase.TryGetById(shopItemId, out var shopItem) || shopItem == null)
@@ -108,7 +108,11 @@ namespace RPG.Shop
                 return Failure(ShopPurchaseFailureReason.SoldOut, shopItem, quantity, price, remainingStock);
             }
 
-            var totalPrice = price * quantity;
+            if (!TryCalculateTotalPrice(price, quantity, out var totalPrice))
+            {
+                return Failure(ShopPurchaseFailureReason.InvalidRequest, shopItem, quantity, price, remainingStock);
+            }
+
             if (saveData.Money < totalPrice)
             {
                 return Failure(ShopPurchaseFailureReason.NotEnoughMoney, shopItem, quantity, price, remainingStock);
@@ -173,7 +177,9 @@ namespace RPG.Shop
                 return int.MaxValue;
             }
 
-            return saveData.GetOrCreateShopStock(shopItem.ShopItemId, shopItem.StockCount).RemainingCount;
+            return saveData.TryGetShopStock(shopItem.ShopItemId, out var stock)
+                ? stock.RemainingCount
+                : shopItem.StockCount;
         }
 
         private bool TryGetProductPrice(ShopItemData shopItem, out int price)
@@ -225,7 +231,7 @@ namespace RPG.Shop
                 ownedConsumableCount += stack.Count;
             }
 
-            return ownedConsumableCount + quantity > MaxConsumableCount;
+            return ownedConsumableCount > MaxConsumableCount - quantity;
         }
 
         private void AddProductToInventory(RunSaveData saveData, ShopItemData shopItem, int quantity)
@@ -252,7 +258,7 @@ namespace RPG.Shop
             }
         }
 
-        private static ShopPurchaseQuote Failure(ShopPurchaseFailureReason reason, int quantity)
+        private static ShopPurchaseQuote Failure(ShopPurchaseFailureReason reason, int quantity = 0)
         {
             return new ShopPurchaseQuote(false, reason, null, string.Empty, default, 0, quantity, 0, 0);
         }
@@ -264,6 +270,10 @@ namespace RPG.Shop
             int unitPrice = 0,
             int remainingStock = 0)
         {
+            var totalPrice = TryCalculateTotalPrice(unitPrice, quantity, out var calculatedTotalPrice)
+                ? calculatedTotalPrice
+                : 0;
+
             return new ShopPurchaseQuote(
                 false,
                 reason,
@@ -272,7 +282,7 @@ namespace RPG.Shop
                 shopItem != null ? shopItem.ProductType : default,
                 unitPrice,
                 quantity,
-                unitPrice * Math.Max(0, quantity),
+                totalPrice,
                 remainingStock);
         }
 
@@ -293,6 +303,24 @@ namespace RPG.Shop
         private static string CreateDefaultEquipmentInstanceId()
         {
             return Guid.NewGuid().ToString("N");
+        }
+
+        private static bool TryCalculateTotalPrice(int unitPrice, int quantity, out int totalPrice)
+        {
+            totalPrice = 0;
+            if (unitPrice < 0 || quantity <= 0)
+            {
+                return false;
+            }
+
+            var total = (long)unitPrice * quantity;
+            if (total > int.MaxValue)
+            {
+                return false;
+            }
+
+            totalPrice = (int)total;
+            return true;
         }
     }
 }

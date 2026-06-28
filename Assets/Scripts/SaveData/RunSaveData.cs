@@ -11,8 +11,6 @@ namespace RPG.SaveData
         public const int LastActionDay = 40;
         public const int FinalEventDay = 41;
         public const int MaxMainProgress = 4;
-        public const int InitialSynthesisLevel = 1;
-        public const int MaxSynthesisLevel = 5;
 
         [SerializeField] private int currentDay = FirstDay;
         [SerializeField] private GamePhase currentPhase = GamePhase.Phase1;
@@ -33,8 +31,6 @@ namespace RPG.SaveData
         [SerializeField] private List<string> unlockedWanderLocationIds = new();
         [SerializeField] private List<ShopStockSaveData> shopStocks = new();
         [SerializeField] private List<int> restockedPhaseNumbers = new();
-        [SerializeField] private int synthesisLevel = InitialSynthesisLevel;
-        [SerializeField] private List<int> completedSynthesisLevelUps = new();
 
         public int CurrentDay => currentDay;
         public GamePhase CurrentPhase => currentPhase;
@@ -54,8 +50,6 @@ namespace RPG.SaveData
         public IReadOnlyList<string> UnlockedWanderLocationIds => unlockedWanderLocationIds;
         public IReadOnlyList<ShopStockSaveData> ShopStocks => shopStocks;
         public IReadOnlyList<int> RestockedPhaseNumbers => restockedPhaseNumbers;
-        public int SynthesisLevel => synthesisLevel;
-        public IReadOnlyList<int> CompletedSynthesisLevelUps => completedSynthesisLevelUps;
         public bool CanTakeNormalAction => currentDay <= LastActionDay && !actionCompletedToday;
         public bool IsFinalEventDay => currentDay >= FinalEventDay;
 
@@ -119,14 +113,13 @@ namespace RPG.SaveData
             currentPhase = GetPhaseForDay(currentDay);
             mainProgress = Mathf.Clamp(mainProgress, 0, MaxMainProgress);
             money = Mathf.Max(0, money);
-            synthesisLevel = Mathf.Clamp(synthesisLevel, InitialSynthesisLevel, MaxSynthesisLevel);
         }
 
         public void AddMoney(int amount)
         {
             if (amount > 0)
             {
-                money += amount;
+                money = ClampToIntMax((long)money + amount);
             }
         }
 
@@ -349,6 +342,14 @@ namespace RPG.SaveData
             return stock;
         }
 
+        public bool TryGetShopStock(string shopItemId, out ShopStockSaveData stock)
+        {
+            stock = string.IsNullOrWhiteSpace(shopItemId)
+                ? null
+                : shopStocks.Find(entry => entry.ShopItemId == shopItemId);
+            return stock != null;
+        }
+
         public bool WasPhaseRestocked(GamePhase phase)
         {
             return restockedPhaseNumbers.Contains((int)phase);
@@ -359,19 +360,6 @@ namespace RPG.SaveData
             if (phase != GamePhase.Final)
             {
                 AddUniqueInt(restockedPhaseNumbers, (int)phase);
-            }
-        }
-
-        public void SetSynthesisLevel(int level)
-        {
-            synthesisLevel = Mathf.Clamp(level, InitialSynthesisLevel, MaxSynthesisLevel);
-        }
-
-        public void MarkSynthesisLevelUpCompleted(int reachedLevel)
-        {
-            if (reachedLevel >= InitialSynthesisLevel && reachedLevel <= MaxSynthesisLevel)
-            {
-                AddUniqueInt(completedSynthesisLevelUps, reachedLevel);
             }
         }
 
@@ -394,7 +382,7 @@ namespace RPG.SaveData
                 return;
             }
 
-            stack.Count += count;
+            stack.Count = ClampToIntMax((long)stack.Count + count);
         }
 
         private static bool TryRemoveItemStack(List<ItemStackSaveData> stacks, string itemId, int count)
@@ -434,6 +422,11 @@ namespace RPG.SaveData
             {
                 values.Add(value);
             }
+        }
+
+        private static int ClampToIntMax(long value)
+        {
+            return value > int.MaxValue ? int.MaxValue : (int)value;
         }
     }
 }
