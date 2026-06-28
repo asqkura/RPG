@@ -277,7 +277,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
             if (i < displayEntries.Count)
             {
                 var entry = displayEntries[i];
-                row.Configure(entry.RecipeId, entry.Icon, entry.Name, entry.Detail, entry.Detail, entry.Help, entry.Level, entry.Owned, entry.Cost);
+                row.Configure(entry.RecipeId, entry.Icon, entry.Name, string.Empty, entry.Detail, entry.Detail, entry.Help, entry.Level, entry.Owned, entry.Cost);
             }
             else
             {
@@ -354,6 +354,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         lines.Add(string.Empty);
         lines.Add("スキル");
         AppendSkillLines(lines, equipment.BaseSkillIds);
+        AppendBaseTraitLines(lines, equipment.BaseTraits);
 
         return string.Join("\n", lines);
     }
@@ -379,7 +380,15 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         {
             if (!string.IsNullOrWhiteSpace(skillId))
             {
-                detail.FixedSkills.Add(FormatSkillName(skillId));
+                detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(FormatSkillName(skillId)));
+            }
+        }
+
+        foreach (var trait in equipment.BaseTraits)
+        {
+            if (trait != null)
+            {
+                detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(FormatBaseTrait(trait)));
             }
         }
 
@@ -388,7 +397,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
 
     private static void AddStatData(List<EquipmentDetailStat> stats, string label, int value)
     {
-        stats.Add(new EquipmentDetailStat(label, value != 0 ? FormatSigned(value) : "-"));
+        stats.Add(new EquipmentDetailStat(label, value != 0 ? FormatSigned(value) : "-", value.CompareTo(0)));
     }
 
     private static void AddStatData(List<EquipmentDetailStat> stats, string label, string value)
@@ -437,14 +446,14 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
             else if (detailBodyText != null)
             {
                 detailBodyText.gameObject.SetActive(true);
-                detailBodyText.text = row.DetailText;
+                detailBodyText.text = row.DetailPanelText;
             }
         }
         else if (detailBodyText != null)
         {
             equipmentDetailPanelView?.Hide();
             detailBodyText.gameObject.SetActive(true);
-            detailBodyText.text = row.DetailText;
+            detailBodyText.text = row.DetailPanelText;
         }
 
         if (detailStockText != null)
@@ -898,7 +907,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         if (resultPopupRarityText != null)
         {
             resultPopupRarityText.text = result.HasResultRarity
-                ? $"レアリティ: {FormatRarity(result.ResultRarity)}"
+                ? $"レアリティ: {MasterDataDisplayLabels.FormatRarity(result.ResultRarity)}"
                 : "入手数: 1";
         }
 
@@ -1214,18 +1223,6 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         };
     }
 
-    private static string FormatRarity(EquipmentRarity rarity)
-    {
-        return rarity switch
-        {
-            EquipmentRarity.Common => "コモン",
-            EquipmentRarity.Rare => "レア",
-            EquipmentRarity.Epic => "エピック",
-            EquipmentRarity.Legendary => "レジェンダリー",
-            _ => rarity.ToString()
-        };
-    }
-
     private static string FormatModifier(EquipmentModifierSaveData modifier)
     {
         var sign = modifier.Amount >= 0 ? "+" : string.Empty;
@@ -1233,6 +1230,37 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
         return string.IsNullOrWhiteSpace(target)
             ? $"{FormatModifierType(modifier.ModifierType)} {sign}{modifier.Amount}{FormatModifierUnit(modifier.ModifierType)}"
             : $"{target}{FormatModifierType(modifier.ModifierType)} {sign}{modifier.Amount}{FormatModifierUnit(modifier.ModifierType)}";
+    }
+
+    private static string FormatBaseTrait(EquipmentBaseTraitData trait)
+    {
+        return FormatBaseTraitType(trait.TraitType);
+    }
+
+    private static void AppendBaseTraitLines(List<string> lines, IReadOnlyList<EquipmentBaseTraitData> traits)
+    {
+        if (traits == null)
+        {
+            return;
+        }
+
+        foreach (var trait in traits)
+        {
+            if (trait != null)
+            {
+                lines.Add($"・{FormatBaseTrait(trait)}");
+            }
+        }
+    }
+
+    private static bool IsStatModifier(EquipmentModifierType modifierType)
+    {
+        return modifierType == EquipmentModifierType.Hp
+            || modifierType == EquipmentModifierType.Attack
+            || modifierType == EquipmentModifierType.Magic
+            || modifierType == EquipmentModifierType.Defense
+            || modifierType == EquipmentModifierType.Speed
+            || modifierType == EquipmentModifierType.CriticalRate;
     }
 
     private static string FormatModifierType(EquipmentModifierType modifierType)
@@ -1249,6 +1277,17 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, IItemRowVi
             EquipmentModifierType.StatusResistance => "状態異常耐性",
             EquipmentModifierType.DebuffResistance => "弱体耐性",
             _ => modifierType.ToString()
+        };
+    }
+
+    private static string FormatBaseTraitType(EquipmentBaseTraitType traitType)
+    {
+        return traitType switch
+        {
+            EquipmentBaseTraitType.AttributeResistance => "属性耐性",
+            EquipmentBaseTraitType.StatusResistance => "状態異常耐性",
+            EquipmentBaseTraitType.DebuffResistance => "弱体耐性",
+            _ => traitType.ToString()
         };
     }
 

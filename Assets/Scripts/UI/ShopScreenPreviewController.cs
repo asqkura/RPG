@@ -18,13 +18,10 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     private static readonly Color AccentTextColor = new(1f, 0.9f, 0.62f, 1f);
 
     [SerializeField] private TMP_Text detailTitleText;
+    [SerializeField] private TMP_Text detailTagText;
     [SerializeField] private Image detailIconImage;
     [SerializeField] private TMP_Text detailDescriptionText;
-    [SerializeField] private TMP_Text detailBodyText;
     [SerializeField] private EquipmentDetailPanelView equipmentDetailPanelView;
-    [SerializeField] private TMP_Text detailStockText;
-    [SerializeField] private TMP_Text detailOwnedText;
-    [SerializeField] private TMP_Text detailPriceText;
     [SerializeField] private TMP_Text helpText;
     [SerializeField] private TMP_Text moneyText;
     [SerializeField] private Button buyButton;
@@ -41,11 +38,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     [SerializeField] private Button allCategoryButton;
     [SerializeField] private Button consumableCategoryButton;
     [SerializeField] private Button materialCategoryButton;
-    [SerializeField] private Button equipmentCategoryButton;
     [SerializeField] private Button weaponCategoryButton;
     [SerializeField] private Button armorCategoryButton;
     [SerializeField] private Button accessoryCategoryButton;
-    [SerializeField] private Button otherCategoryButton;
     [SerializeField] private ShopItemDatabase shopItemDatabase;
     [SerializeField] private ItemDatabase itemDatabase;
     [SerializeField] private EquipmentDatabase equipmentDatabase;
@@ -66,7 +61,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     private void Awake()
     {
         InitializeGameState();
-        ResolveOptionalReferences();
         RegisterCategoryButtons();
         RegisterModeButtons();
         RefreshModeButtons();
@@ -103,11 +97,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             materialCategoryButton.onClick.RemoveListener(ShowMaterials);
         }
 
-        if (equipmentCategoryButton != null)
-        {
-            equipmentCategoryButton.onClick.RemoveListener(ShowEquipment);
-        }
-
         if (weaponCategoryButton != null)
         {
             weaponCategoryButton.onClick.RemoveListener(ShowWeapons);
@@ -121,11 +110,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         if (accessoryCategoryButton != null)
         {
             accessoryCategoryButton.onClick.RemoveListener(ShowAccessories);
-        }
-
-        if (otherCategoryButton != null)
-        {
-            otherCategoryButton.onClick.RemoveListener(ShowOther);
         }
 
         if (buyButton != null)
@@ -190,6 +174,11 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             detailTitleText.text = row.ItemName;
         }
 
+        if (detailTagText != null)
+        {
+            detailTagText.text = row.TagText;
+        }
+
         if (detailIconImage != null)
         {
             detailIconImage.sprite = row.IconSprite;
@@ -203,40 +192,11 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
 
         if (equipmentDetailsByEntryId.TryGetValue(row.ShopItemId, out var equipmentDetail))
         {
-            if (equipmentDetailPanelView != null)
-            {
-                equipmentDetailPanelView.Show(equipmentDetail);
-                if (detailBodyText != null)
-                {
-                    detailBodyText.gameObject.SetActive(false);
-                }
-            }
-            else if (detailBodyText != null)
-            {
-                detailBodyText.gameObject.SetActive(true);
-                detailBodyText.text = row.DetailText;
-            }
+            equipmentDetailPanelView?.Show(equipmentDetail);
         }
-        else if (detailBodyText != null)
+        else
         {
             equipmentDetailPanelView?.Hide();
-            detailBodyText.gameObject.SetActive(true);
-            detailBodyText.text = row.DetailText;
-        }
-
-        if (detailStockText != null)
-        {
-            detailStockText.text = row.StockText;
-        }
-
-        if (detailOwnedText != null)
-        {
-            detailOwnedText.text = row.OwnedText;
-        }
-
-        if (detailPriceText != null)
-        {
-            detailPriceText.text = row.PriceText;
         }
 
         if (helpText != null)
@@ -382,11 +342,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         ShowCategory(ShopCategory.Material);
     }
 
-    private void ShowEquipment()
-    {
-        ShowCategory(ShopCategory.Equipment);
-    }
-
     private void ShowWeapons()
     {
         ShowCategory(ShopCategory.Weapon);
@@ -400,11 +355,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     private void ShowAccessories()
     {
         ShowCategory(ShopCategory.Accessory);
-    }
-
-    private void ShowOther()
-    {
-        ShowCategory(ShopCategory.Other);
     }
 
     private void ShowCategory(ShopCategory category)
@@ -464,8 +414,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
                     entry.ShopItemId,
                     entry.Icon,
                     entry.Name,
+                    entry.Tag,
                     entry.Description,
-                    entry.Detail,
+                    entry.EquipmentDetail,
                     entry.Help,
                     entry.Stock,
                     entry.Owned,
@@ -582,7 +533,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             return false;
         }
 
-        if (IsEquipmentCategory(currentCategory) || currentCategory == ShopCategory.Other)
+        if (IsEquipmentCategory(currentCategory))
         {
             return false;
         }
@@ -591,8 +542,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             shopItem.ShopItemId,
             item.IconSprite,
             item.DisplayName,
+            BuildItemTag(item),
             item.Description,
-            BuildItemDetail(item),
+            string.Empty,
             $"{item.DisplayName}を購入します。",
             FormatStock(shopItem),
             FormatOwnedCount(GetOwnedItemCount(item)),
@@ -621,8 +573,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             shopItem.ShopItemId,
             equipment.IconSprite,
             equipment.DisplayName,
+            BuildEquipmentTag(equipment, EquipmentRarity.Common),
             equipment.Description,
-            BuildEquipmentDetail(equipment, null),
+            string.Empty,
             $"{equipment.DisplayName}を購入します。",
             FormatStock(shopItem),
             FormatOwnedCount(GetOwnedEquipmentCount(equipment.EquipmentId)),
@@ -638,8 +591,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             item.ItemId,
             item.IconSprite,
             item.DisplayName,
+            BuildItemTag(item),
             item.Description,
-            BuildItemDetail(item),
+            string.Empty,
             $"{item.DisplayName}を売却します。",
             string.Empty,
             FormatOwnedCount(ownedCount),
@@ -653,8 +607,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             ownedEquipment.OwnedEquipmentInstanceId,
             equipment.IconSprite,
             equipment.DisplayName,
+            BuildEquipmentTag(equipment, ownedEquipment.Rarity),
             equipment.Description,
-            BuildEquipmentDetail(equipment, ownedEquipment),
+            string.Empty,
             $"{equipment.DisplayName}を売却します。",
             string.Empty,
             FormatOwnedCount(1),
@@ -663,30 +618,23 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         return entry;
     }
 
-    private static string BuildItemDetail(ItemData item)
+    private static string BuildItemTag(ItemData item)
     {
-        var typeText = item.ItemType == ItemDataType.Consumable ? "消耗品" : "素材";
-
-        return $"種別: {typeText}";
+        return MasterDataDisplayLabels.FormatTag(MasterDataDisplayLabels.FormatItemType(item.ItemType));
     }
 
-    private string BuildEquipmentDetail(EquipmentData equipment, OwnedEquipmentSaveData ownedEquipment)
+    private static string BuildEquipmentTag(EquipmentData equipment, EquipmentRarity rarity)
     {
-        var lines = new List<string>();
-
-        lines.Add("ステータス");
-        AppendStatLines(lines, equipment.StatModifiers, ownedEquipment?.RandomModifiers);
-
-        lines.Add(string.Empty);
-        lines.Add("スキル");
-        AppendSkillLines(lines, equipment.BaseSkillIds, ownedEquipment?.RandomSkillId);
-
-        return string.Join("\n", lines);
+        return MasterDataDisplayLabels.FormatTag(MasterDataDisplayLabels.FormatEquipmentType(equipment))
+            + MasterDataDisplayLabels.FormatTag(MasterDataDisplayLabels.FormatRarity(rarity));
     }
 
     private EquipmentDetailData BuildEquipmentDetailData(EquipmentData equipment, OwnedEquipmentSaveData ownedEquipment)
     {
-        var detail = new EquipmentDetailData();
+        var detail = new EquipmentDetailData
+        {
+            Description = equipment.Description
+        };
 
         AddStatData(detail.Stats, "HP", (equipment.StatModifiers?.Hp ?? 0) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.Hp));
         AddStatData(detail.Stats, "SP", equipment.StatModifiers?.Sp ?? 0);
@@ -695,36 +643,49 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         AddStatData(detail.Stats, "防御", (equipment.StatModifiers?.Defense ?? 0) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.Defense));
         AddStatData(detail.Stats, "素早さ", (equipment.StatModifiers?.Speed ?? 0) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.Speed));
         var criticalRate = Mathf.RoundToInt((equipment.StatModifiers?.CriticalRate ?? 0f) * 100f) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.CriticalRate);
-        AddStatData(detail.Stats, "会心率", criticalRate != 0
-            ? $"{FormatSigned(criticalRate)}%"
-            : "-");
+        AddStatData(detail.Stats, "会心率", criticalRate, "%");
 
         foreach (var skillId in equipment.BaseSkillIds)
         {
             var skillName = FormatSkillName(skillId, string.Empty);
             if (!string.IsNullOrWhiteSpace(skillName))
             {
-                detail.FixedSkills.Add(skillName);
+                detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(skillName));
             }
         }
 
         var randomSkillName = FormatSkillName(ownedEquipment?.RandomSkillId, string.Empty);
         if (!string.IsNullOrWhiteSpace(randomSkillName))
         {
-            detail.FixedSkills.Add(randomSkillName);
+            detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(randomSkillName));
+        }
+
+        foreach (var trait in equipment.BaseTraits)
+        {
+            if (trait != null)
+            {
+                detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(FormatBaseTrait(trait)));
+            }
+        }
+
+        if (ownedEquipment != null)
+        {
+            foreach (var modifier in ownedEquipment.RandomModifiers)
+            {
+                if (modifier != null && !IsStatModifier(modifier.ModifierType))
+                {
+                    detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(FormatModifier(modifier)));
+                }
+            }
         }
 
         return detail;
     }
 
-    private static void AddStatData(List<EquipmentDetailStat> stats, string label, int value)
+    private static void AddStatData(List<EquipmentDetailStat> stats, string label, int value, string suffix = "")
     {
-        stats.Add(new EquipmentDetailStat(label, value != 0 ? FormatSigned(value) : "-"));
-    }
-
-    private static void AddStatData(List<EquipmentDetailStat> stats, string label, string value)
-    {
-        stats.Add(new EquipmentDetailStat(label, string.IsNullOrWhiteSpace(value) ? "-" : value));
+        var text = value != 0 ? $"{FormatSigned(value)}{suffix}" : "-";
+        stats.Add(new EquipmentDetailStat(label, text, value.CompareTo(0)));
     }
 
     private static int GetRandomModifierAmount(OwnedEquipmentSaveData ownedEquipment, EquipmentModifierType modifierType)
@@ -746,88 +707,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         return amount;
     }
 
-    private static void AppendStatLines(List<string> lines, BattleStats stats, IReadOnlyList<EquipmentModifierSaveData> randomModifiers)
-    {
-        AddStatLine(lines, "HP", (stats?.Hp ?? 0) + GetRandomModifierAmount(randomModifiers, EquipmentModifierType.Hp));
-        AddStatLine(lines, "SP", stats?.Sp ?? 0);
-        AddStatLine(lines, "攻撃", (stats?.Attack ?? 0) + GetRandomModifierAmount(randomModifiers, EquipmentModifierType.Attack));
-        AddStatLine(lines, "魔力", (stats?.Magic ?? 0) + GetRandomModifierAmount(randomModifiers, EquipmentModifierType.Magic));
-        AddStatLine(lines, "防御", (stats?.Defense ?? 0) + GetRandomModifierAmount(randomModifiers, EquipmentModifierType.Defense));
-        AddStatLine(lines, "素早さ", (stats?.Speed ?? 0) + GetRandomModifierAmount(randomModifiers, EquipmentModifierType.Speed));
-        var criticalRate = Mathf.RoundToInt((stats?.CriticalRate ?? 0f) * 100f) + GetRandomModifierAmount(randomModifiers, EquipmentModifierType.CriticalRate);
-        lines.Add($"・会心率 {(criticalRate != 0 ? $"{FormatSigned(criticalRate)}%" : "-")}");
-    }
-
-    private static int GetRandomModifierAmount(IReadOnlyList<EquipmentModifierSaveData> randomModifiers, EquipmentModifierType modifierType)
-    {
-        if (randomModifiers == null)
-        {
-            return 0;
-        }
-
-        var amount = 0;
-        foreach (var modifier in randomModifiers)
-        {
-            if (modifier != null && modifier.ModifierType == modifierType)
-            {
-                amount += modifier.Amount;
-            }
-        }
-
-        return amount;
-    }
-
-    private static void AddStatLine(List<string> lines, string label, int value)
-    {
-        lines.Add($"・{label} {(value != 0 ? FormatSigned(value) : "-")}");
-    }
-
-    private string FormatSkillList(IReadOnlyList<string> skillIds)
-    {
-        if (skillIds == null || skillIds.Count == 0)
-        {
-            return "なし";
-        }
-
-        var names = new List<string>();
-        foreach (var skillId in skillIds)
-        {
-            if (!string.IsNullOrWhiteSpace(skillId))
-            {
-                names.Add(FormatSkillName(skillId, skillId));
-            }
-        }
-
-        return names.Count > 0 ? string.Join("、", names) : "なし";
-    }
-
-    private void AppendSkillLines(List<string> lines, IReadOnlyList<string> skillIds, string extraSkillId = null)
-    {
-        var startCount = lines.Count;
-        if (skillIds != null)
-        {
-            foreach (var skillId in skillIds)
-            {
-                var skillName = FormatSkillName(skillId, string.Empty);
-                if (!string.IsNullOrWhiteSpace(skillName))
-                {
-                    lines.Add($"・{skillName}");
-                }
-            }
-        }
-
-        var extraSkillName = FormatSkillName(extraSkillId, string.Empty);
-        if (!string.IsNullOrWhiteSpace(extraSkillName))
-        {
-            lines.Add($"・{extraSkillName}");
-        }
-
-        if (lines.Count == startCount)
-        {
-            lines.Add("・なし");
-        }
-    }
-
     private string FormatSkillName(string skillId, string emptyText)
     {
         if (string.IsNullOrWhiteSpace(skillId))
@@ -846,27 +725,71 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         return skillId;
     }
 
+    private static bool IsStatModifier(EquipmentModifierType modifierType)
+    {
+        return modifierType == EquipmentModifierType.Hp
+            || modifierType == EquipmentModifierType.Attack
+            || modifierType == EquipmentModifierType.Magic
+            || modifierType == EquipmentModifierType.Defense
+            || modifierType == EquipmentModifierType.Speed
+            || modifierType == EquipmentModifierType.CriticalRate;
+    }
+
+    private static string FormatModifier(EquipmentModifierSaveData modifier)
+    {
+        var target = FormatModifierTarget(modifier.TargetId);
+        var sign = modifier.Amount >= 0 ? "+" : string.Empty;
+        return string.IsNullOrWhiteSpace(target)
+            ? $"{FormatModifierType(modifier.ModifierType)} {sign}{modifier.Amount}{FormatModifierUnit(modifier.ModifierType)}"
+            : $"{target}{FormatModifierType(modifier.ModifierType)} {sign}{modifier.Amount}{FormatModifierUnit(modifier.ModifierType)}";
+    }
+
+    private static string FormatBaseTrait(EquipmentBaseTraitData trait)
+    {
+        return FormatBaseTraitType(trait.TraitType);
+    }
+
+    private static string FormatModifierType(EquipmentModifierType modifierType)
+    {
+        return modifierType switch
+        {
+            EquipmentModifierType.AttributeResistance => "属性耐性",
+            EquipmentModifierType.StatusResistance => "状態異常耐性",
+            EquipmentModifierType.DebuffResistance => "弱体耐性",
+            _ => modifierType.ToString()
+        };
+    }
+
+    private static string FormatBaseTraitType(EquipmentBaseTraitType traitType)
+    {
+        return traitType switch
+        {
+            EquipmentBaseTraitType.AttributeResistance => "属性耐性",
+            EquipmentBaseTraitType.StatusResistance => "状態異常耐性",
+            EquipmentBaseTraitType.DebuffResistance => "弱体耐性",
+            _ => traitType.ToString()
+        };
+    }
+
+    private static string FormatModifierUnit(EquipmentModifierType modifierType)
+    {
+        return modifierType == EquipmentModifierType.AttributeResistance
+            || modifierType == EquipmentModifierType.StatusResistance
+            || modifierType == EquipmentModifierType.DebuffResistance
+            ? "%"
+            : string.Empty;
+    }
+
+    private static string FormatModifierTarget(string targetId)
+    {
+        return string.IsNullOrWhiteSpace(targetId) || targetId == "all"
+            ? string.Empty
+            : $"{targetId} ";
+    }
+
     private static string FormatSigned(int value)
     {
         return value >= 0 ? $"+{value}" : value.ToString();
-    }
-
-    private static string FormatSignedPercent(float value)
-    {
-        var percent = Mathf.RoundToInt(value * 100f);
-        return $"{FormatSigned(percent)}%";
-    }
-
-    private static string FormatRarity(EquipmentRarity rarity)
-    {
-        return rarity switch
-        {
-            EquipmentRarity.Common => "コモン",
-            EquipmentRarity.Rare => "レア",
-            EquipmentRarity.Epic => "エピック",
-            EquipmentRarity.Legendary => "レジェンダリー",
-            _ => rarity.ToString()
-        };
     }
 
     private string FormatStock(ShopItemData shopItem)
@@ -910,90 +833,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         sellService = new ShopSellService(itemDatabase, equipmentDatabase);
     }
 
-    private void ResolveOptionalReferences()
-    {
-        if (buyButton == null)
-        {
-            buyButton = FindDeep(transform, "BuyButton")?.GetComponent<Button>();
-        }
-
-        if (moneyText == null)
-        {
-            moneyText = FindDeep(transform, "MoneyPanel")?.Find("Value")?.GetComponent<TMP_Text>();
-        }
-
-        if (buyTabButton == null)
-        {
-            buyTabButton = FindDeep(transform, "BuyTab")?.GetComponent<Button>();
-        }
-
-        if (sellTabButton == null)
-        {
-            sellTabButton = FindDeep(transform, "SellTab")?.GetComponent<Button>();
-        }
-
-        if (allCategoryButton == null)
-        {
-            allCategoryButton = FindDeep(transform, "AllCategory")?.GetComponent<Button>();
-        }
-
-        if (consumableCategoryButton == null)
-        {
-            consumableCategoryButton = FindDeep(transform, "ConsumableCategory")?.GetComponent<Button>();
-        }
-
-        if (materialCategoryButton == null)
-        {
-            materialCategoryButton = FindDeep(transform, "MaterialCategory")?.GetComponent<Button>();
-        }
-
-        if (weaponCategoryButton == null)
-        {
-            weaponCategoryButton = FindDeep(transform, "WeaponCategory")?.GetComponent<Button>();
-        }
-
-        if (armorCategoryButton == null)
-        {
-            armorCategoryButton = FindDeep(transform, "ArmorCategory")?.GetComponent<Button>();
-        }
-
-        if (accessoryCategoryButton == null)
-        {
-            accessoryCategoryButton = FindDeep(transform, "AccessoryCategory")?.GetComponent<Button>();
-        }
-
-        if (otherCategoryButton == null)
-        {
-            otherCategoryButton = FindDeep(transform, "OtherCategory")?.GetComponent<Button>();
-        }
-
-        if (actionButtonLabel == null)
-        {
-            actionButtonLabel = FindDeep(transform, "BuyButton")?.Find("Label")?.GetComponent<TMP_Text>();
-        }
-
-        if (stockHeaderText == null)
-        {
-            stockHeaderText = FindDeep(transform, "在庫Header")?.GetComponent<TMP_Text>();
-        }
-
-        if (ownedHeaderText == null)
-        {
-            ownedHeaderText = FindDeep(transform, "所持Header")?.GetComponent<TMP_Text>();
-        }
-
-        if (priceHeaderText == null)
-        {
-            priceHeaderText = FindDeep(transform, "価格Header")?.GetComponent<TMP_Text>();
-        }
-
-        if (equipmentDetailPanelView == null)
-        {
-            equipmentDetailPanelView = FindDeep(transform, "EquipmentDetailPanel")?.GetComponent<EquipmentDetailPanelView>();
-        }
-
-    }
-
     private void RegisterCategoryButtons()
     {
         if (allCategoryButton != null)
@@ -1011,11 +850,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             materialCategoryButton.onClick.AddListener(ShowMaterials);
         }
 
-        if (equipmentCategoryButton != null)
-        {
-            equipmentCategoryButton.onClick.AddListener(ShowEquipment);
-        }
-
         if (weaponCategoryButton != null)
         {
             weaponCategoryButton.onClick.AddListener(ShowWeapons);
@@ -1029,11 +863,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         if (accessoryCategoryButton != null)
         {
             accessoryCategoryButton.onClick.AddListener(ShowAccessories);
-        }
-
-        if (otherCategoryButton != null)
-        {
-            otherCategoryButton.onClick.AddListener(ShowOther);
         }
 
         if (buyButton != null)
@@ -1060,11 +889,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         SetCategoryButtonState(allCategoryButton, currentCategory == ShopCategory.All);
         SetCategoryButtonState(consumableCategoryButton, currentCategory == ShopCategory.Consumable);
         SetCategoryButtonState(materialCategoryButton, currentCategory == ShopCategory.Material);
-        SetCategoryButtonState(equipmentCategoryButton, currentCategory == ShopCategory.Equipment);
         SetCategoryButtonState(weaponCategoryButton, currentCategory == ShopCategory.Weapon);
         SetCategoryButtonState(armorCategoryButton, currentCategory == ShopCategory.Armor);
         SetCategoryButtonState(accessoryCategoryButton, currentCategory == ShopCategory.Accessory);
-        SetCategoryButtonState(otherCategoryButton, currentCategory == ShopCategory.Other);
     }
 
     private void RefreshModeButtons()
@@ -1237,38 +1064,22 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             detailTitleText.text = string.Empty;
         }
 
+        if (detailTagText != null)
+        {
+            detailTagText.text = string.Empty;
+        }
+
         if (detailIconImage != null)
         {
             detailIconImage.sprite = null;
             detailIconImage.enabled = false;
         }
 
-        if (detailBodyText != null)
-        {
-            detailBodyText.gameObject.SetActive(true);
-            detailBodyText.text = string.Empty;
-        }
+        equipmentDetailPanelView?.Hide();
 
         if (detailDescriptionText != null)
         {
             detailDescriptionText.text = string.Empty;
-        }
-
-        equipmentDetailPanelView?.Hide();
-
-        if (detailStockText != null)
-        {
-            detailStockText.text = string.Empty;
-        }
-
-        if (detailOwnedText != null)
-        {
-            detailOwnedText.text = string.Empty;
-        }
-
-        if (detailPriceText != null)
-        {
-            detailPriceText.text = string.Empty;
         }
 
         if (helpText != null)
@@ -1346,8 +1157,7 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
 
     private static bool IsEquipmentCategory(ShopCategory category)
     {
-        return category == ShopCategory.Equipment
-            || category == ShopCategory.Weapon
+        return category == ShopCategory.Weapon
             || category == ShopCategory.Armor
             || category == ShopCategory.Accessory;
     }
@@ -1362,7 +1172,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         switch (category)
         {
             case ShopCategory.All:
-            case ShopCategory.Equipment:
                 return true;
             case ShopCategory.Weapon:
                 return equipment.EquipmentType == EquipmentDataType.Weapon;
@@ -1438,38 +1247,15 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         };
     }
 
-    private static Transform FindDeep(Transform root, string targetName)
-    {
-        if (root == null)
-        {
-            return null;
-        }
-
-        if (root.name == targetName)
-        {
-            return root;
-        }
-
-        foreach (Transform child in root)
-        {
-            var result = FindDeep(child, targetName);
-            if (result != null)
-            {
-                return result;
-            }
-        }
-
-        return null;
-    }
-
     private readonly struct ShopDisplayEntry
     {
         public ShopDisplayEntry(
             string shopItemId,
             Sprite icon,
             string name,
+            string tag,
             string description,
-            string detail,
+            string equipmentDetail,
             string help,
             string stock,
             string owned,
@@ -1478,8 +1264,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             ShopItemId = shopItemId ?? string.Empty;
             Icon = icon;
             Name = name;
+            Tag = tag ?? string.Empty;
             Description = description ?? string.Empty;
-            Detail = detail;
+            EquipmentDetail = equipmentDetail;
             Help = help;
             Stock = stock;
             Owned = owned;
@@ -1489,8 +1276,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         public string ShopItemId { get; }
         public Sprite Icon { get; }
         public string Name { get; }
+        public string Tag { get; }
         public string Description { get; }
-        public string Detail { get; }
+        public string EquipmentDetail { get; }
         public string Help { get; }
         public string Stock { get; }
         public string Owned { get; }
@@ -1502,11 +1290,9 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         All,
         Consumable,
         Material,
-        Equipment,
         Weapon,
         Armor,
-        Accessory,
-        Other
+        Accessory
     }
 
     private enum ShopMode
