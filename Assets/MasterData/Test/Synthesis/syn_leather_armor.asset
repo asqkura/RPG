@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_leather_armor
   displayName: 
   description: 
-  requiredSynthesisLevel: 1
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: 222cebad2bd613742aa136dbcf7c1fdf, type: 2}

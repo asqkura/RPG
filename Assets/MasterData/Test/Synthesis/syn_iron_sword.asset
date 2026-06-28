@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_iron_sword
   displayName: 
   description: 
-  requiredSynthesisLevel: 1
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: a5e93160e3df7cd4db9d16233992a04d, type: 2}

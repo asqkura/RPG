@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_apprentice_dagger
   displayName: 
   description: 
-  requiredSynthesisLevel: 1
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: adcdf79f0a0f18940a9e584d00bf6b27, type: 2}

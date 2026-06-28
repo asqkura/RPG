@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_guard_salve
   displayName: 
   description: 
-  requiredSynthesisLevel: 2
   productType: 0
   productItem: {fileID: 11400000, guid: 7411d5b507ff77a4b8f741dee79dc947, type: 2}
   productEquipment: {fileID: 0}

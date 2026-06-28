@@ -28,25 +28,13 @@ namespace RPG.SaveData
         Back
     }
 
-    public enum EquipmentRarity
-    {
-        Common,
-        Rare,
-        Epic,
-        Legendary
-    }
-
     public enum EquipmentModifierType
     {
-        Hp,
         Attack,
         Magic,
         Defense,
         Speed,
-        CriticalRate,
-        AttributeResistance,
-        StatusResistance,
-        DebuffResistance
+        CriticalRate
     }
 
     public enum SaveSlotKind
@@ -128,28 +116,27 @@ namespace RPG.SaveData
     {
         [SerializeField] private string ownedEquipmentInstanceId = string.Empty;
         [SerializeField] private string equipmentId = string.Empty;
-        [SerializeField] private EquipmentRarity rarity;
-        [SerializeField] private List<EquipmentModifierSaveData> randomModifiers = new();
-        [SerializeField] private string randomSkillId = string.Empty;
+        [SerializeField] private List<EquipmentModifierSaveData> randomStatModifiers = new();
+        [SerializeField] private string randomPassiveId = string.Empty;
+        [SerializeField] private int randomPassiveLevel;
 
-        public OwnedEquipmentSaveData(string ownedEquipmentInstanceId, string equipmentId, EquipmentRarity rarity)
+        public OwnedEquipmentSaveData(string ownedEquipmentInstanceId, string equipmentId)
         {
             this.ownedEquipmentInstanceId = ownedEquipmentInstanceId;
             this.equipmentId = equipmentId;
-            this.rarity = rarity;
         }
 
         public string OwnedEquipmentInstanceId => ownedEquipmentInstanceId;
         public string EquipmentId => equipmentId;
-        public EquipmentRarity Rarity => rarity;
-        public IReadOnlyList<EquipmentModifierSaveData> RandomModifiers => randomModifiers;
-        public string RandomSkillId { get => randomSkillId; set => randomSkillId = value ?? string.Empty; }
+        public IReadOnlyList<EquipmentModifierSaveData> RandomStatModifiers => randomStatModifiers;
+        public string RandomPassiveId { get => randomPassiveId; set => randomPassiveId = value ?? string.Empty; }
+        public int RandomPassiveLevel { get => randomPassiveLevel; set => randomPassiveLevel = Mathf.Max(0, value); }
 
-        public void AddRandomModifier(EquipmentModifierSaveData modifier)
+        public void AddRandomStatModifier(EquipmentModifierSaveData modifier)
         {
             if (modifier != null)
             {
-                randomModifiers.Add(modifier);
+                randomStatModifiers.Add(modifier);
             }
         }
     }

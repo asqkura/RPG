@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_antidote
   displayName: 
   description: 
-  requiredSynthesisLevel: 1
   productType: 0
   productItem: {fileID: 11400000, guid: 3c80a4571cd35dc4fa93d6f5bd6808ff, type: 2}
   productEquipment: {fileID: 0}

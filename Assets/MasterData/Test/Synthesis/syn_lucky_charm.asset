@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_lucky_charm
   displayName: 
   description: 
-  requiredSynthesisLevel: 1
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: e2e3875199bd7e842801e3179925a39e, type: 2}

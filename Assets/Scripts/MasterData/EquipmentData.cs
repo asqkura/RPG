@@ -1,7 +1,7 @@
+using System;
 using System.Collections.Generic;
 using RPG.SaveData;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace RPG.MasterData
 {
@@ -12,11 +12,10 @@ namespace RPG.MasterData
         [SerializeField] private EquipmentDataType equipmentType;
         [SerializeField] private WeaponDataType weaponType;
         [SerializeField] private BattleStats statModifiers = new();
-        [FormerlySerializedAs("baseModifiers")]
-        [SerializeField] private List<EquipmentBaseTraitData> baseTraits = new();
-        [SerializeField] private List<string> baseSkillIds = new();
-        [SerializeField] private List<string> randomSkillPool = new();
-        [SerializeField] private List<EquipmentModifierType> allowedRandomModifierTypes = new();
+        [SerializeField] private List<string> activeSkillIds = new();
+        [SerializeField] private List<string> fixedPassiveIds = new();
+        [SerializeField] private List<EquipmentRandomPassiveData> randomPassivePool = new();
+        [SerializeField] private List<EquipmentModifierType> allowedRandomStatTypes = new();
         [SerializeField] private List<string> equippableBy = new();
         [Min(0)]
         [SerializeField] private int price;
@@ -28,10 +27,12 @@ namespace RPG.MasterData
         public EquipmentDataType EquipmentType => equipmentType;
         public WeaponDataType WeaponType => weaponType;
         public BattleStats StatModifiers => statModifiers;
-        public IReadOnlyList<EquipmentBaseTraitData> BaseTraits => baseTraits;
-        public IReadOnlyList<string> BaseSkillIds => baseSkillIds;
-        public IReadOnlyList<string> RandomSkillPool => randomSkillPool;
-        public IReadOnlyList<EquipmentModifierType> AllowedRandomModifierTypes => allowedRandomModifierTypes;
+        public IReadOnlyList<string> ActiveSkillIds => equipmentType == EquipmentDataType.Weapon
+            ? activeSkillIds
+            : Array.Empty<string>();
+        public IReadOnlyList<string> FixedPassiveIds => fixedPassiveIds;
+        public IReadOnlyList<EquipmentRandomPassiveData> RandomPassivePool => randomPassivePool;
+        public IReadOnlyList<EquipmentModifierType> AllowedRandomStatTypes => allowedRandomStatTypes;
         public IReadOnlyList<string> EquippableBy => equippableBy;
         public int Price => price;
         public bool Unsellable => unsellable;

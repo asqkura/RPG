@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_hunter_bow
   displayName: 
   description: 
-  requiredSynthesisLevel: 2
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: 39fd1d81e022551429505374630558dc, type: 2}

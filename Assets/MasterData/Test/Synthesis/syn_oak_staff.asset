@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_oak_staff
   displayName: 
   description: 
-  requiredSynthesisLevel: 2
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: e0b4f24c1163d5241b6443d9d3ce9fe3, type: 2}

@@ -26,9 +26,20 @@ MonoBehaviour:
     defense: 0
     speed: 1
     criticalRate: 0.03
-  baseSkillIds: []
-  randomSkillPool: []
-  allowedRandomModifierTypes:
+  activeSkillIds:
+  - skill_aimed_shot
+  fixedPassiveIds: []
+  randomPassivePool:
+  - passiveId: passive_accuracy_up
+    minLevel: 1
+    maxLevel: 3
+  - passiveId: passive_status_success_up
+    minLevel: 1
+    maxLevel: 3
+  allowedRandomStatTypes:
+  - 0
+  - 3
+  - 4
   equippableBy: []
   price: 700
   unsellable: 0

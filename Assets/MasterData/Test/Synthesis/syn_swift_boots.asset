@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_swift_boots
   displayName: 
   description: 
-  requiredSynthesisLevel: 3
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: 4deebb6f25f271c48b97381891b5367b, type: 2}

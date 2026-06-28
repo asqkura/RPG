@@ -10,7 +10,6 @@ public sealed class SynthesisRecipeDataEditor : Editor
         serializedObject.Update();
 
         EditorGUILayout.PropertyField(serializedObject.FindProperty("id"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("requiredSynthesisLevel"));
 
         var productType = serializedObject.FindProperty("productType");
         var productItem = serializedObject.FindProperty("productItem");

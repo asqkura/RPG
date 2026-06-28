@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_iron_mail
   displayName: 
   description: 
-  requiredSynthesisLevel: 3
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: dc62ac88ef9a1dd47881b0ca47dda796, type: 2}

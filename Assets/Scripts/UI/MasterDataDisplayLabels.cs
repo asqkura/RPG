@@ -1,5 +1,4 @@
 using RPG.MasterData;
-using RPG.SaveData;
 
 public static class MasterDataDisplayLabels
 {
@@ -46,18 +45,6 @@ public static class MasterDataDisplayLabels
             WeaponDataType.Bow => "弓",
             WeaponDataType.Staff => "杖",
             _ => Weapon
-        };
-    }
-
-    public static string FormatRarity(EquipmentRarity rarity)
-    {
-        return rarity switch
-        {
-            EquipmentRarity.Common => "コモン",
-            EquipmentRarity.Rare => "レア",
-            EquipmentRarity.Epic => "エピック",
-            EquipmentRarity.Legendary => "レジェンダリー",
-            _ => rarity.ToString()
         };
     }
 

@@ -10,7 +10,6 @@ namespace RPG.Synthesis
         None,
         InvalidRequest,
         RecipeNotFound,
-        SynthesisLevelTooLow,
         ProductNotFound,
         NotEnoughMaterials,
         NotEnoughMoney,
@@ -159,11 +158,6 @@ namespace RPG.Synthesis
             if (!recipeDatabase.TryGetById(recipeId, out var recipe) || recipe == null)
             {
                 return Failure(SynthesisFailureReason.RecipeNotFound);
-            }
-
-            if (recipe.RequiredSynthesisLevel > saveData.SynthesisLevel)
-            {
-                return Failure(SynthesisFailureReason.SynthesisLevelTooLow, recipe);
             }
 
             if (!ProductExists(recipe))
@@ -431,128 +425,205 @@ namespace RPG.Synthesis
 
         private OwnedEquipmentSaveData CreateOwnedEquipment(string equipmentId, int synthesisLevel, EquipmentData equipment)
         {
-            var rarity = RollSynthesisRarity(synthesisLevel);
             var ownedEquipment = new OwnedEquipmentSaveData(
                 CreateOwnedEquipmentInstanceId(equipmentId),
-                equipmentId,
-                rarity);
+                equipmentId);
 
-            AddRandomModifiers(ownedEquipment, equipment, rarity);
-            ownedEquipment.RandomSkillId = RollRandomSkill(equipment, rarity);
+            AddRandomStatModifiers(ownedEquipment, equipment, synthesisLevel);
+            RollRandomPassive(ownedEquipment, equipment, synthesisLevel);
             return ownedEquipment;
         }
 
-        private EquipmentRarity RollSynthesisRarity(int synthesisLevel)
+        private void AddRandomStatModifiers(OwnedEquipmentSaveData ownedEquipment, EquipmentData equipment, int synthesisLevel)
         {
-            var roll = random.Next(100);
-            var commonThreshold = synthesisLevel switch
+            var candidates = GetRandomStatCandidates(equipment);
+            foreach (var modifierType in candidates)
             {
-                1 => 75,
-                2 => 65,
-                3 => 55,
-                4 => 45,
-                _ => 35
-            };
-            var rareThreshold = synthesisLevel switch
-            {
-                1 => 98,
-                2 => 95,
-                3 => 90,
-                4 => 85,
-                _ => 80
-            };
-            var epicThreshold = synthesisLevel switch
-            {
-                1 => 100,
-                2 => 100,
-                3 => 99,
-                4 => 98,
-                _ => 97
-            };
+                var amount = RollRandomStatModifierAmount(modifierType, synthesisLevel);
+                if (amount == 0)
+                {
+                    continue;
+                }
 
-            if (roll < commonThreshold)
-            {
-                return EquipmentRarity.Common;
-            }
-
-            if (roll < rareThreshold)
-            {
-                return EquipmentRarity.Rare;
-            }
-
-            return roll < epicThreshold ? EquipmentRarity.Epic : EquipmentRarity.Legendary;
-        }
-
-        private void AddRandomModifiers(OwnedEquipmentSaveData ownedEquipment, EquipmentData equipment, EquipmentRarity rarity)
-        {
-            var count = RollRandomModifierCount(rarity);
-            for (var i = 0; i < count; i++)
-            {
-                var modifierType = RollRandomModifierType(equipment);
-                ownedEquipment.AddRandomModifier(new EquipmentModifierSaveData(
+                ownedEquipment.AddRandomStatModifier(new EquipmentModifierSaveData(
                     modifierType,
                     string.Empty,
-                    RollRandomModifierAmount(modifierType)));
+                    amount));
             }
         }
 
-        private int RollRandomModifierCount(EquipmentRarity rarity)
+        private List<EquipmentModifierType> GetRandomStatCandidates(EquipmentData equipment)
         {
-            return rarity switch
+            var candidates = new List<EquipmentModifierType>();
+            if (equipment == null)
             {
-                EquipmentRarity.Common => random.Next(0, 2),
-                EquipmentRarity.Rare => 1,
-                EquipmentRarity.Epic => random.Next(1, 3),
-                EquipmentRarity.Legendary => random.Next(2, 4),
-                _ => 0
-            };
+                candidates.Add(EquipmentModifierType.Speed);
+                return candidates;
+            }
+
+            if (equipment.AllowedRandomStatTypes.Count > 0)
+            {
+                foreach (var candidate in equipment.AllowedRandomStatTypes)
+                {
+                    AddUniqueStatCandidate(candidates, candidate);
+                }
+            }
+            else
+            {
+                var stats = equipment.StatModifiers;
+                if (stats != null)
+                {
+                    if (stats.Attack != 0)
+                    {
+                        AddUniqueStatCandidate(candidates, EquipmentModifierType.Attack);
+                    }
+
+                    if (stats.Magic != 0)
+                    {
+                        AddUniqueStatCandidate(candidates, EquipmentModifierType.Magic);
+                    }
+
+                    if (stats.Defense != 0)
+                    {
+                        AddUniqueStatCandidate(candidates, EquipmentModifierType.Defense);
+                    }
+
+                    if (stats.Speed != 0)
+                    {
+                        AddUniqueStatCandidate(candidates, EquipmentModifierType.Speed);
+                    }
+
+                    if (stats.CriticalRate != 0f)
+                    {
+                        AddUniqueStatCandidate(candidates, EquipmentModifierType.CriticalRate);
+                    }
+                }
+            }
+
+            AddUniqueStatCandidate(candidates, EquipmentModifierType.Speed);
+            return candidates;
         }
 
-        private EquipmentModifierType RollRandomModifierType(EquipmentData equipment)
+        private int RollRandomStatModifierAmount(EquipmentModifierType modifierType, int synthesisLevel)
         {
-            var candidates = equipment != null && equipment.AllowedRandomModifierTypes.Count > 0
-                ? equipment.AllowedRandomModifierTypes
-                : DefaultRandomModifierTypes;
-            return candidates[random.Next(candidates.Count)];
-        }
-
-        private int RollRandomModifierAmount(EquipmentModifierType modifierType)
-        {
+            var qualityBonus = RollQualityBonus(synthesisLevel);
             return modifierType switch
             {
-                EquipmentModifierType.Hp => random.Next(10, 26),
-                EquipmentModifierType.Attack => random.Next(3, 9),
-                EquipmentModifierType.Magic => random.Next(3, 9),
-                EquipmentModifierType.Defense => random.Next(3, 9),
-                EquipmentModifierType.Speed => random.Next(3, 9),
-                EquipmentModifierType.CriticalRate => random.Next(3, 9),
-                EquipmentModifierType.AttributeResistance => 10,
-                EquipmentModifierType.StatusResistance => 10,
-                EquipmentModifierType.DebuffResistance => 10,
+                EquipmentModifierType.Attack => random.Next(0, 4) + qualityBonus,
+                EquipmentModifierType.Magic => random.Next(0, 4) + qualityBonus,
+                EquipmentModifierType.Defense => random.Next(0, 4) + qualityBonus,
+                EquipmentModifierType.Speed => RollSpeedIndividuality(synthesisLevel),
+                EquipmentModifierType.CriticalRate => random.Next(0, 3) + qualityBonus,
                 _ => 0
             };
         }
 
-        private string RollRandomSkill(EquipmentData equipment, EquipmentRarity rarity)
+        private int RollQualityBonus(int synthesisLevel)
         {
-            if (equipment == null || equipment.RandomSkillPool.Count == 0 || !ShouldAddRandomSkill(rarity))
+            var chance = synthesisLevel switch
             {
-                return string.Empty;
+                1 => 20,
+                2 => 35,
+                3 => 50,
+                4 => 65,
+                _ => 80
+            };
+
+            return random.Next(100) < chance ? 1 : 0;
+        }
+
+        private int RollSpeedIndividuality(int synthesisLevel)
+        {
+            var roll = random.Next(100);
+            var positiveThreshold = synthesisLevel switch
+            {
+                1 => 45,
+                2 => 55,
+                3 => 65,
+                4 => 75,
+                _ => 85
+            };
+            if (roll < 15)
+            {
+                return -1;
             }
 
-            return equipment.RandomSkillPool[random.Next(equipment.RandomSkillPool.Count)];
+            return roll < positiveThreshold ? 1 : 0;
         }
 
-        private bool ShouldAddRandomSkill(EquipmentRarity rarity)
+        private void RollRandomPassive(OwnedEquipmentSaveData ownedEquipment, EquipmentData equipment, int synthesisLevel)
         {
-            var chance = rarity switch
+            if (ownedEquipment == null || equipment == null || equipment.RandomPassivePool.Count == 0)
             {
-                EquipmentRarity.Rare => 30,
-                EquipmentRarity.Epic => 70,
-                EquipmentRarity.Legendary => 100,
-                _ => 0
+                return;
+            }
+
+            var passive = equipment.RandomPassivePool[random.Next(equipment.RandomPassivePool.Count)];
+            if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
+            {
+                return;
+            }
+
+            ownedEquipment.RandomPassiveId = passive.PassiveId;
+            ownedEquipment.RandomPassiveLevel = RollPassiveLevel(passive, synthesisLevel);
+        }
+
+        private int RollPassiveLevel(EquipmentRandomPassiveData passive, int synthesisLevel)
+        {
+            var maxLevel = Math.Max(passive.MinLevel, passive.MaxLevel);
+            if (maxLevel <= passive.MinLevel)
+            {
+                return passive.MinLevel;
+            }
+
+            var level3Chance = synthesisLevel switch
+            {
+                1 => 0,
+                2 => 5,
+                3 => 15,
+                4 => 30,
+                _ => 45
             };
-            return random.Next(100) < chance;
+            var level2Chance = synthesisLevel switch
+            {
+                1 => 20,
+                2 => 35,
+                3 => 50,
+                4 => 60,
+                _ => 70
+            };
+
+            var roll = random.Next(100);
+            if (maxLevel >= 3 && roll < level3Chance)
+            {
+                return Math.Max(passive.MinLevel, 3);
+            }
+
+            if (maxLevel >= 2 && roll < level2Chance)
+            {
+                return Math.Max(passive.MinLevel, 2);
+            }
+
+            return passive.MinLevel;
+        }
+
+        private static void AddUniqueStatCandidate(List<EquipmentModifierType> candidates, EquipmentModifierType modifierType)
+        {
+            if (!IsRandomStatModifier(modifierType) || candidates.Contains(modifierType))
+            {
+                return;
+            }
+
+            candidates.Add(modifierType);
+        }
+
+        private static bool IsRandomStatModifier(EquipmentModifierType modifierType)
+        {
+            return modifierType == EquipmentModifierType.Attack
+                || modifierType == EquipmentModifierType.Magic
+                || modifierType == EquipmentModifierType.Defense
+                || modifierType == EquipmentModifierType.Speed
+                || modifierType == EquipmentModifierType.CriticalRate;
         }
 
         private static string CreateOwnedEquipmentInstanceId(string equipmentId)
@@ -708,17 +779,5 @@ namespace RPG.Synthesis
             public SynthesisLevelUpRequirementData Data { get; }
         }
 
-        private static readonly IReadOnlyList<EquipmentModifierType> DefaultRandomModifierTypes = new[]
-        {
-            EquipmentModifierType.Hp,
-            EquipmentModifierType.Attack,
-            EquipmentModifierType.Magic,
-            EquipmentModifierType.Defense,
-            EquipmentModifierType.Speed,
-            EquipmentModifierType.CriticalRate,
-            EquipmentModifierType.AttributeResistance,
-            EquipmentModifierType.StatusResistance,
-            EquipmentModifierType.DebuffResistance
-        };
     }
 }

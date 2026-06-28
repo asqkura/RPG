@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_mana_drop
   displayName: 
   description: 
-  requiredSynthesisLevel: 1
   productType: 0
   productItem: {fileID: 11400000, guid: c2f275cc90c95c341824d38c6685ad0f, type: 2}
   productEquipment: {fileID: 0}

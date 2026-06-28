@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_guard_ring
   displayName: 
   description: 
-  requiredSynthesisLevel: 2
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: 528a2c480d0ff6b4db79f5c8b2a88964, type: 2}

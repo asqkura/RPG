@@ -24,11 +24,18 @@ MonoBehaviour:
     attack: 5
     magic: 0
     defense: 0
-    speed: -5
+    speed: 0
     criticalRate: 0
-  baseSkillIds: []
-  randomSkillPool: []
-  allowedRandomModifierTypes: 
+  activeSkillIds:
+  - skill_power_slash
+  fixedPassiveIds: []
+  randomPassivePool:
+  - passiveId: passive_attack_up
+    minLevel: 1
+    maxLevel: 3
+  allowedRandomStatTypes:
+  - 0
+  - 3
   equippableBy: []
   price: 760
   unsellable: 0

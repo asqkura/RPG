@@ -41,9 +41,9 @@ public sealed class SynthesisServiceTests
     }
 
     [Test]
-    public void TrySynthesizeEquipmentAddsRolledRarityModifiersAndSkill()
+    public void TrySynthesizeEquipmentAddsStatIndividualityAndRandomPassive()
     {
-        var context = CreateContext(new FixedRandom(99, 3, 0, 5, 0, 6, 0, 7, 0, 1));
+        var context = CreateContext(new FixedRandom(10, 2, 20, 0, 10));
         context.SaveData.SetSynthesisLevel(5);
         context.SaveData.AddMoney(300);
         context.SaveData.AddMaterial("mat_herb", 2);
@@ -52,21 +52,19 @@ public sealed class SynthesisServiceTests
 
         Assert.IsTrue(result.CanSynthesize);
         Assert.IsNotNull(result.CreatedEquipment);
-        Assert.AreEqual(EquipmentRarity.Legendary, result.CreatedEquipment.Rarity);
-        Assert.AreEqual(3, result.CreatedEquipment.RandomModifiers.Count);
-        Assert.AreEqual(EquipmentModifierType.Attack, result.CreatedEquipment.RandomModifiers[0].ModifierType);
-        Assert.AreEqual(5, result.CreatedEquipment.RandomModifiers[0].Amount);
-        Assert.AreEqual(EquipmentModifierType.Attack, result.CreatedEquipment.RandomModifiers[1].ModifierType);
-        Assert.AreEqual(6, result.CreatedEquipment.RandomModifiers[1].Amount);
-        Assert.AreEqual(EquipmentModifierType.Attack, result.CreatedEquipment.RandomModifiers[2].ModifierType);
-        Assert.AreEqual(7, result.CreatedEquipment.RandomModifiers[2].Amount);
-        Assert.AreEqual("skill_b", result.CreatedEquipment.RandomSkillId);
+        Assert.AreEqual(2, result.CreatedEquipment.RandomStatModifiers.Count);
+        Assert.AreEqual(EquipmentModifierType.Attack, result.CreatedEquipment.RandomStatModifiers[0].ModifierType);
+        Assert.AreEqual(3, result.CreatedEquipment.RandomStatModifiers[0].Amount);
+        Assert.AreEqual(EquipmentModifierType.Speed, result.CreatedEquipment.RandomStatModifiers[1].ModifierType);
+        Assert.AreEqual(1, result.CreatedEquipment.RandomStatModifiers[1].Amount);
+        Assert.AreEqual("passive_fire_damage", result.CreatedEquipment.RandomPassiveId);
+        Assert.AreEqual(3, result.CreatedEquipment.RandomPassiveLevel);
     }
 
     [Test]
-    public void TrySynthesizeCommonEquipmentCanHaveNoRandomModifiers()
+    public void TrySynthesizeEquipmentCanHaveNoStatIndividuality()
     {
-        var context = CreateContext(new FixedRandom(0, 0));
+        var context = CreateContext(new FixedRandom(90, 0, 90, 0, 90));
         context.SaveData.AddMoney(300);
         context.SaveData.AddMaterial("mat_herb", 2);
 
@@ -74,14 +72,13 @@ public sealed class SynthesisServiceTests
 
         Assert.IsTrue(result.CanSynthesize);
         Assert.IsNotNull(result.CreatedEquipment);
-        Assert.AreEqual(EquipmentRarity.Common, result.CreatedEquipment.Rarity);
-        Assert.AreEqual(0, result.CreatedEquipment.RandomModifiers.Count);
+        Assert.AreEqual(0, result.CreatedEquipment.RandomStatModifiers.Count);
     }
 
     [Test]
-    public void TrySynthesizeRareEquipmentCanRollNonStatModifier()
+    public void TrySynthesizeEquipmentLimitsRandomStatsToConfiguredStatsAndSpeed()
     {
-        var context = CreateContext(new FixedRandom(80, 0));
+        var context = CreateContext(new FixedRandom(10, 1));
         context.SaveData.AddMoney(300);
         context.SaveData.AddMaterial("mat_herb", 2);
 
@@ -89,10 +86,9 @@ public sealed class SynthesisServiceTests
 
         Assert.IsTrue(result.CanSynthesize);
         Assert.IsNotNull(result.CreatedEquipment);
-        Assert.AreEqual(EquipmentRarity.Rare, result.CreatedEquipment.Rarity);
-        Assert.AreEqual(1, result.CreatedEquipment.RandomModifiers.Count);
-        Assert.AreEqual(EquipmentModifierType.AttributeResistance, result.CreatedEquipment.RandomModifiers[0].ModifierType);
-        Assert.AreEqual(10, result.CreatedEquipment.RandomModifiers[0].Amount);
+        Assert.AreEqual(1, result.CreatedEquipment.RandomStatModifiers.Count);
+        Assert.AreEqual(EquipmentModifierType.Speed, result.CreatedEquipment.RandomStatModifiers[0].ModifierType);
+        Assert.AreEqual(1, result.CreatedEquipment.RandomStatModifiers[0].Amount);
     }
 
     [Test]
@@ -197,7 +193,7 @@ public sealed class SynthesisServiceTests
     }
 
     [Test]
-    public void GetQuoteReturnsSynthesisLevelTooLow()
+    public void GetQuoteAllowsRecipeRegardlessOfSynthesisLevel()
     {
         var context = CreateContext();
         context.SaveData.AddMoney(500);
@@ -205,8 +201,7 @@ public sealed class SynthesisServiceTests
 
         var quote = context.Service.GetQuote(context.SaveData, "syn_late");
 
-        Assert.IsFalse(quote.CanSynthesize);
-        Assert.AreEqual(SynthesisFailureReason.SynthesisLevelTooLow, quote.FailureReason);
+        Assert.IsTrue(quote.CanSynthesize);
     }
 
     [Test]
@@ -323,13 +318,12 @@ public sealed class SynthesisServiceTests
             "鉄の剣",
             EquipmentDataType.Weapon,
             new[] { EquipmentModifierType.Attack },
-            "skill_a",
-            "skill_b");
+            "passive_fire_damage");
         var resistCharm = CreateEquipment(
             "eq_resist_charm",
             "耐性のお守り",
             EquipmentDataType.Accessory,
-            new[] { EquipmentModifierType.AttributeResistance });
+            new[] { EquipmentModifierType.Speed });
 
         SetDatabaseEntries(itemDatabase, herb, potion);
         SetDatabaseEntries(equipmentDatabase, sword, resistCharm);
@@ -379,7 +373,7 @@ public sealed class SynthesisServiceTests
         string displayName,
         EquipmentDataType equipmentType,
         EquipmentModifierType[] allowedRandomModifierTypes = null,
-        params string[] randomSkillPool)
+        params string[] randomPassivePool)
     {
         var equipment = ScriptableObject.CreateInstance<EquipmentData>();
         var serialized = new SerializedObject(equipment);
@@ -396,13 +390,16 @@ public sealed class SynthesisServiceTests
             }
         }
 
-        if (randomSkillPool != null)
+        if (randomPassivePool != null)
         {
-            var skillPool = serialized.FindProperty("randomSkillPool");
-            skillPool.arraySize = randomSkillPool.Length;
-            for (var i = 0; i < randomSkillPool.Length; i++)
+            var passivePool = serialized.FindProperty("randomPassivePool");
+            passivePool.arraySize = randomPassivePool.Length;
+            for (var i = 0; i < randomPassivePool.Length; i++)
             {
-                skillPool.GetArrayElementAtIndex(i).stringValue = randomSkillPool[i];
+                var element = passivePool.GetArrayElementAtIndex(i);
+                element.FindPropertyRelative("passiveId").stringValue = randomPassivePool[i];
+                element.FindPropertyRelative("minLevel").intValue = 1;
+                element.FindPropertyRelative("maxLevel").intValue = 3;
             }
         }
 
@@ -415,7 +412,7 @@ public sealed class SynthesisServiceTests
         SynthesisProductDataType productType,
         ItemData productItem,
         EquipmentData productEquipment,
-        int requiredSynthesisLevel,
+        int ignoredFormerSynthesisLevel,
         int moneyCost,
         ItemData material,
         int materialCount)
@@ -425,7 +422,7 @@ public sealed class SynthesisServiceTests
             productType,
             productItem,
             productEquipment,
-            requiredSynthesisLevel,
+            ignoredFormerSynthesisLevel,
             moneyCost,
             new[] { (material, materialCount) });
     }
@@ -435,7 +432,7 @@ public sealed class SynthesisServiceTests
         SynthesisProductDataType productType,
         ItemData productItem,
         EquipmentData productEquipment,
-        int requiredSynthesisLevel,
+        int ignoredFormerSynthesisLevel,
         int moneyCost,
         params (ItemData Material, int Count)[] materialCosts)
     {
@@ -445,7 +442,6 @@ public sealed class SynthesisServiceTests
         serialized.FindProperty("productType").enumValueIndex = (int)productType;
         serialized.FindProperty("productItem").objectReferenceValue = productItem;
         serialized.FindProperty("productEquipment").objectReferenceValue = productEquipment;
-        serialized.FindProperty("requiredSynthesisLevel").intValue = requiredSynthesisLevel;
         serialized.FindProperty("moneyCost").intValue = moneyCost;
         var costs = serialized.FindProperty("materialCosts");
         costs.arraySize = materialCosts.Length;

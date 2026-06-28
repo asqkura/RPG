@@ -245,8 +245,7 @@ namespace RPG.Shop
             {
                 saveData.AddOwnedEquipment(new OwnedEquipmentSaveData(
                     createEquipmentInstanceId(),
-                    shopItem.ProductId,
-                    EquipmentRarity.Common));
+                    shopItem.ProductId));
             }
         }
 

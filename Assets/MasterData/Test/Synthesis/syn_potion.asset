@@ -15,7 +15,6 @@ MonoBehaviour:
   id: syn_potion
   displayName: 
   description: 
-  requiredSynthesisLevel: 1
   productType: 0
   productItem: {fileID: 11400000, guid: 991ef9c839c56744981231460162d4a2, type: 2}
   productEquipment: {fileID: 0}

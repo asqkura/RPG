@@ -20,9 +20,6 @@ namespace RPG.MasterData
     [CreateAssetMenu(menuName = "RPG/Master Data/Synthesis Recipe", fileName = "SynthesisRecipeData")]
     public sealed class SynthesisRecipeData : MasterDataAsset
     {
-        [FormerlySerializedAs("availablePhase")]
-        [Range(1, 5)]
-        [SerializeField] private int requiredSynthesisLevel = 1;
         [SerializeField] private SynthesisProductDataType productType;
         [SerializeField] private ItemData productItem;
         [SerializeField] private EquipmentData productEquipment;
@@ -32,7 +29,6 @@ namespace RPG.MasterData
         [SerializeField] private int sortOrder;
 
         public string RecipeId => Id;
-        public int RequiredSynthesisLevel => requiredSynthesisLevel;
         public SynthesisProductDataType ProductType => productType;
         public ItemData ProductItem => productItem;
         public EquipmentData ProductEquipment => productEquipment;

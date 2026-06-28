@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using RPG.MasterData;
+using RPG.SaveData;
 using UnityEditor;
 using UnityEngine;
 
@@ -174,6 +176,10 @@ public static class TestShopDataBuilder
         serialized.FindProperty("equipmentType").enumValueIndex = (int)spec.EquipmentType;
         serialized.FindProperty("weaponType").enumValueIndex = (int)spec.WeaponType;
         SetEquipmentStats(serialized.FindProperty("statModifiers"), spec.Id);
+        SetEquipmentActiveSkills(serialized.FindProperty("activeSkillIds"), spec.Id);
+        SetEquipmentFixedPassives(serialized.FindProperty("fixedPassiveIds"), spec.Id);
+        SetEquipmentRandomPassives(serialized.FindProperty("randomPassivePool"), spec.Id);
+        SetAllowedRandomStatTypes(serialized.FindProperty("allowedRandomStatTypes"), spec.Id);
         serialized.FindProperty("price").intValue = spec.Price;
         serialized.FindProperty("unsellable").boolValue = false;
         serialized.FindProperty("sortOrder").intValue = sortOrder;
@@ -189,10 +195,10 @@ public static class TestShopDataBuilder
             "eq_apprentice_dagger" => new StatSpec(0, 0, 2, 0, 0, 3, 0.04f),
             "eq_iron_sword" => new StatSpec(0, 0, 5, 0, 0, 0, 0f),
             "eq_hunter_bow" => new StatSpec(0, 0, 4, 0, 0, 1, 0.03f),
-            "eq_oak_staff" => new StatSpec(0, 10, 0, 5, 0, 0, 0f),
-            "eq_traveler_cloak" => new StatSpec(10, 0, 0, 0, 1, 1, 0f),
+            "eq_oak_staff" => new StatSpec(0, 0, 0, 5, 0, 0, 0f),
+            "eq_traveler_cloak" => new StatSpec(0, 0, 0, 0, 1, 1, 0f),
             "eq_leather_armor" => new StatSpec(0, 0, 0, 0, 3, 1, 0f),
-            "eq_iron_mail" => new StatSpec(15, 0, 0, 0, 5, 0, 0f),
+            "eq_iron_mail" => new StatSpec(0, 0, 0, 0, 5, 0, 0f),
             "eq_lucky_charm" => new StatSpec(0, 0, 0, 0, 0, 0, 0.05f),
             "eq_guard_ring" => new StatSpec(0, 0, 0, 0, 2, 0, 0f),
             "eq_swift_boots" => new StatSpec(0, 0, 0, 0, 0, 4, 0f),
@@ -206,6 +212,93 @@ public static class TestShopDataBuilder
         statsProperty.FindPropertyRelative("defense").intValue = stats.Defense;
         statsProperty.FindPropertyRelative("speed").intValue = stats.Speed;
         statsProperty.FindPropertyRelative("criticalRate").floatValue = stats.CriticalRate;
+    }
+
+    private static void SetEquipmentActiveSkills(SerializedProperty activeSkillIdsProperty, string equipmentId)
+    {
+        var skillIds = equipmentId switch
+        {
+            "eq_apprentice_dagger" => new[] { "skill_quick_slash" },
+            "eq_iron_sword" => new[] { "skill_power_slash" },
+            "eq_hunter_bow" => new[] { "skill_aimed_shot" },
+            "eq_oak_staff" => new[] { "skill_heal", "skill_magic_bolt" },
+            _ => Array.Empty<string>()
+        };
+
+        SetStringArray(activeSkillIdsProperty, skillIds);
+    }
+
+    private static void SetEquipmentFixedPassives(SerializedProperty fixedPassiveIdsProperty, string equipmentId)
+    {
+        var passiveIds = equipmentId switch
+        {
+            "eq_lucky_charm" => new[] { "passive_luck_up" },
+            "eq_guard_ring" => new[] { "passive_guard_up" },
+            "eq_swift_boots" => new[] { "passive_speed_up" },
+            _ => Array.Empty<string>()
+        };
+
+        SetStringArray(fixedPassiveIdsProperty, passiveIds);
+    }
+
+    private static void SetEquipmentRandomPassives(SerializedProperty randomPassivePoolProperty, string equipmentId)
+    {
+        var passiveIds = equipmentId switch
+        {
+            "eq_apprentice_dagger" => new[] { "passive_critical_up", "passive_poison_edge" },
+            "eq_iron_sword" => new[] { "passive_attack_up" },
+            "eq_hunter_bow" => new[] { "passive_accuracy_up", "passive_status_success_up" },
+            "eq_oak_staff" => new[] { "passive_magic_up", "passive_heal_up" },
+            "eq_traveler_cloak" => new[] { "passive_speed_up" },
+            "eq_leather_armor" => new[] { "passive_evasion_up" },
+            "eq_iron_mail" => new[] { "passive_guard_up" },
+            "eq_lucky_charm" => new[] { "passive_luck_up" },
+            "eq_guard_ring" => new[] { "passive_guard_up" },
+            "eq_swift_boots" => new[] { "passive_speed_up" },
+            _ => Array.Empty<string>()
+        };
+
+        randomPassivePoolProperty.arraySize = passiveIds.Length;
+        for (var i = 0; i < passiveIds.Length; i++)
+        {
+            var element = randomPassivePoolProperty.GetArrayElementAtIndex(i);
+            element.FindPropertyRelative("passiveId").stringValue = passiveIds[i];
+            element.FindPropertyRelative("minLevel").intValue = 1;
+            element.FindPropertyRelative("maxLevel").intValue = 3;
+        }
+    }
+
+    private static void SetAllowedRandomStatTypes(SerializedProperty allowedRandomStatTypesProperty, string equipmentId)
+    {
+        var modifierTypes = equipmentId switch
+        {
+            "eq_apprentice_dagger" => new[] { EquipmentModifierType.Attack, EquipmentModifierType.Speed, EquipmentModifierType.CriticalRate },
+            "eq_iron_sword" => new[] { EquipmentModifierType.Attack, EquipmentModifierType.Speed },
+            "eq_hunter_bow" => new[] { EquipmentModifierType.Attack, EquipmentModifierType.Speed, EquipmentModifierType.CriticalRate },
+            "eq_oak_staff" => new[] { EquipmentModifierType.Magic, EquipmentModifierType.Speed },
+            "eq_traveler_cloak" => new[] { EquipmentModifierType.Defense, EquipmentModifierType.Speed },
+            "eq_leather_armor" => new[] { EquipmentModifierType.Defense, EquipmentModifierType.Speed },
+            "eq_iron_mail" => new[] { EquipmentModifierType.Defense, EquipmentModifierType.Speed },
+            "eq_lucky_charm" => new[] { EquipmentModifierType.CriticalRate, EquipmentModifierType.Speed },
+            "eq_guard_ring" => new[] { EquipmentModifierType.Defense, EquipmentModifierType.Speed },
+            "eq_swift_boots" => new[] { EquipmentModifierType.Speed },
+            _ => new[] { EquipmentModifierType.Speed }
+        };
+
+        allowedRandomStatTypesProperty.arraySize = modifierTypes.Length;
+        for (var i = 0; i < modifierTypes.Length; i++)
+        {
+            allowedRandomStatTypesProperty.GetArrayElementAtIndex(i).enumValueIndex = (int)modifierTypes[i];
+        }
+    }
+
+    private static void SetStringArray(SerializedProperty property, IReadOnlyList<string> values)
+    {
+        property.arraySize = values.Count;
+        for (var i = 0; i < values.Count; i++)
+        {
+            property.GetArrayElementAtIndex(i).stringValue = values[i];
+        }
     }
 
     private static ShopItemData CreateOrUpdateShopItem(

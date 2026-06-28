@@ -26,9 +26,16 @@ MonoBehaviour:
     defense: 0
     speed: 0
     criticalRate: 0.05
-  baseSkillIds: []
-  randomSkillPool: []
-  allowedRandomModifierTypes:
+  activeSkillIds: []
+  fixedPassiveIds:
+  - passive_luck_up
+  randomPassivePool:
+  - passiveId: passive_luck_up
+    minLevel: 1
+    maxLevel: 3
+  allowedRandomStatTypes:
+  - 4
+  - 3
   equippableBy: []
   price: 420
   unsellable: 0

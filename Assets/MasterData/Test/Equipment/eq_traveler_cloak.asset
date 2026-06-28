@@ -19,16 +19,22 @@ MonoBehaviour:
   equipmentType: 1
   weaponType: 0
   statModifiers:
-    hp: 10
+    hp: 0
     sp: 0
     attack: 0
     magic: 0
     defense: 1
     speed: 1
     criticalRate: 0
-  baseSkillIds: []
-  randomSkillPool: []
-  allowedRandomModifierTypes:
+  activeSkillIds: []
+  fixedPassiveIds: []
+  randomPassivePool:
+  - passiveId: passive_speed_up
+    minLevel: 1
+    maxLevel: 3
+  allowedRandomStatTypes:
+  - 2
+  - 3
   equippableBy: []
   price: 480
   unsellable: 0

@@ -169,7 +169,7 @@ public static class TestSynthesisDataBuilder
         string id,
         SynthesisProductDataType productType,
         string productId,
-        int requiredSynthesisLevel,
+        int ignoredFormerSynthesisLevel,
         int moneyCost,
         IReadOnlyList<MaterialCostSpec> materialCosts,
         int sortOrder)
@@ -177,7 +177,6 @@ public static class TestSynthesisDataBuilder
         var recipe = LoadOrCreate<SynthesisRecipeData>(SynthesisFolder + "/" + id + ".asset");
         var serialized = new SerializedObject(recipe);
         serialized.FindProperty("id").stringValue = id;
-        serialized.FindProperty("requiredSynthesisLevel").intValue = requiredSynthesisLevel;
         serialized.FindProperty("productType").enumValueIndex = (int)productType;
         serialized.FindProperty("productItem").objectReferenceValue = productType == SynthesisProductDataType.Consumable
             ? LoadMasterAsset<ItemData>("Items", productId)

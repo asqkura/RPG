@@ -87,19 +87,17 @@ namespace RPG.MasterData
     }
 
     [Serializable]
-    public sealed class EquipmentBaseTraitData
+    public sealed class EquipmentRandomPassiveData
     {
-        [UnityEngine.Serialization.FormerlySerializedAs("modifierType")]
-        [SerializeField] private EquipmentBaseTraitType traitType;
+        [SerializeField] private string passiveId = string.Empty;
+        [Min(1)]
+        [SerializeField] private int minLevel = 1;
+        [Min(1)]
+        [SerializeField] private int maxLevel = 1;
 
-        public EquipmentBaseTraitType TraitType => traitType;
-    }
-
-    public enum EquipmentBaseTraitType
-    {
-        AttributeResistance,
-        StatusResistance,
-        DebuffResistance
+        public string PassiveId => passiveId;
+        public int MinLevel => Mathf.Max(1, minLevel);
+        public int MaxLevel => Mathf.Max(MinLevel, maxLevel);
     }
 
     public enum EnemyActionSelectionType
