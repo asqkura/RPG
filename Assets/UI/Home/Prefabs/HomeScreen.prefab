@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &315286279852901772
 GameObject:
@@ -823,7 +823,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1214042520961669138, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: 1528057, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
     - target: {fileID: 3146306454944863218, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Pivot.x
@@ -1019,7 +1019,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1214042520961669138, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: 1461155039, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
     - target: {fileID: 3146306454944863218, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Pivot.x
@@ -1198,7 +1198,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1214042520961669138, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: -2138733969, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
     - target: {fileID: 3146306454944863218, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Pivot.x
@@ -1377,7 +1377,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1214042520961669138, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: -1391045229, guid: 11f4fe489f0dea34485711c8f52f2a49, type: 3}
     - target: {fileID: 3146306454944863218, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Pivot.x
@@ -1556,7 +1556,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1214042520961669138, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: -1935552798, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
     - target: {fileID: 3146306454944863218, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Pivot.x
@@ -1657,6 +1657,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 726148656125111525, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3829410756120613600}
+    - targetCorrespondingSourceObject: {fileID: 726148656125111525, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3829410756120613601}
   m_SourcePrefab: {fileID: 100100000, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
 --- !u!114 &3436738454014089886 stripped
 MonoBehaviour:
@@ -1705,6 +1708,20 @@ MonoBehaviour:
   labelText: {fileID: 3436738454014089886}
   normalTextColor: {r: 0.86, g: 0.82, b: 0.75, a: 1}
   highlightedTextColor: {r: 1, g: 0.96, b: 0.84, a: 1}
+--- !u!114 &3829410756120613601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6264438020563152498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32dba03abfe8c06428cf75ffec58ccc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIScreenSwitchButton
+  hideTargetName: HomeScreen
+  showTargetName: SynthesisScreen
 --- !u!114 &7846724572268772899 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3465844295884373172, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
@@ -1735,7 +1752,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1214042520961669138, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: -425565046, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
     - target: {fileID: 3146306454944863218, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Pivot.x
@@ -1914,7 +1931,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1214042520961669138, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: -1605806345, guid: e2f2d36f20062024b9bd156e3a923dcd, type: 3}
     - target: {fileID: 3146306454944863218, guid: 3cd199d9b7c0a12439d8cc05391bd68a, type: 3}
       propertyPath: m_Pivot.x

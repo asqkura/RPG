@@ -49,6 +49,12 @@ namespace RPG.MasterData
         Limited
     }
 
+    public enum SynthesisProductDataType
+    {
+        Consumable,
+        Equipment
+    }
+
     [Serializable]
     public sealed class ItemEffectData
     {

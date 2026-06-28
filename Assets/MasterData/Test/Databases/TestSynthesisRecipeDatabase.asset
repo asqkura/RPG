@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b73021902438d84d9fbe46fd183aef7, type: 3}
+  m_Name: TestSynthesisRecipeDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.SynthesisRecipeDatabase
+  entries:
+  - {fileID: 11400000, guid: 116c657614a1afc43a60f821d27d5838, type: 2}
+  - {fileID: 11400000, guid: c0b33b7a1d367a74c87bd059b4f72e9a, type: 2}
+  - {fileID: 11400000, guid: cafa6339e91147f4d8070b2a84262908, type: 2}
+  - {fileID: 11400000, guid: 2206e17e70fbd4647ad2c74982a25fc7, type: 2}
+  - {fileID: 11400000, guid: 09e05847db50b184ca280c17272057ef, type: 2}
