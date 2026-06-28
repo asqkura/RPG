@@ -105,6 +105,22 @@ namespace RPG.MasterData
         public float CriticalRate => criticalRate;
     }
 
+    [Serializable]
+    public sealed class EquipmentBaseTraitData
+    {
+        [UnityEngine.Serialization.FormerlySerializedAs("modifierType")]
+        [SerializeField] private EquipmentBaseTraitType traitType;
+
+        public EquipmentBaseTraitType TraitType => traitType;
+    }
+
+    public enum EquipmentBaseTraitType
+    {
+        AttributeResistance,
+        StatusResistance,
+        DebuffResistance
+    }
+
     public enum EnemyActionSelectionType
     {
         Priority,

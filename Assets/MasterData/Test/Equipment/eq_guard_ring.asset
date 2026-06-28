@@ -18,7 +18,6 @@ MonoBehaviour:
   iconSprite: {fileID: -1331836565, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
   equipmentType: 2
   weaponType: 0
-  attackAttribute:
   statModifiers:
     hp: 0
     sp: 0

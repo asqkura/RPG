@@ -6,8 +6,9 @@ using UnityEngine.UI;
 public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ISelectHandler, IDeselectHandler
 {
     [SerializeField] private string itemName;
+    [SerializeField] private string tagText;
     [SerializeField] private string descriptionText;
-    [SerializeField] private string detailText;
+    [SerializeField] private string detailPanelText;
     [SerializeField] private string helpText;
     [SerializeField] private string shopItemId;
     [SerializeField] private string stockText;
@@ -32,8 +33,9 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     private Image hitAreaImage;
 
     public string ItemName => itemName;
+    public string TagText => tagText;
     public string DescriptionText => descriptionText;
-    public string DetailText => detailText;
+    public string DetailPanelText => detailPanelText;
     public string HelpText => helpText;
     public string ShopItemId => shopItemId;
     public string StockText => stockText;
@@ -45,8 +47,9 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
         string shopItemId,
         Sprite icon,
         string displayName,
+        string tag,
         string description,
-        string detail,
+        string detailPanel,
         string help,
         string stock,
         string owned,
@@ -54,8 +57,9 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     {
         this.shopItemId = shopItemId ?? string.Empty;
         itemName = displayName;
+        tagText = tag;
         descriptionText = description;
-        detailText = detail;
+        detailPanelText = detailPanel;
         helpText = help;
         stockText = stock;
         ownedText = owned;
@@ -79,8 +83,9 @@ public sealed class ShopItemRowView : MonoBehaviour, IPointerEnterHandler, IPoin
     public void ClearRow()
     {
         itemName = string.Empty;
+        tagText = string.Empty;
         descriptionText = string.Empty;
-        detailText = string.Empty;
+        detailPanelText = string.Empty;
         helpText = string.Empty;
         shopItemId = string.Empty;
         stockText = string.Empty;

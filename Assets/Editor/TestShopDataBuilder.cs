@@ -173,7 +173,6 @@ public static class TestShopDataBuilder
         SetIcon(serialized, spec.IconPath, spec.IconName);
         serialized.FindProperty("equipmentType").enumValueIndex = (int)spec.EquipmentType;
         serialized.FindProperty("weaponType").enumValueIndex = (int)spec.WeaponType;
-        serialized.FindProperty("attackAttribute").stringValue = spec.WeaponType == WeaponDataType.None ? string.Empty : "物理";
         SetEquipmentStats(serialized.FindProperty("statModifiers"), spec.Id);
         serialized.FindProperty("price").intValue = spec.Price;
         serialized.FindProperty("unsellable").boolValue = false;

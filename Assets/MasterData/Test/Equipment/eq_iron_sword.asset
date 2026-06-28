@@ -18,18 +18,17 @@ MonoBehaviour:
   iconSprite: {fileID: -203710236, guid: b43107b1af4388d429349636dd5e7efa, type: 3}
   equipmentType: 0
   weaponType: 1
-  attackAttribute: "\u7269\u7406"
   statModifiers:
     hp: 0
     sp: 0
     attack: 5
     magic: 0
     defense: 0
-    speed: 0
+    speed: -5
     criticalRate: 0
   baseSkillIds: []
   randomSkillPool: []
-  allowedRandomModifierTypes:
+  allowedRandomModifierTypes: 
   equippableBy: []
   price: 760
   unsellable: 0

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using RPG.SaveData;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace RPG.MasterData
 {
@@ -10,8 +11,9 @@ namespace RPG.MasterData
         [SerializeField] private Sprite iconSprite;
         [SerializeField] private EquipmentDataType equipmentType;
         [SerializeField] private WeaponDataType weaponType;
-        [SerializeField] private string attackAttribute = string.Empty;
         [SerializeField] private BattleStats statModifiers = new();
+        [FormerlySerializedAs("baseModifiers")]
+        [SerializeField] private List<EquipmentBaseTraitData> baseTraits = new();
         [SerializeField] private List<string> baseSkillIds = new();
         [SerializeField] private List<string> randomSkillPool = new();
         [SerializeField] private List<EquipmentModifierType> allowedRandomModifierTypes = new();
@@ -25,8 +27,8 @@ namespace RPG.MasterData
         public Sprite IconSprite => iconSprite;
         public EquipmentDataType EquipmentType => equipmentType;
         public WeaponDataType WeaponType => weaponType;
-        public string AttackAttribute => attackAttribute;
         public BattleStats StatModifiers => statModifiers;
+        public IReadOnlyList<EquipmentBaseTraitData> BaseTraits => baseTraits;
         public IReadOnlyList<string> BaseSkillIds => baseSkillIds;
         public IReadOnlyList<string> RandomSkillPool => randomSkillPool;
         public IReadOnlyList<EquipmentModifierType> AllowedRandomModifierTypes => allowedRandomModifierTypes;

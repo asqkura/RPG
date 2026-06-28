@@ -232,7 +232,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShopItemRowView
   itemName: 
-  detailText: 
+  tagText: 
+  descriptionText: 
+  detailPanelText: 
   helpText: 
   shopItemId: 
   stockText: 
