@@ -477,11 +477,10 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             return;
         }
 
-        var colors = button.colors;
-        colors.normalColor = selected ? new Color(0.52f, 0.41f, 0.25f, 1f) : new Color(0.18f, 0.15f, 0.12f, 1f);
-        colors.highlightedColor = selected ? new Color(0.62f, 0.49f, 0.3f, 1f) : new Color(0.32f, 0.27f, 0.2f, 1f);
-        colors.selectedColor = colors.highlightedColor;
-        button.colors = colors;
+        if (button.TryGetComponent<WindowHoverSpriteView>(out var hover))
+        {
+            hover.SetSelected(selected);
+        }
 
         var label = button.transform.Find("Label")?.GetComponent<TMP_Text>();
         if (label != null)
@@ -692,7 +691,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
     {
         if (moneyText != null)
         {
-            moneyText.text = runSaveData != null ? runSaveData.Money.ToString() : "0";
+            moneyText.text = runSaveData != null ? $"{runSaveData.Money:N0}" : "0";
         }
     }
 

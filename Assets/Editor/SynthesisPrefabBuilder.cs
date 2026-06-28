@@ -12,6 +12,9 @@ public static class SynthesisPrefabBuilder
     private const string PrefabFolder = SynthesisRoot + "/Prefabs";
     private const string RowPrefabPath = PrefabFolder + "/SynthesisRecipeRow.prefab";
     private const string ScreenPrefabPath = PrefabFolder + "/SynthesisScreen.prefab";
+    private const string BackgroundSpritePath = SynthesisRoot + "/Backgrounds/SynthesisWorkshopBackground.png";
+    private const string WindowSpritePath = "Assets/UI/Windows/Sprites/Window.png";
+    private const string WindowHoverSpritePath = "Assets/UI/Windows/Sprites/Window_Hover.png";
     private const string HomeScreenPath = "Assets/UI/Home/Prefabs/HomeScreen.prefab";
     private const string ItemDatabasePath = "Assets/MasterData/Test/Databases/TestItemDatabase.asset";
     private const string EquipmentDatabasePath = "Assets/MasterData/Test/Databases/TestEquipmentDatabase.asset";
@@ -19,8 +22,6 @@ public static class SynthesisPrefabBuilder
 
     private static readonly Color TextColor = new(0.86f, 0.82f, 0.75f, 1f);
     private static readonly Color AccentColor = new(1f, 0.9f, 0.62f, 1f);
-    private static readonly Color PanelColor = new(0.08f, 0.07f, 0.06f, 0.92f);
-    private static readonly Color ButtonColor = new(0.18f, 0.15f, 0.12f, 1f);
 
     [MenuItem("Tools/RPG/Build Synthesis UI Prefabs")]
     public static void Build()
@@ -37,23 +38,31 @@ public static class SynthesisPrefabBuilder
 
     private static SynthesisRecipeRowView BuildRowPrefab()
     {
-        var root = CreateUIObject("SynthesisRecipeRow", null, new Vector2(760f, 50f));
+        var root = CreateUIObject("SynthesisRecipeRow", null, new Vector2(690f, 50f));
         var image = root.AddComponent<Image>();
         image.color = new Color(1f, 1f, 1f, 0.001f);
         var view = root.AddComponent<SynthesisRecipeRowView>();
 
-        var icon = CreateImage("Icon", root.transform, new Vector2(42f, 42f), new Vector2(32f, 0f));
-        Anchor(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f));
+        var windowImage = CreateImage("Window", root.transform, new Vector2(690f, 50f), Vector2.zero);
+        Stretch(windowImage.rectTransform);
+        windowImage.sprite = LoadWindowSprite();
+        windowImage.type = Image.Type.Sliced;
+
+        var icon = CreateImage("Icon", root.transform, new Vector2(24f, 24f), new Vector2(40f, 0f));
+        Anchor(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f));
         icon.preserveAspect = true;
 
-        var nameLabel = CreateText("Name", root.transform, "レシピ名", 24, TextAlignmentOptions.Left, new Vector2(360f, 40f), new Vector2(270f, 0f));
+        var nameLabel = CreateText("Name", root.transform, "レシピ名", 24, TextAlignmentOptions.Left, new Vector2(330f, 36f), new Vector2(230f, 0f));
         Anchor(nameLabel.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f));
-        var ownedLabel = CreateText("Owned", root.transform, "0", 22, TextAlignmentOptions.Center, new Vector2(100f, 40f), new Vector2(-150f, 0f));
+        var ownedLabel = CreateText("Owned", root.transform, "0", 22, TextAlignmentOptions.Center, new Vector2(70f, 36f), new Vector2(-160f, 0f));
         Anchor(ownedLabel.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f));
-        var costLabel = CreateText("Cost", root.transform, "-", 22, TextAlignmentOptions.Center, new Vector2(120f, 40f), new Vector2(-48f, 0f));
-        Anchor(costLabel.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f));
+        var costLabel = CreateText("Cost", root.transform, "-", 22, TextAlignmentOptions.Right, new Vector2(112f, 36f), new Vector2(-60f, 0f));
+        Anchor(costLabel.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f));
 
         var serialized = new SerializedObject(view);
+        serialized.FindProperty("windowImage").objectReferenceValue = windowImage;
+        serialized.FindProperty("normalWindowSprite").objectReferenceValue = LoadWindowSprite();
+        serialized.FindProperty("highlightedWindowSprite").objectReferenceValue = LoadWindowHoverSprite();
         serialized.FindProperty("iconImage").objectReferenceValue = icon;
         serialized.FindProperty("nameLabel").objectReferenceValue = nameLabel;
         serialized.FindProperty("ownedLabel").objectReferenceValue = ownedLabel;
@@ -89,25 +98,30 @@ public static class SynthesisPrefabBuilder
 
         var background = CreateImage("Background", root.transform, new Vector2(1920f, 1080f), Vector2.zero);
         Stretch(background.rectTransform);
-        background.color = new Color(0.04f, 0.035f, 0.03f, 1f);
+        background.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(BackgroundSpritePath);
+        background.color = Color.white;
 
         var title = CreateText("Title", root.transform, "合成", 46, TextAlignmentOptions.Left, new Vector2(320f, 70f), new Vector2(90f, -60f));
         AnchorTopLeft(title.rectTransform);
-        var moneyCaption = CreateText("MoneyCaption", root.transform, "所持金", 24, TextAlignmentOptions.Right, new Vector2(120f, 38f), new Vector2(-270f, -62f));
-        AnchorTopRight(moneyCaption.rectTransform);
-        var moneyText = CreateText("MoneyText", root.transform, "0", 28, TextAlignmentOptions.Right, new Vector2(180f, 42f), new Vector2(-80f, -60f));
-        AnchorTopRight(moneyText.rectTransform);
+        var moneyPanel = CreatePanel("MoneyPanel", root.transform, new Vector2(300f, 60f), new Vector2(-250f, -70f));
+        AnchorTopRight(moneyPanel.GetComponent<RectTransform>());
+        CreateText("MoneyCaption", moneyPanel.transform, "所持金", 20, TextAlignmentOptions.Left, new Vector2(100f, 28f), new Vector2(30f, -16f));
+        var moneyText = CreateText("MoneyText", moneyPanel.transform, "0", 24, TextAlignmentOptions.Right, new Vector2(130f, 32f), new Vector2(240f, -15f));
+        Anchor(moneyText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(1f, 1f));
+        CreateText("MoneyUnit", moneyPanel.transform, "G", 20, TextAlignmentOptions.Center, new Vector2(20f, 24f), new Vector2(-30f, 0f));
+        Anchor(moneyPanel.transform.Find("MoneyUnit").GetComponent<RectTransform>(), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f));
 
-        var allButton = CreateButton("AllButton", root.transform, "すべて", new Vector2(132f, 46f), new Vector2(90f, -140f));
-        var consumableButton = CreateButton("ConsumableButton", root.transform, "消耗品", new Vector2(132f, 46f), new Vector2(236f, -140f));
-        var weaponButton = CreateButton("WeaponButton", root.transform, "武器", new Vector2(132f, 46f), new Vector2(382f, -140f));
-        var armorButton = CreateButton("ArmorButton", root.transform, "防具", new Vector2(132f, 46f), new Vector2(528f, -140f));
-        var accessoryButton = CreateButton("AccessoryButton", root.transform, "装飾品", new Vector2(132f, 46f), new Vector2(674f, -140f));
+        var categoryPanel = CreatePanel("CategoryPanel", root.transform, new Vector2(280f, 700f), new Vector2(70f, -190f));
+        var allButton = CreateButton("AllButton", categoryPanel.transform, "すべて", new Vector2(220f, 58f), new Vector2(30f, -70f));
+        var consumableButton = CreateButton("ConsumableButton", categoryPanel.transform, "消耗品", new Vector2(220f, 58f), new Vector2(30f, -145f));
+        var weaponButton = CreateButton("WeaponButton", categoryPanel.transform, "武器", new Vector2(220f, 58f), new Vector2(30f, -220f));
+        var armorButton = CreateButton("ArmorButton", categoryPanel.transform, "防具", new Vector2(220f, 58f), new Vector2(30f, -295f));
+        var accessoryButton = CreateButton("AccessoryButton", categoryPanel.transform, "装飾品", new Vector2(220f, 58f), new Vector2(30f, -370f));
 
-        var listPanel = CreatePanel("RecipeListPanel", root.transform, new Vector2(850f, 760f), new Vector2(90f, -205f));
-        var viewport = CreatePanel("Viewport", listPanel.transform, new Vector2(800f, 650f), new Vector2(25f, -70f));
+        var listPanel = CreatePanel("RecipeListPanel", root.transform, new Vector2(800f, 700f), new Vector2(350f, -190f));
+        var viewport = CreatePanel("Viewport", listPanel.transform, new Vector2(700f, 550f), new Vector2(20f, -110f));
         viewport.AddComponent<RectMask2D>();
-        var content = CreateUIObject("Content", viewport.transform, new Vector2(800f, 650f));
+        var content = CreateUIObject("Content", viewport.transform, new Vector2(700f, 550f));
         AnchorTopStretch(content.GetComponent<RectTransform>(), 0f, 0f, 0f);
         var scrollRect = listPanel.AddComponent<ScrollRect>();
         scrollRect.viewport = viewport.GetComponent<RectTransform>();
@@ -116,19 +130,20 @@ public static class SynthesisPrefabBuilder
         scrollRect.vertical = true;
         scrollRect.movementType = ScrollRect.MovementType.Clamped;
 
-        CreateText("ListNameHeader", listPanel.transform, "合成品", 20, TextAlignmentOptions.Left, new Vector2(180f, 32f), new Vector2(30f, -28f));
-        CreateText("ListOwnedHeader", listPanel.transform, "所持", 20, TextAlignmentOptions.Center, new Vector2(80f, 32f), new Vector2(610f, -28f));
-        CreateText("ListCostHeader", listPanel.transform, "費用", 20, TextAlignmentOptions.Center, new Vector2(80f, 32f), new Vector2(720f, -28f));
+        CreateText("PanelTitle", listPanel.transform, "合成品", 26, TextAlignmentOptions.Left, new Vector2(180f, 36f), new Vector2(30f, -30f));
+        CreateText("ListOwnedHeader", listPanel.transform, "所持", 20, TextAlignmentOptions.Center, new Vector2(70f, 32f), new Vector2(545f, -72f));
+        CreateText("ListCostHeader", listPanel.transform, "費用", 20, TextAlignmentOptions.Right, new Vector2(112f, 32f), new Vector2(660f, -72f));
 
-        var detailPanel = CreatePanel("DetailPanel", root.transform, new Vector2(840f, 760f), new Vector2(990f, -205f));
+        var detailPanel = CreatePanel("DetailPanel", root.transform, new Vector2(640f, 700f), new Vector2(-70f, -190f));
+        AnchorTopRight(detailPanel.GetComponent<RectTransform>());
         var detailIcon = CreateImage("DetailIcon", detailPanel.transform, new Vector2(88f, 88f), new Vector2(40f, -42f));
         AnchorTopLeft(detailIcon.rectTransform);
         detailIcon.preserveAspect = true;
-        var detailTitle = CreateText("DetailTitle", detailPanel.transform, "合成品", 32, TextAlignmentOptions.Left, new Vector2(500f, 46f), new Vector2(150f, -42f));
+        var detailTitle = CreateText("DetailTitle", detailPanel.transform, "合成品", 32, TextAlignmentOptions.Left, new Vector2(420f, 46f), new Vector2(150f, -42f));
         AnchorTopLeft(detailTitle.rectTransform);
         var detailTag = CreateText("DetailTag", detailPanel.transform, "", 22, TextAlignmentOptions.Left, new Vector2(300f, 34f), new Vector2(150f, -90f));
         AnchorTopLeft(detailTag.rectTransform);
-        var detailDescription = CreateText("DetailDescription", detailPanel.transform, "", 22, TextAlignmentOptions.TopLeft, new Vector2(760f, 110f), new Vector2(40f, -150f));
+        var detailDescription = CreateText("DetailDescription", detailPanel.transform, "", 22, TextAlignmentOptions.TopLeft, new Vector2(560f, 110f), new Vector2(40f, -150f));
         AnchorTopLeft(detailDescription.rectTransform);
 
         CreateText("OwnedCaption", detailPanel.transform, "所持数", 22, TextAlignmentOptions.Left, new Vector2(120f, 32f), new Vector2(40f, -285f));
@@ -136,9 +151,13 @@ public static class SynthesisPrefabBuilder
         CreateText("MoneyCostCaption", detailPanel.transform, "必要金額", 22, TextAlignmentOptions.Left, new Vector2(120f, 32f), new Vector2(40f, -330f));
         var moneyCostText = CreateText("MoneyCostText", detailPanel.transform, "0", 22, TextAlignmentOptions.Left, new Vector2(200f, 32f), new Vector2(170f, -330f));
         CreateText("MaterialCostCaption", detailPanel.transform, "必要素材", 22, TextAlignmentOptions.Left, new Vector2(160f, 32f), new Vector2(40f, -385f));
-        var materialCostText = CreateText("MaterialCostText", detailPanel.transform, "", 22, TextAlignmentOptions.TopLeft, new Vector2(760f, 180f), new Vector2(40f, -430f));
-        var helpText = CreateText("HelpText", detailPanel.transform, "", 22, TextAlignmentOptions.TopLeft, new Vector2(760f, 70f), new Vector2(40f, -640f));
-        var synthesizeButton = CreateButton("SynthesizeButton", detailPanel.transform, "合成する", new Vector2(220f, 58f), new Vector2(580f, -665f));
+        var materialCostText = CreateText("MaterialCostText", detailPanel.transform, "", 22, TextAlignmentOptions.TopLeft, new Vector2(560f, 150f), new Vector2(40f, -430f));
+
+        var helpPanel = CreatePanel("HelpPanel", root.transform, new Vector2(-140f, 100f), new Vector2(0f, 120f));
+        AnchorBottomStretch(helpPanel.GetComponent<RectTransform>(), 70f, 70f, 120f);
+        var helpText = CreateText("HelpText", helpPanel.transform, "", 22, TextAlignmentOptions.TopLeft, new Vector2(1640f, 58f), new Vector2(30f, -22f));
+        AnchorTopStretch(helpText.rectTransform, 30f, 30f, 22f);
+        var synthesizeButton = CreateButton("SynthesizeButton", detailPanel.transform, "合成する", new Vector2(220f, 58f), new Vector2(380f, -610f));
 
         var backButton = CreateButton("BackButton", root.transform, "戻る", new Vector2(140f, 52f), new Vector2(-220f, -60f));
         AnchorTopRight(backButton.GetComponent<RectTransform>());
@@ -210,7 +229,9 @@ public static class SynthesisPrefabBuilder
     {
         var panel = CreateUIObject(name, parent, size, position);
         var image = panel.AddComponent<Image>();
-        image.color = PanelColor;
+        image.sprite = LoadWindowSprite();
+        image.type = Image.Type.Sliced;
+        image.color = Color.white;
         return panel;
     }
 
@@ -240,9 +261,17 @@ public static class SynthesisPrefabBuilder
     {
         var buttonObject = CreateUIObject(name, parent, size, position);
         var image = buttonObject.AddComponent<Image>();
-        image.color = ButtonColor;
+        image.sprite = LoadWindowSprite();
+        image.type = Image.Type.Sliced;
+        image.color = Color.white;
         var button = buttonObject.AddComponent<Button>();
         button.targetGraphic = image;
+        var hover = buttonObject.AddComponent<WindowHoverSpriteView>();
+        var hoverSerialized = new SerializedObject(hover);
+        hoverSerialized.FindProperty("windowImage").objectReferenceValue = image;
+        hoverSerialized.FindProperty("normalWindowSprite").objectReferenceValue = LoadWindowSprite();
+        hoverSerialized.FindProperty("highlightedWindowSprite").objectReferenceValue = LoadWindowHoverSprite();
+        hoverSerialized.ApplyModifiedPropertiesWithoutUndo();
         var label = CreateText("Label", buttonObject.transform, text, 22, TextAlignmentOptions.Center, size, Vector2.zero);
         Stretch(label.rectTransform);
         label.color = AccentColor;
@@ -288,6 +317,15 @@ public static class SynthesisPrefabBuilder
         rect.sizeDelta = new Vector2(-(left + right), rect.sizeDelta.y);
     }
 
+    private static void AnchorBottomStretch(RectTransform rect, float left, float right, float bottom)
+    {
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2((left - right) * 0.5f, bottom);
+        rect.sizeDelta = new Vector2(-(left + right), rect.sizeDelta.y);
+    }
+
     private static void Stretch(RectTransform rect)
     {
         rect.anchorMin = Vector2.zero;
@@ -308,6 +346,7 @@ public static class SynthesisPrefabBuilder
     {
         CreateFolder("Assets/UI", "Synthesis");
         CreateFolder(SynthesisRoot, "Prefabs");
+        CreateFolder(SynthesisRoot, "Backgrounds");
     }
 
     private static void CreateFolder(string parent, string name)
@@ -317,5 +356,15 @@ public static class SynthesisPrefabBuilder
         {
             AssetDatabase.CreateFolder(parent, name);
         }
+    }
+
+    private static Sprite LoadWindowSprite()
+    {
+        return AssetDatabase.LoadAssetAtPath<Sprite>(WindowSpritePath);
+    }
+
+    private static Sprite LoadWindowHoverSprite()
+    {
+        return AssetDatabase.LoadAssetAtPath<Sprite>(WindowHoverSpritePath);
     }
 }
