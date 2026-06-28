@@ -21,10 +21,10 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     [SerializeField] private Image detailIconImage;
     [SerializeField] private TMP_Text detailDescriptionText;
     [SerializeField] private EquipmentDetailPanelView equipmentDetailPanelView;
-    [SerializeField] private TMP_Text helpText;
     [SerializeField] private TMP_Text moneyText;
     [SerializeField] private Button buyButton;
     [SerializeField] private TMP_Text actionButtonLabel;
+    [SerializeField] private TMP_Text selectionInstructionText;
     [SerializeField] private TMP_Text stockHeaderText;
     [SerializeField] private TMP_Text ownedHeaderText;
     [SerializeField] private TMP_Text priceHeaderText;
@@ -198,11 +198,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             equipmentDetailPanelView?.Hide();
         }
 
-        if (helpText != null)
-        {
-            helpText.text = FormatDetailHelp(row);
-        }
-
         RefreshActionButtonState();
     }
 
@@ -249,16 +244,13 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     {
         if (selectedRow == null || purchaseService == null || runSaveData == null)
         {
-            SetHelpText("購入する商品を選んでください。");
             return;
         }
 
         var purchasedShopItemId = selectedRow.ShopItemId;
-        var purchasedItemName = selectedRow.ItemName;
         var result = purchaseService.TryPurchase(runSaveData, purchasedShopItemId);
         if (!result.CanPurchase)
         {
-            SetHelpText(FormatPurchaseFailure(result.FailureReason));
             return;
         }
 
@@ -268,25 +260,21 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         SelectRowByShopItemId(purchasedShopItemId);
         RefreshMoneyText();
         RefreshActionButtonState();
-        SetHelpText($"{purchasedItemName}を購入しました。");
     }
 
     public void SellCurrentItem()
     {
         if (selectedRow == null || sellService == null || runSaveData == null)
         {
-            SetHelpText("売却する所持品を選んでください。");
             return;
         }
 
         var soldEntryId = selectedRow.ShopItemId;
-        var soldItemName = selectedRow.ItemName;
         var result = ShouldSellSelectedAsEquipment(soldEntryId)
             ? sellService.TrySellEquipment(runSaveData, soldEntryId)
             : sellService.TrySellItem(runSaveData, soldEntryId);
         if (!result.CanSell)
         {
-            SetHelpText(FormatSellFailure(result.FailureReason));
             return;
         }
 
@@ -296,7 +284,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
         SelectRowByShopItemId(soldEntryId);
         RefreshMoneyText();
         RefreshActionButtonState();
-        SetHelpText($"{soldItemName}を売却しました。");
     }
 
     private void ShowBuyMode()
@@ -890,6 +877,13 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             actionButtonLabel.text = currentMode == ShopMode.Buy ? "購入する" : "売却する";
         }
 
+        if (selectionInstructionText != null)
+        {
+            selectionInstructionText.text = currentMode == ShopMode.Buy
+                ? "購入するアイテムを選択してください"
+                : "売却するアイテムを選択してください";
+        }
+
         RefreshActionButtonState();
     }
 
@@ -1068,10 +1062,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             detailDescriptionText.text = string.Empty;
         }
 
-        if (helpText != null)
-        {
-            helpText.text = string.Empty;
-        }
     }
 
     private void RefreshMoneyText()
@@ -1168,69 +1158,6 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
             default:
                 return false;
         }
-    }
-
-    private string FormatDetailHelp(ShopItemRowView row)
-    {
-        if (row == null)
-        {
-            return string.Empty;
-        }
-
-        if (row != selectedRow)
-        {
-            return $"{row.ItemName}の詳細です。クリックで対象にします。";
-        }
-
-        if (currentMode == ShopMode.Buy)
-        {
-            var quote = purchaseService != null && runSaveData != null
-                ? purchaseService.GetQuote(runSaveData, row.ShopItemId)
-                : default;
-            return quote.CanPurchase
-                ? $"{row.ItemName}を購入対象にしています。"
-                : FormatPurchaseFailure(quote.FailureReason);
-        }
-
-        var sellQuote = ShouldSellSelectedAsEquipment(row.ShopItemId)
-            ? sellService?.GetEquipmentQuote(runSaveData, row.ShopItemId) ?? default
-            : sellService?.GetItemQuote(runSaveData, row.ShopItemId) ?? default;
-        return sellQuote.CanSell
-            ? $"{row.ItemName}を売却対象にしています。"
-            : FormatSellFailure(sellQuote.FailureReason);
-    }
-
-    private void SetHelpText(string message)
-    {
-        if (helpText != null)
-        {
-            helpText.text = message;
-        }
-    }
-
-    private static string FormatPurchaseFailure(ShopPurchaseFailureReason reason)
-    {
-        return reason switch
-        {
-            ShopPurchaseFailureReason.ShopItemNotFound => "商品データが見つかりません。",
-            ShopPurchaseFailureReason.ProductNotFound => "商品内容のデータが見つかりません。",
-            ShopPurchaseFailureReason.NotAvailableInCurrentPhase => "この商品はまだ購入できません。",
-            ShopPurchaseFailureReason.SoldOut => "在庫がありません。",
-            ShopPurchaseFailureReason.NotEnoughMoney => "所持金が足りません。",
-            ShopPurchaseFailureReason.InventoryFull => $"消耗品は{ShopPurchaseService.MaxConsumableCount}個まで所持できます。",
-            _ => "購入できません。"
-        };
-    }
-
-    private static string FormatSellFailure(ShopSellFailureReason reason)
-    {
-        return reason switch
-        {
-            ShopSellFailureReason.ProductNotFound => "所持品のデータが見つかりません。",
-            ShopSellFailureReason.NotOwned => "所持していません。",
-            ShopSellFailureReason.Unsellable => "この所持品は売却できません。",
-            _ => "売却できません。"
-        };
     }
 
     private readonly struct ShopDisplayEntry

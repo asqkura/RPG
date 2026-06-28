@@ -53,8 +53,6 @@ namespace RPG.Shop
 
     public sealed class ShopPurchaseService
     {
-        public const int MaxConsumableCount = 20;
-
         private readonly ShopItemDatabase shopItemDatabase;
         private readonly ItemDatabase itemDatabase;
         private readonly EquipmentDatabase equipmentDatabase;
@@ -225,13 +223,7 @@ namespace RPG.Shop
                 return false;
             }
 
-            var ownedConsumableCount = 0;
-            foreach (var stack in saveData.ConsumableItems)
-            {
-                ownedConsumableCount += stack.Count;
-            }
-
-            return ownedConsumableCount > MaxConsumableCount - quantity;
+            return saveData.GetTotalConsumableCount() > RunSaveData.MaxConsumableCount - quantity;
         }
 
         private void AddProductToInventory(RunSaveData saveData, ShopItemData shopItem, int quantity)

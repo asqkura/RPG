@@ -15,11 +15,10 @@ MonoBehaviour:
   id: syn_guard_ring
   displayName: 
   description: 
-  availablePhase: 2
+  requiredSynthesisLevel: 2
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: 528a2c480d0ff6b4db79f5c8b2a88964, type: 2}
-  resultCount: 1
   moneyCost: 220
   materialCosts:
   - item: {fileID: 11400000, guid: 9aa17c0fa5e55d84ab85025b49dd9cfb, type: 2}

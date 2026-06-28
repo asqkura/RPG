@@ -26,7 +26,6 @@ public static class TestSynthesisDataBuilder
                 "syn_potion",
                 SynthesisProductDataType.Consumable,
                 "item_potion",
-                2,
                 1,
                 30,
                 new[] { new MaterialCostSpec("mat_herb", 2) },
@@ -35,7 +34,6 @@ public static class TestSynthesisDataBuilder
                 "syn_high_potion",
                 SynthesisProductDataType.Consumable,
                 "item_high_potion",
-                1,
                 2,
                 90,
                 new[] { new MaterialCostSpec("mat_healing_grass", 1), new MaterialCostSpec("mat_magic_shard", 1) },
@@ -45,7 +43,6 @@ public static class TestSynthesisDataBuilder
                 SynthesisProductDataType.Equipment,
                 "eq_iron_sword",
                 1,
-                1,
                 180,
                 new[] { new MaterialCostSpec("mat_iron_ore", 3), new MaterialCostSpec("mat_sturdy_wood", 1) },
                 10),
@@ -54,7 +51,6 @@ public static class TestSynthesisDataBuilder
                 SynthesisProductDataType.Equipment,
                 "eq_leather_armor",
                 1,
-                1,
                 160,
                 new[] { new MaterialCostSpec("mat_beast_hide", 3), new MaterialCostSpec("mat_iron_ore", 1) },
                 11),
@@ -62,7 +58,6 @@ public static class TestSynthesisDataBuilder
                 "syn_guard_ring",
                 SynthesisProductDataType.Equipment,
                 "eq_guard_ring",
-                1,
                 2,
                 220,
                 new[] { new MaterialCostSpec("mat_magic_stone", 1), new MaterialCostSpec("mat_fine_leather", 1) },
@@ -80,8 +75,7 @@ public static class TestSynthesisDataBuilder
         string id,
         SynthesisProductDataType productType,
         string productId,
-        int resultCount,
-        int availablePhase,
+        int requiredSynthesisLevel,
         int moneyCost,
         IReadOnlyList<MaterialCostSpec> materialCosts,
         int sortOrder)
@@ -89,7 +83,7 @@ public static class TestSynthesisDataBuilder
         var recipe = LoadOrCreate<SynthesisRecipeData>(SynthesisFolder + "/" + id + ".asset");
         var serialized = new SerializedObject(recipe);
         serialized.FindProperty("id").stringValue = id;
-        serialized.FindProperty("availablePhase").intValue = availablePhase;
+        serialized.FindProperty("requiredSynthesisLevel").intValue = requiredSynthesisLevel;
         serialized.FindProperty("productType").enumValueIndex = (int)productType;
         serialized.FindProperty("productItem").objectReferenceValue = productType == SynthesisProductDataType.Consumable
             ? LoadMasterAsset<ItemData>("Items", productId)
@@ -97,7 +91,6 @@ public static class TestSynthesisDataBuilder
         serialized.FindProperty("productEquipment").objectReferenceValue = productType == SynthesisProductDataType.Equipment
             ? LoadMasterAsset<EquipmentData>("Equipment", productId)
             : null;
-        serialized.FindProperty("resultCount").intValue = resultCount;
         serialized.FindProperty("moneyCost").intValue = moneyCost;
         serialized.FindProperty("sortOrder").intValue = sortOrder;
         SetMaterialCosts(serialized.FindProperty("materialCosts"), materialCosts);

@@ -15,11 +15,10 @@ MonoBehaviour:
   id: syn_leather_armor
   displayName: 
   description: 
-  availablePhase: 1
+  requiredSynthesisLevel: 1
   productType: 1
   productItem: {fileID: 0}
   productEquipment: {fileID: 11400000, guid: 222cebad2bd613742aa136dbcf7c1fdf, type: 2}
-  resultCount: 1
   moneyCost: 160
   materialCosts:
   - item: {fileID: 11400000, guid: 91d11e4a25956f44ca8a28f63d143c83, type: 2}

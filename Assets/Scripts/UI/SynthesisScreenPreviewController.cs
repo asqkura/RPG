@@ -19,12 +19,12 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
     [SerializeField] private TMP_Text detailTagText;
     [SerializeField] private Image detailIconImage;
     [SerializeField] private TMP_Text detailDescriptionText;
-    [SerializeField] private TMP_Text materialCostText;
-    [SerializeField] private TMP_Text moneyCostText;
-    [SerializeField] private TMP_Text ownedText;
     [SerializeField] private EquipmentDetailPanelView equipmentDetailPanelView;
-    [SerializeField] private TMP_Text helpText;
+    [SerializeField] private SynthesisMaterialPanelView materialPanelView;
+    [SerializeField] private SynthesisResultScreenView resultScreenView;
+    [SerializeField] private SynthesisResultScreenView resultScreenPrefab;
     [SerializeField] private TMP_Text moneyText;
+    [SerializeField] private TMP_Text synthesisLevelText;
     [SerializeField] private Button synthesizeButton;
     [SerializeField] private TMP_Text actionButtonLabel;
     [SerializeField] private SynthesisRecipeRowView recipeRowPrefab;
@@ -54,6 +54,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
     private void Awake()
     {
         InitializeGameState();
+        EnsureResultScreenView();
         RegisterCategoryButtons();
         if (synthesizeButton != null)
         {
@@ -64,6 +65,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         PopulateRows();
         SelectFirstRow();
         RefreshMoneyText();
+        RefreshSynthesisLevelText();
         initialized = true;
     }
 
@@ -149,6 +151,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         }
 
         RefreshMoneyText();
+        RefreshSynthesisLevelText();
     }
 
     private void SubmitCurrentRecipe()
@@ -162,7 +165,6 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         var result = synthesisService.TrySynthesize(runSaveData, recipeId);
         if (!result.CanSynthesize)
         {
-            SetHelpText(FormatFailure(result.FailureReason));
             RefreshActionButtonState();
             return;
         }
@@ -170,7 +172,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         PopulateRows();
         SelectRowByRecipeId(recipeId);
         RefreshMoneyText();
-        SetHelpText($"{selectedRow.ItemName}を合成しました。");
+        ShowSynthesisResult(result);
     }
 
     private void ShowAll()
@@ -240,11 +242,6 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             detailDescriptionText.text = row.DescriptionText;
         }
 
-        if (recipeDatabase != null && recipeDatabase.TryGetById(row.RecipeId, out var recipe))
-        {
-            RefreshCostTexts(recipe);
-        }
-
         if (equipmentDetailsByRecipeId.TryGetValue(row.RecipeId, out var equipmentDetail))
         {
             equipmentDetailPanelView?.Show(equipmentDetail);
@@ -254,11 +251,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             equipmentDetailPanelView?.Hide();
         }
 
-        if (helpText != null)
-        {
-            helpText.text = FormatDetailHelp(row);
-        }
-
+        RefreshMaterialPanel(row.RecipeId);
         RefreshActionButtonState();
     }
 
@@ -285,23 +278,8 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             detailDescriptionText.text = string.Empty;
         }
 
-        if (materialCostText != null)
-        {
-            materialCostText.text = string.Empty;
-        }
-
-        if (moneyCostText != null)
-        {
-            moneyCostText.text = string.Empty;
-        }
-
-        if (ownedText != null)
-        {
-            ownedText.text = string.Empty;
-        }
-
         equipmentDetailPanelView?.Hide();
-        SetHelpText(string.Empty);
+        materialPanelView?.Clear();
         RefreshActionButtonState();
     }
 
@@ -318,6 +296,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
 
         foreach (var recipe in recipeDatabase.Entries
             .Where(recipe => recipe != null)
+            .Where(recipe => runSaveData == null || recipe.RequiredSynthesisLevel <= runSaveData.SynthesisLevel)
             .OrderBy(recipe => recipe.SortOrder)
             .ThenBy(recipe => recipe.RecipeId))
         {
@@ -595,46 +574,72 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         }
     }
 
-    private void RefreshCostTexts(SynthesisRecipeData recipe)
+    private void RefreshMaterialPanel(string recipeId)
     {
-        if (materialCostText != null)
+        if (materialPanelView == null)
         {
-            materialCostText.text = FormatMaterialCosts(recipe);
+            return;
         }
 
-        if (moneyCostText != null)
+        if (recipeDatabase == null
+            || string.IsNullOrWhiteSpace(recipeId)
+            || !recipeDatabase.TryGetById(recipeId, out var recipe)
+            || recipe == null)
         {
-            moneyCostText.text = recipe.MoneyCost > 0 ? recipe.MoneyCost.ToString() : "0";
+            materialPanelView.Clear();
+            return;
         }
 
-        if (ownedText != null)
+        var allEntries = BuildMaterialPanelEntries(recipe);
+        var overflowCount = 0;
+        if (allEntries.Count > 3)
         {
-            ownedText.text = FormatOwnedForRecipe(recipe);
+            overflowCount = allEntries.Count - 2;
+            allEntries.RemoveRange(2, allEntries.Count - 2);
         }
+
+        materialPanelView.Show(allEntries, overflowCount);
     }
 
-    private string FormatMaterialCosts(SynthesisRecipeData recipe)
+    private List<SynthesisMaterialPanelEntry> BuildMaterialPanelEntries(SynthesisRecipeData recipe)
     {
-        if (recipe == null || recipe.MaterialCosts.Count == 0)
+        var materialCosts = new List<SynthesisMaterialPanelCost>();
+        if (recipe == null)
         {
-            return "なし";
+            return new List<SynthesisMaterialPanelEntry>();
         }
 
-        var lines = new List<string>();
         foreach (var cost in recipe.MaterialCosts)
         {
-            if (cost == null || string.IsNullOrWhiteSpace(cost.ItemId))
+            if (cost == null || string.IsNullOrWhiteSpace(cost.ItemId) || cost.Count <= 0)
             {
                 continue;
             }
 
-            var ownedCount = runSaveData?.GetMaterialCount(cost.ItemId) ?? 0;
-            var materialName = FormatMaterialName(cost);
-            var shortage = ownedCount < cost.Count ? " 不足" : string.Empty;
-            lines.Add($"{materialName} {ownedCount}/{cost.Count}{shortage}");
+            var existingIndex = materialCosts.FindIndex(entry => entry.ItemId == cost.ItemId);
+            if (existingIndex >= 0)
+            {
+                var existing = materialCosts[existingIndex];
+                materialCosts[existingIndex] = existing.AddCount(cost.Count);
+                continue;
+            }
+
+            materialCosts.Add(new SynthesisMaterialPanelCost(cost.ItemId, cost.Item, cost.Count));
         }
 
-        return lines.Count > 0 ? string.Join("\n", lines) : "なし";
+        var entries = new List<SynthesisMaterialPanelEntry>(materialCosts.Count);
+        foreach (var cost in materialCosts)
+        {
+            var ownedCount = runSaveData?.GetMaterialCount(cost.ItemId) ?? 0;
+            entries.Add(new SynthesisMaterialPanelEntry(
+                cost.Item != null ? cost.Item.IconSprite : null,
+                FormatMaterialName(cost.Item, cost.ItemId),
+                ownedCount,
+                cost.RequiredCount,
+                ownedCount < cost.RequiredCount));
+        }
+
+        return entries;
     }
 
     private string FormatRecipeCost(SynthesisRecipeData recipe)
@@ -645,21 +650,6 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         }
 
         return recipe.MoneyCost > 0 ? recipe.MoneyCost.ToString() : "-";
-    }
-
-    private string FormatOwnedForRecipe(SynthesisRecipeData recipe)
-    {
-        if (recipe == null)
-        {
-            return string.Empty;
-        }
-
-        if (recipe.ProductType == SynthesisProductDataType.Consumable)
-        {
-            return FormatOwnedCount(runSaveData?.GetConsumableCount(recipe.ProductId) ?? 0);
-        }
-
-        return FormatOwnedCount(GetOwnedEquipmentCount(recipe.ProductId));
     }
 
     private static string FormatOwnedCount(int count)
@@ -681,18 +671,98 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             return string.Empty;
         }
 
-        return cost.Item != null
-            && !string.IsNullOrWhiteSpace(cost.Item.DisplayName)
-            ? cost.Item.DisplayName
-            : cost.ItemId;
+        return FormatMaterialName(cost.Item, cost.ItemId);
+    }
+
+    private static string FormatMaterialName(ItemData item, string itemId)
+    {
+        return item != null
+            && !string.IsNullOrWhiteSpace(item.DisplayName)
+            ? item.DisplayName
+            : itemId;
     }
 
     private void RefreshMoneyText()
     {
         if (moneyText != null)
         {
-            moneyText.text = runSaveData != null ? $"{runSaveData.Money:N0}" : "0";
+            if (runSaveData == null)
+            {
+                moneyText.text = "0";
+                return;
+            }
+
+            moneyText.text = synthesisLevelText == null
+                ? $"Lv{runSaveData.SynthesisLevel} / {runSaveData.Money:N0}"
+                : $"{runSaveData.Money:N0}";
         }
+    }
+
+    private void RefreshSynthesisLevelText()
+    {
+        if (synthesisLevelText != null)
+        {
+            synthesisLevelText.text = runSaveData != null ? $"Lv{runSaveData.SynthesisLevel}" : "Lv1";
+        }
+    }
+
+    private void ShowSynthesisResult(SynthesisQuote result)
+    {
+        EnsureResultScreenView();
+        if (resultScreenView == null || result.Recipe == null)
+        {
+            return;
+        }
+
+        if (result.ProductType == SynthesisProductDataType.Consumable)
+        {
+            var item = result.Recipe.ProductItem;
+            if (item == null)
+            {
+                return;
+            }
+
+            resultScreenView.ShowConsumable(new SynthesisConsumableResultViewData
+            {
+                Icon = item.IconSprite,
+                DisplayName = item.DisplayName,
+                TagText = MasterDataDisplayLabels.FormatTag(MasterDataDisplayLabels.FormatItemType(item.ItemType)),
+                Description = item.Description
+            });
+            return;
+        }
+
+        var equipment = result.Recipe.ProductEquipment;
+        if (equipment == null)
+        {
+            return;
+        }
+
+        var rarity = result.CreatedEquipment?.Rarity ?? EquipmentRarity.Common;
+        resultScreenView.ShowEquipment(new SynthesisEquipmentResultViewData
+        {
+            Icon = equipment.IconSprite,
+            DisplayName = equipment.DisplayName,
+            TagText = MasterDataDisplayLabels.FormatTag(MasterDataDisplayLabels.FormatEquipmentType(equipment))
+                + MasterDataDisplayLabels.FormatTag(MasterDataDisplayLabels.FormatRarity(rarity)),
+            Description = equipment.Description,
+            DefaultDetail = BuildEquipmentDetailData(equipment),
+            ResultDetail = BuildEquipmentDetailData(equipment, result.CreatedEquipment)
+        });
+    }
+
+    private void EnsureResultScreenView()
+    {
+        if (resultScreenView != null || resultScreenPrefab == null)
+        {
+            return;
+        }
+
+        var parent = transform.parent;
+        resultScreenView = parent != null
+            ? Instantiate(resultScreenPrefab, parent, false)
+            : Instantiate(resultScreenPrefab);
+        resultScreenView.name = resultScreenPrefab.name;
     }
 
     private void RefreshActionButtonState()
@@ -702,73 +772,41 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             return;
         }
 
-        var canSubmit = selectedRow != null
-            && synthesisService != null
-            && runSaveData != null
-            && synthesisService.GetQuote(runSaveData, selectedRow.RecipeId).CanSynthesize;
+        var quote = selectedRow != null && synthesisService != null && runSaveData != null
+            ? synthesisService.GetQuote(runSaveData, selectedRow.RecipeId)
+            : default;
+        var canSubmit = quote.CanSynthesize;
 
         synthesizeButton.interactable = canSubmit;
         if (actionButtonLabel != null)
         {
+            actionButtonLabel.text = FormatActionButtonLabel(quote.FailureReason);
             actionButtonLabel.color = canSubmit ? AccentTextColor : TextColor;
         }
     }
 
-    private string FormatDetailHelp(SynthesisRecipeRowView row)
+    private static string FormatActionButtonLabel(SynthesisFailureReason failureReason)
     {
-        if (row == null)
-        {
-            return string.Empty;
-        }
-
-        if (row != selectedRow)
-        {
-            return $"{row.ItemName}の詳細です。クリックで対象にします。";
-        }
-
-        var quote = synthesisService != null && runSaveData != null
-            ? synthesisService.GetQuote(runSaveData, row.RecipeId)
-            : default;
-        return quote.CanSynthesize
-            ? $"{row.ItemName}を合成対象にしています。"
-            : FormatFailure(quote.FailureReason);
+        return failureReason == SynthesisFailureReason.NotEnoughMaterials
+            ? "素材不足"
+            : "合成する";
     }
 
-    private void SetHelpText(string message)
-    {
-        if (helpText != null)
-        {
-            helpText.text = message;
-        }
-    }
-
-    private static string FormatFailure(SynthesisFailureReason reason)
-    {
-        return reason switch
-        {
-            SynthesisFailureReason.RecipeNotFound => "レシピデータが見つかりません。",
-            SynthesisFailureReason.NotAvailableInCurrentPhase => "このレシピはまだ合成できません。",
-            SynthesisFailureReason.ProductNotFound => "合成結果のデータが見つかりません。",
-            SynthesisFailureReason.NotEnoughMaterials => "素材が足りません。",
-            SynthesisFailureReason.NotEnoughMoney => "所持金が足りません。",
-            _ => "合成できません。"
-        };
-    }
-
-    private EquipmentDetailData BuildEquipmentDetailData(EquipmentData equipment)
+    private EquipmentDetailData BuildEquipmentDetailData(EquipmentData equipment, OwnedEquipmentSaveData ownedEquipment = null)
     {
         var detail = new EquipmentDetailData
         {
             Description = equipment.Description
         };
 
-        AddStatData(detail.Stats, "HP", equipment.StatModifiers?.Hp ?? 0);
+        AddStatData(detail.Stats, "HP", (equipment.StatModifiers?.Hp ?? 0) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.Hp));
         AddStatData(detail.Stats, "SP", equipment.StatModifiers?.Sp ?? 0);
-        AddStatData(detail.Stats, "攻撃", equipment.StatModifiers?.Attack ?? 0);
-        AddStatData(detail.Stats, "魔力", equipment.StatModifiers?.Magic ?? 0);
-        AddStatData(detail.Stats, "防御", equipment.StatModifiers?.Defense ?? 0);
-        AddStatData(detail.Stats, "素早さ", equipment.StatModifiers?.Speed ?? 0);
-        AddStatData(detail.Stats, "会心率", Mathf.RoundToInt((equipment.StatModifiers?.CriticalRate ?? 0f) * 100f), "%");
+        AddStatData(detail.Stats, "攻撃", (equipment.StatModifiers?.Attack ?? 0) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.Attack));
+        AddStatData(detail.Stats, "魔力", (equipment.StatModifiers?.Magic ?? 0) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.Magic));
+        AddStatData(detail.Stats, "防御", (equipment.StatModifiers?.Defense ?? 0) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.Defense));
+        AddStatData(detail.Stats, "素早さ", (equipment.StatModifiers?.Speed ?? 0) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.Speed));
+        var criticalRate = Mathf.RoundToInt((equipment.StatModifiers?.CriticalRate ?? 0f) * 100f) + GetRandomModifierAmount(ownedEquipment, EquipmentModifierType.CriticalRate);
+        AddStatData(detail.Stats, "会心率", criticalRate, "%");
 
         foreach (var skillId in equipment.BaseSkillIds)
         {
@@ -779,11 +817,28 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             }
         }
 
+        var randomSkillName = FormatSkillName(ownedEquipment?.RandomSkillId, string.Empty);
+        if (!string.IsNullOrWhiteSpace(randomSkillName))
+        {
+            detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(randomSkillName));
+        }
+
         foreach (var trait in equipment.BaseTraits)
         {
             if (trait != null)
             {
-                detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(FormatBaseTraitType(trait.TraitType)));
+                detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(FormatBaseTrait(trait)));
+            }
+        }
+
+        if (ownedEquipment != null)
+        {
+            foreach (var modifier in ownedEquipment.RandomModifiers)
+            {
+                if (modifier != null && !IsStatModifier(modifier.ModifierType))
+                {
+                    detail.FixedSkills.Add(MasterDataDisplayLabels.FormatTag(FormatModifier(modifier)));
+                }
             }
         }
 
@@ -814,6 +869,60 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         return skillId;
     }
 
+    private static int GetRandomModifierAmount(OwnedEquipmentSaveData ownedEquipment, EquipmentModifierType modifierType)
+    {
+        if (ownedEquipment == null)
+        {
+            return 0;
+        }
+
+        var amount = 0;
+        foreach (var modifier in ownedEquipment.RandomModifiers)
+        {
+            if (modifier != null && modifier.ModifierType == modifierType)
+            {
+                amount += modifier.Amount;
+            }
+        }
+
+        return amount;
+    }
+
+    private static bool IsStatModifier(EquipmentModifierType modifierType)
+    {
+        return modifierType == EquipmentModifierType.Hp
+            || modifierType == EquipmentModifierType.Attack
+            || modifierType == EquipmentModifierType.Magic
+            || modifierType == EquipmentModifierType.Defense
+            || modifierType == EquipmentModifierType.Speed
+            || modifierType == EquipmentModifierType.CriticalRate;
+    }
+
+    private static string FormatModifier(EquipmentModifierSaveData modifier)
+    {
+        var target = FormatModifierTarget(modifier.TargetId);
+        var sign = modifier.Amount >= 0 ? "+" : string.Empty;
+        return string.IsNullOrWhiteSpace(target)
+            ? $"{FormatModifierType(modifier.ModifierType)} {sign}{modifier.Amount}{FormatModifierUnit(modifier.ModifierType)}"
+            : $"{target}{FormatModifierType(modifier.ModifierType)} {sign}{modifier.Amount}{FormatModifierUnit(modifier.ModifierType)}";
+    }
+
+    private static string FormatBaseTrait(EquipmentBaseTraitData trait)
+    {
+        return FormatBaseTraitType(trait.TraitType);
+    }
+
+    private static string FormatModifierType(EquipmentModifierType modifierType)
+    {
+        return modifierType switch
+        {
+            EquipmentModifierType.AttributeResistance => "属性耐性",
+            EquipmentModifierType.StatusResistance => "状態異常耐性",
+            EquipmentModifierType.DebuffResistance => "弱体耐性",
+            _ => modifierType.ToString()
+        };
+    }
+
     private static string FormatBaseTraitType(EquipmentBaseTraitType traitType)
     {
         return traitType switch
@@ -823,6 +932,22 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             EquipmentBaseTraitType.DebuffResistance => "弱体耐性",
             _ => traitType.ToString()
         };
+    }
+
+    private static string FormatModifierUnit(EquipmentModifierType modifierType)
+    {
+        return modifierType == EquipmentModifierType.AttributeResistance
+            || modifierType == EquipmentModifierType.StatusResistance
+            || modifierType == EquipmentModifierType.DebuffResistance
+            ? "%"
+            : string.Empty;
+    }
+
+    private static string FormatModifierTarget(string targetId)
+    {
+        return string.IsNullOrWhiteSpace(targetId) || targetId == "all"
+            ? string.Empty
+            : $"{targetId} ";
     }
 
     private static string FormatSigned(int value)
@@ -874,6 +999,25 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         public string Description { get; }
         public string Owned { get; }
         public string Cost { get; }
+    }
+
+    private readonly struct SynthesisMaterialPanelCost
+    {
+        public SynthesisMaterialPanelCost(string itemId, ItemData item, int requiredCount)
+        {
+            ItemId = itemId ?? string.Empty;
+            Item = item;
+            RequiredCount = Mathf.Max(0, requiredCount);
+        }
+
+        public string ItemId { get; }
+        public ItemData Item { get; }
+        public int RequiredCount { get; }
+
+        public SynthesisMaterialPanelCost AddCount(int count)
+        {
+            return new SynthesisMaterialPanelCost(ItemId, Item, RequiredCount + Mathf.Max(0, count));
+        }
     }
 
     private enum SynthesisCategory

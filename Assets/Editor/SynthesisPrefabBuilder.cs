@@ -12,6 +12,7 @@ public static class SynthesisPrefabBuilder
     private const string PrefabFolder = SynthesisRoot + "/Prefabs";
     private const string RowPrefabPath = PrefabFolder + "/SynthesisRecipeRow.prefab";
     private const string ScreenPrefabPath = PrefabFolder + "/SynthesisScreen.prefab";
+    private const string ResultScreenPrefabPath = PrefabFolder + "/SynthesisResultScreen.prefab";
     private const string BackgroundSpritePath = SynthesisRoot + "/Backgrounds/SynthesisWorkshopBackground.png";
     private const string WindowSpritePath = "Assets/UI/Windows/Sprites/Window.png";
     private const string WindowHoverSpritePath = "Assets/UI/Windows/Sprites/Window_Hover.png";
@@ -87,7 +88,7 @@ public static class SynthesisPrefabBuilder
         rootRect.anchorMax = Vector2.zero;
         rootRect.pivot = Vector2.zero;
         rootRect.sizeDelta = Vector2.zero;
-        rootRect.localScale = Vector3.zero;
+        rootRect.localScale = Vector3.one;
 
         var canvas = root.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -103,6 +104,10 @@ public static class SynthesisPrefabBuilder
 
         var title = CreateText("Title", root.transform, "合成", 46, TextAlignmentOptions.Left, new Vector2(320f, 70f), new Vector2(90f, -60f));
         AnchorTopLeft(title.rectTransform);
+        var levelPanel = CreatePanel("SynthesisLevelPanel", root.transform, new Vector2(180f, 60f), new Vector2(420f, -70f));
+        CreateText("SynthesisLevelCaption", levelPanel.transform, "合成Lv", 20, TextAlignmentOptions.Left, new Vector2(90f, 28f), new Vector2(22f, -16f));
+        var synthesisLevelText = CreateText("SynthesisLevelText", levelPanel.transform, "Lv1", 24, TextAlignmentOptions.Right, new Vector2(70f, 32f), new Vector2(155f, -15f));
+        Anchor(synthesisLevelText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(1f, 1f));
         var moneyPanel = CreatePanel("MoneyPanel", root.transform, new Vector2(300f, 60f), new Vector2(-250f, -70f));
         AnchorTopRight(moneyPanel.GetComponent<RectTransform>());
         CreateText("MoneyCaption", moneyPanel.transform, "所持金", 20, TextAlignmentOptions.Left, new Vector2(100f, 28f), new Vector2(30f, -16f));
@@ -146,13 +151,6 @@ public static class SynthesisPrefabBuilder
         var detailDescription = CreateText("DetailDescription", detailPanel.transform, "", 22, TextAlignmentOptions.TopLeft, new Vector2(560f, 110f), new Vector2(40f, -150f));
         AnchorTopLeft(detailDescription.rectTransform);
 
-        CreateText("OwnedCaption", detailPanel.transform, "所持数", 22, TextAlignmentOptions.Left, new Vector2(120f, 32f), new Vector2(40f, -285f));
-        var ownedText = CreateText("OwnedText", detailPanel.transform, "0", 22, TextAlignmentOptions.Left, new Vector2(200f, 32f), new Vector2(170f, -285f));
-        CreateText("MoneyCostCaption", detailPanel.transform, "必要金額", 22, TextAlignmentOptions.Left, new Vector2(120f, 32f), new Vector2(40f, -330f));
-        var moneyCostText = CreateText("MoneyCostText", detailPanel.transform, "0", 22, TextAlignmentOptions.Left, new Vector2(200f, 32f), new Vector2(170f, -330f));
-        CreateText("MaterialCostCaption", detailPanel.transform, "必要素材", 22, TextAlignmentOptions.Left, new Vector2(160f, 32f), new Vector2(40f, -385f));
-        var materialCostText = CreateText("MaterialCostText", detailPanel.transform, "", 22, TextAlignmentOptions.TopLeft, new Vector2(560f, 150f), new Vector2(40f, -430f));
-
         var helpPanel = CreatePanel("HelpPanel", root.transform, new Vector2(-140f, 100f), new Vector2(0f, 120f));
         AnchorBottomStretch(helpPanel.GetComponent<RectTransform>(), 70f, 70f, 120f);
         var helpText = CreateText("HelpText", helpPanel.transform, "", 22, TextAlignmentOptions.TopLeft, new Vector2(1640f, 58f), new Vector2(30f, -22f));
@@ -173,11 +171,11 @@ public static class SynthesisPrefabBuilder
         serialized.FindProperty("detailTagText").objectReferenceValue = detailTag;
         serialized.FindProperty("detailIconImage").objectReferenceValue = detailIcon;
         serialized.FindProperty("detailDescriptionText").objectReferenceValue = detailDescription;
-        serialized.FindProperty("materialCostText").objectReferenceValue = materialCostText;
-        serialized.FindProperty("moneyCostText").objectReferenceValue = moneyCostText;
-        serialized.FindProperty("ownedText").objectReferenceValue = ownedText;
-        serialized.FindProperty("helpText").objectReferenceValue = helpText;
+        serialized.FindProperty("materialPanelView").objectReferenceValue = null;
+        serialized.FindProperty("resultScreenView").objectReferenceValue = null;
+        serialized.FindProperty("resultScreenPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<SynthesisResultScreenView>(ResultScreenPrefabPath);
         serialized.FindProperty("moneyText").objectReferenceValue = moneyText;
+        serialized.FindProperty("synthesisLevelText").objectReferenceValue = synthesisLevelText;
         serialized.FindProperty("synthesizeButton").objectReferenceValue = synthesizeButton;
         serialized.FindProperty("actionButtonLabel").objectReferenceValue = synthesizeButton.transform.Find("Label").GetComponent<TMP_Text>();
         serialized.FindProperty("recipeRowPrefab").objectReferenceValue = rowPrefab;

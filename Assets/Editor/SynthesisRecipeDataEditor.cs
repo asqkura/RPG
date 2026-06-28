@@ -10,7 +10,7 @@ public sealed class SynthesisRecipeDataEditor : Editor
         serializedObject.Update();
 
         EditorGUILayout.PropertyField(serializedObject.FindProperty("id"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("availablePhase"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("requiredSynthesisLevel"));
 
         var productType = serializedObject.FindProperty("productType");
         var productItem = serializedObject.FindProperty("productItem");
@@ -28,7 +28,6 @@ public sealed class SynthesisRecipeDataEditor : Editor
             EditorGUILayout.PropertyField(productItem);
         }
 
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("resultCount"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("moneyCost"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("materialCosts"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("sortOrder"));

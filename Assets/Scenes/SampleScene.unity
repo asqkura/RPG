@@ -768,9 +768,13 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 5270042107979132886, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
-      propertyPath: m_AdditionalShaderChannelsFlag
-      value: 25
+    - target: {fileID: 706220168858353931, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
+      propertyPath: m_Name
+      value: SynthesisScreen
+      objectReference: {fileID: 0}
+    - target: {fileID: 706220168858353931, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
       propertyPath: m_Pivot.x
@@ -805,18 +809,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
       objectReference: {fileID: 0}
@@ -827,6 +819,18 @@ PrefabInstance:
     - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
       propertyPath: m_LocalScale.z
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3846344893009770736, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
       propertyPath: m_LocalRotation.w
@@ -864,13 +868,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 706220168858353931, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
-      propertyPath: m_Name
-      value: SynthesisScreen
-      objectReference: {fileID: 0}
-    - target: {fileID: 706220168858353931, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
-      propertyPath: m_IsActive
-      value: 0
+    - target: {fileID: 5270042107979132886, guid: 65f7f387a378b61469050ea2bdce1eda, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: 25
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -884,7 +884,7 @@ SceneRoots:
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 832575519}
-  - {fileID: 2003197826}
   - {fileID: 418243893}
+  - {fileID: 2003197826}
   - {fileID: 2103197826}
   - {fileID: 1402360152}

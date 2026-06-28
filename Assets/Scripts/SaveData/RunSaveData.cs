@@ -11,6 +11,9 @@ namespace RPG.SaveData
         public const int LastActionDay = 40;
         public const int FinalEventDay = 41;
         public const int MaxMainProgress = 4;
+        public const int MaxConsumableCount = 20;
+        public const int MinSynthesisLevel = 1;
+        public const int MaxSynthesisLevel = 5;
 
         [SerializeField] private int currentDay = FirstDay;
         [SerializeField] private GamePhase currentPhase = GamePhase.Phase1;
@@ -18,6 +21,8 @@ namespace RPG.SaveData
         [SerializeField] private bool actionCompletedToday;
         [Min(0)]
         [SerializeField] private int money;
+        [Range(MinSynthesisLevel, MaxSynthesisLevel)]
+        [SerializeField] private int synthesisLevel = MinSynthesisLevel;
         [SerializeField] private List<ItemStackSaveData> consumableItems = new();
         [SerializeField] private List<ItemStackSaveData> materials = new();
         [SerializeField] private List<OwnedEquipmentSaveData> ownedEquipments = new();
@@ -37,6 +42,7 @@ namespace RPG.SaveData
         public int MainProgress => mainProgress;
         public bool ActionCompletedToday => actionCompletedToday;
         public int Money => money;
+        public int SynthesisLevel => synthesisLevel;
         public IReadOnlyList<ItemStackSaveData> ConsumableItems => consumableItems;
         public IReadOnlyList<ItemStackSaveData> Materials => materials;
         public IReadOnlyList<OwnedEquipmentSaveData> OwnedEquipments => ownedEquipments;
@@ -113,6 +119,7 @@ namespace RPG.SaveData
             currentPhase = GetPhaseForDay(currentDay);
             mainProgress = Mathf.Clamp(mainProgress, 0, MaxMainProgress);
             money = Mathf.Max(0, money);
+            synthesisLevel = Mathf.Clamp(synthesisLevel, MinSynthesisLevel, MaxSynthesisLevel);
         }
 
         public void AddMoney(int amount)
@@ -132,6 +139,36 @@ namespace RPG.SaveData
 
             money -= amount;
             return true;
+        }
+
+        public void SetSynthesisLevel(int level)
+        {
+            synthesisLevel = Mathf.Clamp(level, MinSynthesisLevel, MaxSynthesisLevel);
+        }
+
+        public bool TryRaiseSynthesisLevel()
+        {
+            if (synthesisLevel >= MaxSynthesisLevel)
+            {
+                return false;
+            }
+
+            synthesisLevel++;
+            return true;
+        }
+
+        public int GetTotalConsumableCount()
+        {
+            var total = 0;
+            foreach (var stack in consumableItems)
+            {
+                if (stack != null)
+                {
+                    total = ClampToIntMax((long)total + stack.Count);
+                }
+            }
+
+            return total;
         }
 
         public int GetConsumableCount(string itemId)

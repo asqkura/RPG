@@ -15,11 +15,10 @@ MonoBehaviour:
   id: syn_high_potion
   displayName: 
   description: 
-  availablePhase: 2
+  requiredSynthesisLevel: 2
   productType: 0
   productItem: {fileID: 11400000, guid: d51a78c716445414699b88bcca2f81e6, type: 2}
   productEquipment: {fileID: 0}
-  resultCount: 1
   moneyCost: 90
   materialCosts:
   - item: {fileID: 11400000, guid: 7f7f6766cb62b4b4f9d76bc3171d4755, type: 2}

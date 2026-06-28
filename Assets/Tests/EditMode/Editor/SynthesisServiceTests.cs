@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using RPG.MasterData;
 using RPG.SaveData;
@@ -19,7 +21,7 @@ public sealed class SynthesisServiceTests
         Assert.IsTrue(result.CanSynthesize);
         Assert.AreEqual(1, context.SaveData.GetMaterialCount("mat_herb"));
         Assert.AreEqual(70, context.SaveData.Money);
-        Assert.AreEqual(2, context.SaveData.GetConsumableCount("item_potion"));
+        Assert.AreEqual(1, context.SaveData.GetConsumableCount("item_potion"));
     }
 
     [Test]
@@ -34,7 +36,31 @@ public sealed class SynthesisServiceTests
         Assert.IsTrue(result.CanSynthesize);
         Assert.AreEqual(1, context.SaveData.OwnedEquipments.Count);
         Assert.AreEqual("eq_iron_sword", context.SaveData.OwnedEquipments[0].EquipmentId);
-        Assert.AreEqual(EquipmentRarity.Common, context.SaveData.OwnedEquipments[0].Rarity);
+        Assert.IsNotNull(result.CreatedEquipment);
+        Assert.AreSame(result.CreatedEquipment, context.SaveData.OwnedEquipments[0]);
+    }
+
+    [Test]
+    public void TrySynthesizeEquipmentAddsRolledRarityModifiersAndSkill()
+    {
+        var context = CreateContext(new FixedRandom(99, 3, 0, 5, 0, 6, 0, 7, 0, 1));
+        context.SaveData.SetSynthesisLevel(5);
+        context.SaveData.AddMoney(300);
+        context.SaveData.AddMaterial("mat_herb", 2);
+
+        var result = context.Service.TrySynthesize(context.SaveData, "syn_sword");
+
+        Assert.IsTrue(result.CanSynthesize);
+        Assert.IsNotNull(result.CreatedEquipment);
+        Assert.AreEqual(EquipmentRarity.Legendary, result.CreatedEquipment.Rarity);
+        Assert.AreEqual(3, result.CreatedEquipment.RandomModifiers.Count);
+        Assert.AreEqual(EquipmentModifierType.Attack, result.CreatedEquipment.RandomModifiers[0].ModifierType);
+        Assert.AreEqual(5, result.CreatedEquipment.RandomModifiers[0].Amount);
+        Assert.AreEqual(EquipmentModifierType.Attack, result.CreatedEquipment.RandomModifiers[1].ModifierType);
+        Assert.AreEqual(6, result.CreatedEquipment.RandomModifiers[1].Amount);
+        Assert.AreEqual(EquipmentModifierType.Attack, result.CreatedEquipment.RandomModifiers[2].ModifierType);
+        Assert.AreEqual(7, result.CreatedEquipment.RandomModifiers[2].Amount);
+        Assert.AreEqual("skill_b", result.CreatedEquipment.RandomSkillId);
     }
 
     [Test]
@@ -67,7 +93,7 @@ public sealed class SynthesisServiceTests
     }
 
     [Test]
-    public void GetQuoteReturnsNotAvailableInCurrentPhase()
+    public void GetQuoteReturnsSynthesisLevelTooLow()
     {
         var context = CreateContext();
         context.SaveData.AddMoney(500);
@@ -76,7 +102,51 @@ public sealed class SynthesisServiceTests
         var quote = context.Service.GetQuote(context.SaveData, "syn_late");
 
         Assert.IsFalse(quote.CanSynthesize);
-        Assert.AreEqual(SynthesisFailureReason.NotAvailableInCurrentPhase, quote.FailureReason);
+        Assert.AreEqual(SynthesisFailureReason.SynthesisLevelTooLow, quote.FailureReason);
+    }
+
+    [Test]
+    public void GetQuoteAllowsRecipeWhenSynthesisLevelIsHighEnough()
+    {
+        var context = CreateContext();
+        context.SaveData.SetSynthesisLevel(2);
+        context.SaveData.AddMoney(500);
+        context.SaveData.AddMaterial("mat_herb", 2);
+
+        var quote = context.Service.GetQuote(context.SaveData, "syn_late");
+
+        Assert.IsTrue(quote.CanSynthesize);
+    }
+
+    [Test]
+    public void GetQuoteReturnsConsumableLimitReached()
+    {
+        var context = CreateContext();
+        context.SaveData.AddMoney(100);
+        context.SaveData.AddMaterial("mat_herb", 2);
+        context.SaveData.AddConsumable("item_potion", 20);
+
+        var quote = context.Service.GetQuote(context.SaveData, "syn_potion");
+
+        Assert.IsFalse(quote.CanSynthesize);
+        Assert.AreEqual(SynthesisFailureReason.ConsumableLimitReached, quote.FailureReason);
+    }
+
+    [Test]
+    public void TrySynthesizeConsumableLimitReachedDoesNotMutateSaveData()
+    {
+        var context = CreateContext();
+        context.SaveData.AddMoney(100);
+        context.SaveData.AddMaterial("mat_herb", 2);
+        context.SaveData.AddConsumable("item_potion", 20);
+
+        var result = context.Service.TrySynthesize(context.SaveData, "syn_potion");
+
+        Assert.IsFalse(result.CanSynthesize);
+        Assert.AreEqual(SynthesisFailureReason.ConsumableLimitReached, result.FailureReason);
+        Assert.AreEqual(100, context.SaveData.Money);
+        Assert.AreEqual(2, context.SaveData.GetMaterialCount("mat_herb"));
+        Assert.AreEqual(20, context.SaveData.GetConsumableCount("item_potion"));
     }
 
     [Test]
@@ -106,7 +176,37 @@ public sealed class SynthesisServiceTests
         Assert.AreEqual(0, context.SaveData.OwnedEquipments.Count);
     }
 
-    private static TestContext CreateContext()
+    [Test]
+    public void TrySynthesizeAggregatesDuplicateMaterialCosts()
+    {
+        var context = CreateContext();
+        context.SaveData.AddMoney(100);
+        context.SaveData.AddMaterial("mat_herb", 3);
+
+        var result = context.Service.TrySynthesize(context.SaveData, "syn_duplicate_material");
+
+        Assert.IsTrue(result.CanSynthesize);
+        Assert.AreEqual(0, context.SaveData.GetMaterialCount("mat_herb"));
+        Assert.AreEqual(1, context.SaveData.GetConsumableCount("item_potion"));
+    }
+
+    [Test]
+    public void FailedSynthesisWithDuplicateMaterialCostsDoesNotMutateSaveData()
+    {
+        var context = CreateContext();
+        context.SaveData.AddMoney(100);
+        context.SaveData.AddMaterial("mat_herb", 2);
+
+        var result = context.Service.TrySynthesize(context.SaveData, "syn_duplicate_material");
+
+        Assert.IsFalse(result.CanSynthesize);
+        Assert.AreEqual(SynthesisFailureReason.NotEnoughMaterials, result.FailureReason);
+        Assert.AreEqual(100, context.SaveData.Money);
+        Assert.AreEqual(2, context.SaveData.GetMaterialCount("mat_herb"));
+        Assert.AreEqual(0, context.SaveData.GetConsumableCount("item_potion"));
+    }
+
+    private static TestContext CreateContext(System.Random random = null)
     {
         var itemDatabase = ScriptableObject.CreateInstance<ItemDatabase>();
         var equipmentDatabase = ScriptableObject.CreateInstance<EquipmentDatabase>();
@@ -114,19 +214,26 @@ public sealed class SynthesisServiceTests
 
         var herb = CreateItem("mat_herb", "薬草", ItemDataType.Material);
         var potion = CreateItem("item_potion", "ポーション", ItemDataType.Consumable);
-        var sword = CreateEquipment("eq_iron_sword", "鉄の剣", EquipmentDataType.Weapon);
+        var sword = CreateEquipment(
+            "eq_iron_sword",
+            "鉄の剣",
+            EquipmentDataType.Weapon,
+            new[] { EquipmentModifierType.Attack },
+            "skill_a",
+            "skill_b");
 
         SetDatabaseEntries(itemDatabase, herb, potion);
         SetDatabaseEntries(equipmentDatabase, sword);
         SetDatabaseEntries(
             recipeDatabase,
-            CreateRecipe("syn_potion", SynthesisProductDataType.Consumable, potion, null, 2, 1, 30, herb, 2),
-            CreateRecipe("syn_sword", SynthesisProductDataType.Equipment, null, sword, 1, 1, 120, herb, 2),
-            CreateRecipe("syn_late", SynthesisProductDataType.Consumable, potion, null, 1, 2, 30, herb, 2));
+            CreateRecipe("syn_potion", SynthesisProductDataType.Consumable, potion, null, 1, 30, herb, 2),
+            CreateRecipe("syn_sword", SynthesisProductDataType.Equipment, null, sword, 1, 120, herb, 2),
+            CreateRecipe("syn_late", SynthesisProductDataType.Consumable, potion, null, 2, 30, herb, 2),
+            CreateRecipe("syn_duplicate_material", SynthesisProductDataType.Consumable, potion, null, 1, 30, (herb, 1), (herb, 2)));
 
         return new TestContext(
             RunSaveData.CreateNew(),
-            new SynthesisService(recipeDatabase, itemDatabase, equipmentDatabase));
+            new SynthesisService(recipeDatabase, itemDatabase, equipmentDatabase, random));
     }
 
     private static ItemData CreateItem(string id, string displayName, ItemDataType itemType)
@@ -139,12 +246,38 @@ public sealed class SynthesisServiceTests
         return item;
     }
 
-    private static EquipmentData CreateEquipment(string id, string displayName, EquipmentDataType equipmentType)
+    private static EquipmentData CreateEquipment(
+        string id,
+        string displayName,
+        EquipmentDataType equipmentType,
+        EquipmentModifierType[] allowedRandomModifierTypes = null,
+        params string[] randomSkillPool)
     {
         var equipment = ScriptableObject.CreateInstance<EquipmentData>();
         var serialized = new SerializedObject(equipment);
         SetMasterFields(serialized, id, displayName, string.Empty);
         serialized.FindProperty("equipmentType").enumValueIndex = (int)equipmentType;
+
+        if (allowedRandomModifierTypes != null)
+        {
+            var modifierTypes = serialized.FindProperty("allowedRandomModifierTypes");
+            modifierTypes.arraySize = allowedRandomModifierTypes.Length;
+            for (var i = 0; i < allowedRandomModifierTypes.Length; i++)
+            {
+                modifierTypes.GetArrayElementAtIndex(i).enumValueIndex = (int)allowedRandomModifierTypes[i];
+            }
+        }
+
+        if (randomSkillPool != null)
+        {
+            var skillPool = serialized.FindProperty("randomSkillPool");
+            skillPool.arraySize = randomSkillPool.Length;
+            for (var i = 0; i < randomSkillPool.Length; i++)
+            {
+                skillPool.GetArrayElementAtIndex(i).stringValue = randomSkillPool[i];
+            }
+        }
+
         serialized.ApplyModifiedPropertiesWithoutUndo();
         return equipment;
     }
@@ -154,11 +287,29 @@ public sealed class SynthesisServiceTests
         SynthesisProductDataType productType,
         ItemData productItem,
         EquipmentData productEquipment,
-        int resultCount,
-        int availablePhase,
+        int requiredSynthesisLevel,
         int moneyCost,
         ItemData material,
         int materialCount)
+    {
+        return CreateRecipe(
+            id,
+            productType,
+            productItem,
+            productEquipment,
+            requiredSynthesisLevel,
+            moneyCost,
+            new[] { (material, materialCount) });
+    }
+
+    private static SynthesisRecipeData CreateRecipe(
+        string id,
+        SynthesisProductDataType productType,
+        ItemData productItem,
+        EquipmentData productEquipment,
+        int requiredSynthesisLevel,
+        int moneyCost,
+        params (ItemData Material, int Count)[] materialCosts)
     {
         var recipe = ScriptableObject.CreateInstance<SynthesisRecipeData>();
         var serialized = new SerializedObject(recipe);
@@ -166,13 +317,16 @@ public sealed class SynthesisServiceTests
         serialized.FindProperty("productType").enumValueIndex = (int)productType;
         serialized.FindProperty("productItem").objectReferenceValue = productItem;
         serialized.FindProperty("productEquipment").objectReferenceValue = productEquipment;
-        serialized.FindProperty("resultCount").intValue = resultCount;
-        serialized.FindProperty("availablePhase").intValue = availablePhase;
+        serialized.FindProperty("requiredSynthesisLevel").intValue = requiredSynthesisLevel;
         serialized.FindProperty("moneyCost").intValue = moneyCost;
         var costs = serialized.FindProperty("materialCosts");
-        costs.arraySize = 1;
-        costs.GetArrayElementAtIndex(0).FindPropertyRelative("item").objectReferenceValue = material;
-        costs.GetArrayElementAtIndex(0).FindPropertyRelative("count").intValue = materialCount;
+        costs.arraySize = materialCosts.Length;
+        for (var i = 0; i < materialCosts.Length; i++)
+        {
+            costs.GetArrayElementAtIndex(i).FindPropertyRelative("item").objectReferenceValue = materialCosts[i].Material;
+            costs.GetArrayElementAtIndex(i).FindPropertyRelative("count").intValue = materialCosts[i].Count;
+        }
+
         serialized.ApplyModifiedPropertiesWithoutUndo();
         return recipe;
     }
@@ -208,5 +362,34 @@ public sealed class SynthesisServiceTests
 
         public RunSaveData SaveData { get; }
         public SynthesisService Service { get; }
+    }
+
+    private sealed class FixedRandom : System.Random
+    {
+        private readonly Queue<int> values;
+
+        public FixedRandom(params int[] values)
+        {
+            this.values = new Queue<int>(values);
+        }
+
+        public override int Next(int maxValue)
+        {
+            return NextValue(0, maxValue);
+        }
+
+        public override int Next(int minValue, int maxValue)
+        {
+            return NextValue(minValue, maxValue);
+        }
+
+        private int NextValue(int minValue, int maxValue)
+        {
+            Assert.IsTrue(values.Count > 0, "FixedRandom value queue was exhausted.");
+            var value = values.Dequeue();
+            Assert.GreaterOrEqual(value, minValue);
+            Assert.Less(value, maxValue);
+            return value;
+        }
     }
 }
