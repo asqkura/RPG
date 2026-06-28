@@ -312,7 +312,9 @@ namespace RPG.Synthesis
             var count = RollRandomModifierCount(rarity);
             for (var i = 0; i < count; i++)
             {
-                var modifierType = RollRandomModifierType(equipment);
+                var modifierType = i == 0
+                    ? RollRandomStatModifierType(equipment)
+                    : RollRandomModifierType(equipment);
                 ownedEquipment.AddRandomModifier(new EquipmentModifierSaveData(
                     modifierType,
                     string.Empty,
@@ -324,7 +326,7 @@ namespace RPG.Synthesis
         {
             return rarity switch
             {
-                EquipmentRarity.Common => random.Next(0, 2),
+                EquipmentRarity.Common => 1,
                 EquipmentRarity.Rare => 1,
                 EquipmentRarity.Epic => random.Next(1, 3),
                 EquipmentRarity.Legendary => random.Next(2, 4),
@@ -338,6 +340,25 @@ namespace RPG.Synthesis
                 ? equipment.AllowedRandomModifierTypes
                 : DefaultRandomModifierTypes;
             return candidates[random.Next(candidates.Count)];
+        }
+
+        private EquipmentModifierType RollRandomStatModifierType(EquipmentData equipment)
+        {
+            var source = equipment != null && equipment.AllowedRandomModifierTypes.Count > 0
+                ? equipment.AllowedRandomModifierTypes
+                : DefaultRandomModifierTypes;
+            var candidates = new List<EquipmentModifierType>();
+            foreach (var modifierType in source)
+            {
+                if (IsStatModifier(modifierType))
+                {
+                    candidates.Add(modifierType);
+                }
+            }
+
+            return candidates.Count > 0
+                ? candidates[random.Next(candidates.Count)]
+                : RollRandomModifierType(equipment);
         }
 
         private int RollRandomModifierAmount(EquipmentModifierType modifierType)
@@ -355,6 +376,16 @@ namespace RPG.Synthesis
                 EquipmentModifierType.DebuffResistance => 10,
                 _ => 0
             };
+        }
+
+        private static bool IsStatModifier(EquipmentModifierType modifierType)
+        {
+            return modifierType == EquipmentModifierType.Hp
+                || modifierType == EquipmentModifierType.Attack
+                || modifierType == EquipmentModifierType.Magic
+                || modifierType == EquipmentModifierType.Defense
+                || modifierType == EquipmentModifierType.Speed
+                || modifierType == EquipmentModifierType.CriticalRate;
         }
 
         private string RollRandomSkill(EquipmentData equipment, EquipmentRarity rarity)

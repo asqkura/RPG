@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d6c4fa9f7e6bd645aea35783019cf6e, type: 3}
+  m_Name: syn_mana_drop
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.SynthesisRecipeData
+  id: syn_mana_drop
+  displayName: 
+  description: 
+  requiredSynthesisLevel: 1
+  productType: 0
+  productItem: {fileID: 11400000, guid: c2f275cc90c95c341824d38c6685ad0f, type: 2}
+  productEquipment: {fileID: 0}
+  moneyCost: 60
+  materialCosts:
+  - item: {fileID: 11400000, guid: b064f154dc43957498400df9be45370f, type: 2}
+    count: 2
+  sortOrder: 3

@@ -1084,8 +1084,8 @@ MonoBehaviour:
   equipmentTagText: {fileID: 2846327777881038670}
   equipmentIconImage: {fileID: 3285485604590971007}
   equipmentDescriptionText: {fileID: 2875068306957195633}
-  defaultEquipmentDetailPanelView: {fileID: 0}
-  resultEquipmentDetailPanelView: {fileID: 0}
+  defaultEquipmentDetailPanelView: {fileID: 6036530661972106654}
+  resultEquipmentDetailPanelView: {fileID: 246813579024681357}
   equipmentCloseButton: {fileID: 8871971726898445114}
 --- !u!1 &808693478092191176
 GameObject:

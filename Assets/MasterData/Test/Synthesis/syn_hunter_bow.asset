@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d6c4fa9f7e6bd645aea35783019cf6e, type: 3}
+  m_Name: syn_hunter_bow
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.SynthesisRecipeData
+  id: syn_hunter_bow
+  displayName: 
+  description: 
+  requiredSynthesisLevel: 2
+  productType: 1
+  productItem: {fileID: 0}
+  productEquipment: {fileID: 11400000, guid: 39fd1d81e022551429505374630558dc, type: 2}
+  moneyCost: 180
+  materialCosts:
+  - item: {fileID: 11400000, guid: 84536e2e56fb86a4484e061a59f61fc5, type: 2}
+    count: 2
+  - item: {fileID: 11400000, guid: f29733404b61c424e9da00a3d927f22e, type: 2}
+    count: 2
+  - item: {fileID: 11400000, guid: 91d11e4a25956f44ca8a28f63d143c83, type: 2}
+    count: 1
+  sortOrder: 14

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d6c4fa9f7e6bd645aea35783019cf6e, type: 3}
+  m_Name: syn_guard_salve
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.SynthesisRecipeData
+  id: syn_guard_salve
+  displayName: 
+  description: 
+  requiredSynthesisLevel: 2
+  productType: 0
+  productItem: {fileID: 11400000, guid: 7411d5b507ff77a4b8f741dee79dc947, type: 2}
+  productEquipment: {fileID: 0}
+  moneyCost: 80
+  materialCosts:
+  - item: {fileID: 11400000, guid: 7f7f6766cb62b4b4f9d76bc3171d4755, type: 2}
+    count: 1
+  - item: {fileID: 11400000, guid: 91d11e4a25956f44ca8a28f63d143c83, type: 2}
+    count: 1
+  sortOrder: 4

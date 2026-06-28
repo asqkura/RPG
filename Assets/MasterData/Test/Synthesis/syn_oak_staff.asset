@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d6c4fa9f7e6bd645aea35783019cf6e, type: 3}
+  m_Name: syn_oak_staff
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.SynthesisRecipeData
+  id: syn_oak_staff
+  displayName: 
+  description: 
+  requiredSynthesisLevel: 2
+  productType: 1
+  productItem: {fileID: 0}
+  productEquipment: {fileID: 11400000, guid: e0b4f24c1163d5241b6443d9d3ce9fe3, type: 2}
+  moneyCost: 200
+  materialCosts:
+  - item: {fileID: 11400000, guid: 84536e2e56fb86a4484e061a59f61fc5, type: 2}
+    count: 2
+  - item: {fileID: 11400000, guid: b064f154dc43957498400df9be45370f, type: 2}
+    count: 2
+  - item: {fileID: 11400000, guid: 9aa17c0fa5e55d84ab85025b49dd9cfb, type: 2}
+    count: 1
+  sortOrder: 15

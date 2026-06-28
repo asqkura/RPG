@@ -208,9 +208,12 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         }
 
         currentCategory = category;
+        ClearSelectedRow();
+        previewRow = null;
         RefreshCategoryButtons();
         PopulateRows();
         SelectFirstRow();
+        RefreshActionButtonState();
     }
 
     private void ShowDetail(SynthesisRecipeRowView row)
@@ -561,6 +564,11 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
     {
         if (selectedRow != null)
         {
+            if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == selectedRow.gameObject)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+
             selectedRow.SetHighlighted(false);
             selectedRow = null;
         }

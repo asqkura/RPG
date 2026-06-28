@@ -1030,6 +1030,11 @@ public sealed class ShopScreenPreviewController : MonoBehaviour, IItemRowViewCon
     {
         if (selectedRow != null)
         {
+            if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == selectedRow.gameObject)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+
             selectedRow.SetHighlighted(false);
             selectedRow = null;
         }

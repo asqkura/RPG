@@ -32,7 +32,10 @@ public sealed class EquipmentDetailPanelView : MonoBehaviour
         SetFixedStat(defenseValueText, data.FindStat("防御"));
         SetFixedStat(speedValueText, data.FindStat("素早さ"));
         SetFixedStat(criticalRateValueText, data.FindStat("会心率"));
-        fixedSkillsText.text = FormatFixedSkills(data.FixedSkills);
+        if (fixedSkillsText != null)
+        {
+            fixedSkillsText.text = FormatFixedSkills(data.FixedSkills);
+        }
     }
 
     public void Hide()

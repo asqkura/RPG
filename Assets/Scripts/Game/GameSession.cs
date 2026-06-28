@@ -70,7 +70,23 @@ namespace RPG.Game
         {
             var saveData = RunSaveData.CreateNew();
             saveData.AddMoney(initialMoney);
+            saveData.SetSynthesisLevel(RunSaveData.MaxSynthesisLevel);
+            AddInitialSynthesisMaterials(saveData);
             return saveData;
+        }
+
+        private static void AddInitialSynthesisMaterials(RunSaveData saveData)
+        {
+            saveData.AddMaterial("mat_iron_ore", 50);
+            saveData.AddMaterial("mat_steel_ore", 50);
+            saveData.AddMaterial("mat_sturdy_wood", 50);
+            saveData.AddMaterial("mat_hard_wood", 50);
+            saveData.AddMaterial("mat_beast_hide", 50);
+            saveData.AddMaterial("mat_fine_leather", 50);
+            saveData.AddMaterial("mat_magic_shard", 50);
+            saveData.AddMaterial("mat_magic_stone", 50);
+            saveData.AddMaterial("mat_herb", 50);
+            saveData.AddMaterial("mat_healing_grass", 50);
         }
     }
 }
