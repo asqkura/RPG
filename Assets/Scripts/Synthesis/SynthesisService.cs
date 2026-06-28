@@ -17,6 +17,15 @@ namespace RPG.Synthesis
         ConsumableLimitReached
     }
 
+    public enum SynthesisLevelUpFailureReason
+    {
+        None,
+        InvalidRequest,
+        MaxLevelReached,
+        NotEnoughMaterials,
+        NotEnoughMoney
+    }
+
     public readonly struct SynthesisMaterialShortage
     {
         public SynthesisMaterialShortage(string itemId, int requiredCount, int ownedCount)
@@ -67,16 +76,46 @@ namespace RPG.Synthesis
         public OwnedEquipmentSaveData CreatedEquipment { get; }
     }
 
+    public readonly struct SynthesisLevelUpQuote
+    {
+        public SynthesisLevelUpQuote(
+            bool canLevelUp,
+            SynthesisLevelUpFailureReason failureReason,
+            int currentLevel,
+            int targetLevel,
+            int moneyCost,
+            IReadOnlyList<SynthesisMaterialShortage> materialShortages,
+            SynthesisLevelUpRequirementData requirement = null)
+        {
+            CanLevelUp = canLevelUp;
+            FailureReason = failureReason;
+            CurrentLevel = Math.Max(0, currentLevel);
+            TargetLevel = Math.Max(0, targetLevel);
+            MoneyCost = Math.Max(0, moneyCost);
+            MaterialShortages = materialShortages ?? Array.Empty<SynthesisMaterialShortage>();
+            Requirement = requirement;
+        }
+
+        public bool CanLevelUp { get; }
+        public SynthesisLevelUpFailureReason FailureReason { get; }
+        public int CurrentLevel { get; }
+        public int TargetLevel { get; }
+        public int MoneyCost { get; }
+        public IReadOnlyList<SynthesisMaterialShortage> MaterialShortages { get; }
+        public SynthesisLevelUpRequirementData Requirement { get; }
+    }
+
     public sealed class SynthesisService
     {
         private readonly SynthesisRecipeDatabase recipeDatabase;
+        private readonly SynthesisLevelUpRequirementDatabase levelUpRequirementDatabase;
         private readonly Random random;
 
         public SynthesisService(
             SynthesisRecipeDatabase recipeDatabase,
             ItemDatabase itemDatabase,
             EquipmentDatabase equipmentDatabase)
-            : this(recipeDatabase, itemDatabase, equipmentDatabase, new Random())
+            : this(recipeDatabase, itemDatabase, equipmentDatabase, null, new Random())
         {
         }
 
@@ -85,8 +124,28 @@ namespace RPG.Synthesis
             ItemDatabase itemDatabase,
             EquipmentDatabase equipmentDatabase,
             Random random)
+            : this(recipeDatabase, itemDatabase, equipmentDatabase, null, random)
+        {
+        }
+
+        public SynthesisService(
+            SynthesisRecipeDatabase recipeDatabase,
+            ItemDatabase itemDatabase,
+            EquipmentDatabase equipmentDatabase,
+            SynthesisLevelUpRequirementDatabase levelUpRequirementDatabase)
+            : this(recipeDatabase, itemDatabase, equipmentDatabase, levelUpRequirementDatabase, new Random())
+        {
+        }
+
+        public SynthesisService(
+            SynthesisRecipeDatabase recipeDatabase,
+            ItemDatabase itemDatabase,
+            EquipmentDatabase equipmentDatabase,
+            SynthesisLevelUpRequirementDatabase levelUpRequirementDatabase,
+            Random random)
         {
             this.recipeDatabase = recipeDatabase;
+            this.levelUpRequirementDatabase = levelUpRequirementDatabase;
             this.random = random ?? new Random();
         }
 
@@ -172,6 +231,111 @@ namespace RPG.Synthesis
             return AddProduct(saveData, quote);
         }
 
+        public SynthesisLevelUpQuote GetLevelUpQuote(RunSaveData saveData)
+        {
+            if (saveData == null)
+            {
+                return LevelUpFailure(SynthesisLevelUpFailureReason.InvalidRequest);
+            }
+
+            if (saveData.SynthesisLevel >= RunSaveData.MaxSynthesisLevel)
+            {
+                return LevelUpFailure(
+                    SynthesisLevelUpFailureReason.MaxLevelReached,
+                    saveData.SynthesisLevel,
+                    saveData.SynthesisLevel);
+            }
+
+            var requirement = GetLevelUpRequirement(saveData.SynthesisLevel);
+            if (requirement.TargetLevel != saveData.SynthesisLevel + 1)
+            {
+                return LevelUpFailure(
+                    SynthesisLevelUpFailureReason.InvalidRequest,
+                    saveData.SynthesisLevel,
+                    saveData.SynthesisLevel + 1,
+                    requirement.MoneyCost,
+                    null,
+                    requirement.Data);
+            }
+
+            var shortages = GetMaterialShortages(saveData, requirement.MaterialCosts);
+            if (shortages.Count > 0)
+            {
+                return LevelUpFailure(
+                    SynthesisLevelUpFailureReason.NotEnoughMaterials,
+                    saveData.SynthesisLevel,
+                    requirement.TargetLevel,
+                    requirement.MoneyCost,
+                    shortages,
+                    requirement.Data);
+            }
+
+            if (saveData.Money < requirement.MoneyCost)
+            {
+                return LevelUpFailure(
+                    SynthesisLevelUpFailureReason.NotEnoughMoney,
+                    saveData.SynthesisLevel,
+                    requirement.TargetLevel,
+                    requirement.MoneyCost,
+                    null,
+                    requirement.Data);
+            }
+
+            return new SynthesisLevelUpQuote(
+                true,
+                SynthesisLevelUpFailureReason.None,
+                saveData.SynthesisLevel,
+                requirement.TargetLevel,
+                requirement.MoneyCost,
+                Array.Empty<SynthesisMaterialShortage>(),
+                requirement.Data);
+        }
+
+        public SynthesisLevelUpQuote TryRaiseSynthesisLevel(RunSaveData saveData)
+        {
+            var quote = GetLevelUpQuote(saveData);
+            if (!quote.CanLevelUp)
+            {
+                return quote;
+            }
+
+            if (!saveData.TrySpendMoney(quote.MoneyCost))
+            {
+                return WithLevelUpFailure(quote, SynthesisLevelUpFailureReason.NotEnoughMoney);
+            }
+
+            var requirement = GetLevelUpRequirement(quote.CurrentLevel);
+            var consumedMaterials = new List<KeyValuePair<string, int>>();
+            foreach (var cost in requirement.MaterialCosts)
+            {
+                if (!saveData.TryConsumeMaterial(cost.Key, cost.Value))
+                {
+                    saveData.AddMoney(quote.MoneyCost);
+                    foreach (var consumedMaterial in consumedMaterials)
+                    {
+                        saveData.AddMaterial(consumedMaterial.Key, consumedMaterial.Value);
+                    }
+
+                    return WithLevelUpFailure(quote, SynthesisLevelUpFailureReason.NotEnoughMaterials);
+                }
+
+                consumedMaterials.Add(cost);
+            }
+
+            if (!saveData.TryRaiseSynthesisLevel())
+            {
+                saveData.AddMoney(quote.MoneyCost);
+                foreach (var consumedMaterial in consumedMaterials)
+                {
+                    saveData.AddMaterial(consumedMaterial.Key, consumedMaterial.Value);
+                }
+
+                return WithLevelUpFailure(quote, SynthesisLevelUpFailureReason.MaxLevelReached);
+            }
+
+            return quote;
+        }
+
         private bool ProductExists(SynthesisRecipeData recipe)
         {
             if (recipe == null || string.IsNullOrWhiteSpace(recipe.ProductId))
@@ -190,8 +354,15 @@ namespace RPG.Synthesis
 
         private static List<SynthesisMaterialShortage> GetMaterialShortages(RunSaveData saveData, SynthesisRecipeData recipe)
         {
+            return GetMaterialShortages(saveData, GetRequiredMaterialCounts(recipe));
+        }
+
+        private static List<SynthesisMaterialShortage> GetMaterialShortages(
+            RunSaveData saveData,
+            IReadOnlyDictionary<string, int> requiredMaterialCounts)
+        {
             var shortages = new List<SynthesisMaterialShortage>();
-            foreach (var cost in GetRequiredMaterialCounts(recipe))
+            foreach (var cost in requiredMaterialCounts)
             {
                 var ownedCount = saveData.GetMaterialCount(cost.Key);
                 if (ownedCount < cost.Value)
@@ -205,13 +376,18 @@ namespace RPG.Synthesis
 
         private static Dictionary<string, int> GetRequiredMaterialCounts(SynthesisRecipeData recipe)
         {
+            return GetRequiredMaterialCounts(recipe?.MaterialCosts);
+        }
+
+        private static Dictionary<string, int> GetRequiredMaterialCounts(IReadOnlyList<SynthesisMaterialCostData> materialCosts)
+        {
             var requiredCountsByItemId = new Dictionary<string, int>();
-            if (recipe == null)
+            if (materialCosts == null)
             {
                 return requiredCountsByItemId;
             }
 
-            foreach (var cost in recipe.MaterialCosts)
+            foreach (var cost in materialCosts)
             {
                 if (cost == null || string.IsNullOrWhiteSpace(cost.ItemId) || cost.Count <= 0)
                 {
@@ -312,9 +488,7 @@ namespace RPG.Synthesis
             var count = RollRandomModifierCount(rarity);
             for (var i = 0; i < count; i++)
             {
-                var modifierType = i == 0
-                    ? RollRandomStatModifierType(equipment)
-                    : RollRandomModifierType(equipment);
+                var modifierType = RollRandomModifierType(equipment);
                 ownedEquipment.AddRandomModifier(new EquipmentModifierSaveData(
                     modifierType,
                     string.Empty,
@@ -326,7 +500,7 @@ namespace RPG.Synthesis
         {
             return rarity switch
             {
-                EquipmentRarity.Common => 1,
+                EquipmentRarity.Common => random.Next(0, 2),
                 EquipmentRarity.Rare => 1,
                 EquipmentRarity.Epic => random.Next(1, 3),
                 EquipmentRarity.Legendary => random.Next(2, 4),
@@ -340,25 +514,6 @@ namespace RPG.Synthesis
                 ? equipment.AllowedRandomModifierTypes
                 : DefaultRandomModifierTypes;
             return candidates[random.Next(candidates.Count)];
-        }
-
-        private EquipmentModifierType RollRandomStatModifierType(EquipmentData equipment)
-        {
-            var source = equipment != null && equipment.AllowedRandomModifierTypes.Count > 0
-                ? equipment.AllowedRandomModifierTypes
-                : DefaultRandomModifierTypes;
-            var candidates = new List<EquipmentModifierType>();
-            foreach (var modifierType in source)
-            {
-                if (IsStatModifier(modifierType))
-                {
-                    candidates.Add(modifierType);
-                }
-            }
-
-            return candidates.Count > 0
-                ? candidates[random.Next(candidates.Count)]
-                : RollRandomModifierType(equipment);
         }
 
         private int RollRandomModifierAmount(EquipmentModifierType modifierType)
@@ -376,16 +531,6 @@ namespace RPG.Synthesis
                 EquipmentModifierType.DebuffResistance => 10,
                 _ => 0
             };
-        }
-
-        private static bool IsStatModifier(EquipmentModifierType modifierType)
-        {
-            return modifierType == EquipmentModifierType.Hp
-                || modifierType == EquipmentModifierType.Attack
-                || modifierType == EquipmentModifierType.Magic
-                || modifierType == EquipmentModifierType.Defense
-                || modifierType == EquipmentModifierType.Speed
-                || modifierType == EquipmentModifierType.CriticalRate;
         }
 
         private string RollRandomSkill(EquipmentData equipment, EquipmentRarity rarity)
@@ -443,6 +588,124 @@ namespace RPG.Synthesis
                 quote.MoneyCost,
                 quote.MaterialShortages,
                 quote.CreatedEquipment);
+        }
+
+        private static SynthesisLevelUpQuote LevelUpFailure(
+            SynthesisLevelUpFailureReason reason,
+            int currentLevel = 0,
+            int targetLevel = 0,
+            int moneyCost = 0,
+            IReadOnlyList<SynthesisMaterialShortage> materialShortages = null,
+            SynthesisLevelUpRequirementData requirement = null)
+        {
+            return new SynthesisLevelUpQuote(
+                false,
+                reason,
+                currentLevel,
+                targetLevel,
+                moneyCost,
+                materialShortages,
+                requirement);
+        }
+
+        private static SynthesisLevelUpQuote WithLevelUpFailure(
+            SynthesisLevelUpQuote quote,
+            SynthesisLevelUpFailureReason reason)
+        {
+            return new SynthesisLevelUpQuote(
+                false,
+                reason,
+                quote.CurrentLevel,
+                quote.TargetLevel,
+                quote.MoneyCost,
+                quote.MaterialShortages,
+                quote.Requirement);
+        }
+
+        private SynthesisLevelUpRequirement GetLevelUpRequirement(int currentLevel)
+        {
+            if (levelUpRequirementDatabase != null
+                && levelUpRequirementDatabase.TryGetByCurrentLevel(currentLevel, out var requirementData)
+                && requirementData != null)
+            {
+                return new SynthesisLevelUpRequirement(
+                    requirementData.CurrentLevel,
+                    requirementData.TargetLevel,
+                    requirementData.MoneyCost,
+                    GetRequiredMaterialCounts(requirementData.MaterialCosts),
+                    requirementData);
+            }
+
+            return currentLevel switch
+            {
+                1 => new SynthesisLevelUpRequirement(
+                    1,
+                    2,
+                    100,
+                    new Dictionary<string, int>
+                    {
+                        { "mat_iron_ore", 3 },
+                        { "mat_sturdy_wood", 2 },
+                        { "mat_beast_hide", 2 }
+                    }),
+                2 => new SynthesisLevelUpRequirement(
+                    2,
+                    3,
+                    300,
+                    new Dictionary<string, int>
+                    {
+                        { "mat_steel_ore", 3 },
+                        { "mat_hard_wood", 2 },
+                        { "mat_magic_shard", 3 },
+                        { "mat_forest_core", 1 }
+                    }),
+                3 => new SynthesisLevelUpRequirement(
+                    3,
+                    4,
+                    700,
+                    new Dictionary<string, int>
+                    {
+                        { "mat_mithril_ore", 3 },
+                        { "mat_demon_hide", 2 },
+                        { "mat_magic_stone", 3 },
+                        { "mat_ruin_gear", 1 }
+                    }),
+                4 => new SynthesisLevelUpRequirement(
+                    4,
+                    5,
+                    1500,
+                    new Dictionary<string, int>
+                    {
+                        { "mat_star_silver_ore", 3 },
+                        { "mat_ancient_wood", 2 },
+                        { "mat_great_magic_stone", 3 },
+                        { "mat_ancient_dragon_crystal", 1 }
+                    }),
+                _ => new SynthesisLevelUpRequirement(currentLevel, currentLevel, 0, new Dictionary<string, int>())
+            };
+        }
+
+        private readonly struct SynthesisLevelUpRequirement
+        {
+            public SynthesisLevelUpRequirement(
+                int currentLevel,
+                int targetLevel,
+                int moneyCost,
+                IReadOnlyDictionary<string, int> materialCosts,
+                SynthesisLevelUpRequirementData data = null)
+            {
+                CurrentLevel = Math.Max(0, currentLevel);
+                TargetLevel = Math.Max(0, targetLevel);
+                MoneyCost = Math.Max(0, moneyCost);
+                MaterialCosts = materialCosts ?? new Dictionary<string, int>();
+                Data = data;
+            }
+
+            public int CurrentLevel { get; }
+            public int TargetLevel { get; }
+            public int MoneyCost { get; }
+            public IReadOnlyDictionary<string, int> MaterialCosts { get; }
+            public SynthesisLevelUpRequirementData Data { get; }
         }
 
         private static readonly IReadOnlyList<EquipmentModifierType> DefaultRandomModifierTypes = new[]

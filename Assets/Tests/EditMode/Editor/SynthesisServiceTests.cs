@@ -64,6 +64,110 @@ public sealed class SynthesisServiceTests
     }
 
     [Test]
+    public void TrySynthesizeCommonEquipmentCanHaveNoRandomModifiers()
+    {
+        var context = CreateContext(new FixedRandom(0, 0));
+        context.SaveData.AddMoney(300);
+        context.SaveData.AddMaterial("mat_herb", 2);
+
+        var result = context.Service.TrySynthesize(context.SaveData, "syn_sword");
+
+        Assert.IsTrue(result.CanSynthesize);
+        Assert.IsNotNull(result.CreatedEquipment);
+        Assert.AreEqual(EquipmentRarity.Common, result.CreatedEquipment.Rarity);
+        Assert.AreEqual(0, result.CreatedEquipment.RandomModifiers.Count);
+    }
+
+    [Test]
+    public void TrySynthesizeRareEquipmentCanRollNonStatModifier()
+    {
+        var context = CreateContext(new FixedRandom(80, 0));
+        context.SaveData.AddMoney(300);
+        context.SaveData.AddMaterial("mat_herb", 2);
+
+        var result = context.Service.TrySynthesize(context.SaveData, "syn_resist_charm");
+
+        Assert.IsTrue(result.CanSynthesize);
+        Assert.IsNotNull(result.CreatedEquipment);
+        Assert.AreEqual(EquipmentRarity.Rare, result.CreatedEquipment.Rarity);
+        Assert.AreEqual(1, result.CreatedEquipment.RandomModifiers.Count);
+        Assert.AreEqual(EquipmentModifierType.AttributeResistance, result.CreatedEquipment.RandomModifiers[0].ModifierType);
+        Assert.AreEqual(10, result.CreatedEquipment.RandomModifiers[0].Amount);
+    }
+
+    [Test]
+    public void TryRaiseSynthesisLevelConsumesCostsAndRaisesLevel()
+    {
+        var context = CreateContext();
+        context.SaveData.AddMoney(150);
+        context.SaveData.AddMaterial("mat_iron_ore", 3);
+        context.SaveData.AddMaterial("mat_sturdy_wood", 2);
+        context.SaveData.AddMaterial("mat_beast_hide", 2);
+
+        var result = context.Service.TryRaiseSynthesisLevel(context.SaveData);
+
+        Assert.IsTrue(result.CanLevelUp);
+        Assert.AreEqual(1, result.CurrentLevel);
+        Assert.AreEqual(2, result.TargetLevel);
+        Assert.AreEqual(2, context.SaveData.SynthesisLevel);
+        Assert.AreEqual(50, context.SaveData.Money);
+        Assert.AreEqual(0, context.SaveData.GetMaterialCount("mat_iron_ore"));
+        Assert.AreEqual(0, context.SaveData.GetMaterialCount("mat_sturdy_wood"));
+        Assert.AreEqual(0, context.SaveData.GetMaterialCount("mat_beast_hide"));
+    }
+
+    [Test]
+    public void TryRaiseSynthesisLevelUsesRequirementDatabase()
+    {
+        var context = CreateContextWithLevelUpRequirement();
+        context.SaveData.AddMoney(50);
+        context.SaveData.AddMaterial("mat_herb", 1);
+
+        var result = context.Service.TryRaiseSynthesisLevel(context.SaveData);
+
+        Assert.IsTrue(result.CanLevelUp);
+        Assert.IsNotNull(result.Requirement);
+        Assert.AreEqual("syn_level_1_to_2", result.Requirement.RequirementId);
+        Assert.AreEqual(2, context.SaveData.SynthesisLevel);
+        Assert.AreEqual(25, context.SaveData.Money);
+        Assert.AreEqual(0, context.SaveData.GetMaterialCount("mat_herb"));
+    }
+
+    [Test]
+    public void GetLevelUpQuoteReturnsMaterialShortage()
+    {
+        var context = CreateContext();
+        context.SaveData.AddMoney(150);
+        context.SaveData.AddMaterial("mat_iron_ore", 3);
+        context.SaveData.AddMaterial("mat_sturdy_wood", 1);
+        context.SaveData.AddMaterial("mat_beast_hide", 2);
+
+        var quote = context.Service.GetLevelUpQuote(context.SaveData);
+
+        Assert.IsFalse(quote.CanLevelUp);
+        Assert.AreEqual(SynthesisLevelUpFailureReason.NotEnoughMaterials, quote.FailureReason);
+        Assert.AreEqual(1, quote.MaterialShortages.Count);
+        Assert.AreEqual("mat_sturdy_wood", quote.MaterialShortages[0].ItemId);
+        Assert.AreEqual(2, quote.MaterialShortages[0].RequiredCount);
+        Assert.AreEqual(1, quote.MaterialShortages[0].OwnedCount);
+    }
+
+    [Test]
+    public void TryRaiseSynthesisLevelAtMaxDoesNotMutateSaveData()
+    {
+        var context = CreateContext();
+        context.SaveData.SetSynthesisLevel(RunSaveData.MaxSynthesisLevel);
+        context.SaveData.AddMoney(2000);
+
+        var result = context.Service.TryRaiseSynthesisLevel(context.SaveData);
+
+        Assert.IsFalse(result.CanLevelUp);
+        Assert.AreEqual(SynthesisLevelUpFailureReason.MaxLevelReached, result.FailureReason);
+        Assert.AreEqual(RunSaveData.MaxSynthesisLevel, context.SaveData.SynthesisLevel);
+        Assert.AreEqual(2000, context.SaveData.Money);
+    }
+
+    [Test]
     public void GetQuoteReturnsMaterialShortage()
     {
         var context = CreateContext();
@@ -221,19 +325,43 @@ public sealed class SynthesisServiceTests
             new[] { EquipmentModifierType.Attack },
             "skill_a",
             "skill_b");
+        var resistCharm = CreateEquipment(
+            "eq_resist_charm",
+            "耐性のお守り",
+            EquipmentDataType.Accessory,
+            new[] { EquipmentModifierType.AttributeResistance });
 
         SetDatabaseEntries(itemDatabase, herb, potion);
-        SetDatabaseEntries(equipmentDatabase, sword);
+        SetDatabaseEntries(equipmentDatabase, sword, resistCharm);
         SetDatabaseEntries(
             recipeDatabase,
             CreateRecipe("syn_potion", SynthesisProductDataType.Consumable, potion, null, 1, 30, herb, 2),
             CreateRecipe("syn_sword", SynthesisProductDataType.Equipment, null, sword, 1, 120, herb, 2),
+            CreateRecipe("syn_resist_charm", SynthesisProductDataType.Equipment, null, resistCharm, 1, 120, herb, 2),
             CreateRecipe("syn_late", SynthesisProductDataType.Consumable, potion, null, 2, 30, herb, 2),
             CreateRecipe("syn_duplicate_material", SynthesisProductDataType.Consumable, potion, null, 1, 30, (herb, 1), (herb, 2)));
 
         return new TestContext(
             RunSaveData.CreateNew(),
             new SynthesisService(recipeDatabase, itemDatabase, equipmentDatabase, random));
+    }
+
+    private static TestContext CreateContextWithLevelUpRequirement()
+    {
+        var itemDatabase = ScriptableObject.CreateInstance<ItemDatabase>();
+        var equipmentDatabase = ScriptableObject.CreateInstance<EquipmentDatabase>();
+        var recipeDatabase = ScriptableObject.CreateInstance<SynthesisRecipeDatabase>();
+        var levelUpRequirementDatabase = ScriptableObject.CreateInstance<SynthesisLevelUpRequirementDatabase>();
+
+        var herb = CreateItem("mat_herb", "薬草", ItemDataType.Material);
+        var requirement = CreateLevelUpRequirement("syn_level_1_to_2", "合成Lv2へ強化", 1, 2, 25, (herb, 1));
+
+        SetDatabaseEntries(itemDatabase, herb);
+        SetDatabaseEntries(levelUpRequirementDatabase, requirement);
+
+        return new TestContext(
+            RunSaveData.CreateNew(),
+            new SynthesisService(recipeDatabase, itemDatabase, equipmentDatabase, levelUpRequirementDatabase));
     }
 
     private static ItemData CreateItem(string id, string displayName, ItemDataType itemType)
@@ -329,6 +457,32 @@ public sealed class SynthesisServiceTests
 
         serialized.ApplyModifiedPropertiesWithoutUndo();
         return recipe;
+    }
+
+    private static SynthesisLevelUpRequirementData CreateLevelUpRequirement(
+        string id,
+        string displayName,
+        int currentLevel,
+        int targetLevel,
+        int moneyCost,
+        params (ItemData Material, int Count)[] materialCosts)
+    {
+        var requirement = ScriptableObject.CreateInstance<SynthesisLevelUpRequirementData>();
+        var serialized = new SerializedObject(requirement);
+        SetMasterFields(serialized, id, displayName, string.Empty);
+        serialized.FindProperty("currentLevel").intValue = currentLevel;
+        serialized.FindProperty("targetLevel").intValue = targetLevel;
+        serialized.FindProperty("moneyCost").intValue = moneyCost;
+        var costs = serialized.FindProperty("materialCosts");
+        costs.arraySize = materialCosts.Length;
+        for (var i = 0; i < materialCosts.Length; i++)
+        {
+            costs.GetArrayElementAtIndex(i).FindPropertyRelative("item").objectReferenceValue = materialCosts[i].Material;
+            costs.GetArrayElementAtIndex(i).FindPropertyRelative("count").intValue = materialCosts[i].Count;
+        }
+
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        return requirement;
     }
 
     private static void SetMasterFields(SerializedObject serialized, string id, string displayName, string description)

@@ -9,9 +9,11 @@ public static class TestSynthesisDataBuilder
     private const string RootFolder = "Assets/MasterData";
     private const string TestFolder = RootFolder + "/Test";
     private const string SynthesisFolder = TestFolder + "/Synthesis";
+    private const string SynthesisLevelUpFolder = TestFolder + "/SynthesisLevelUp";
     private const string DatabaseFolder = TestFolder + "/Databases";
 
     private const string RecipeDatabasePath = DatabaseFolder + "/TestSynthesisRecipeDatabase.asset";
+    private const string LevelUpRequirementDatabasePath = DatabaseFolder + "/TestSynthesisLevelUpRequirementDatabase.asset";
 
     [MenuItem("Tools/RPG/Build Test Synthesis Data")]
     public static void Build()
@@ -138,6 +140,26 @@ public static class TestSynthesisDataBuilder
 
         CreateOrUpdateDatabase(RecipeDatabasePath, recipes);
 
+        var levelUpRequirements = new[]
+        {
+            CreateOrUpdateLevelUpRequirement(
+                "syn_level_1_to_2",
+                "合成Lv2へ強化",
+                "序盤の強化装備と基本アクセサリのレシピが増えます。",
+                1,
+                2,
+                100,
+                new[]
+                {
+                    new MaterialCostSpec("mat_iron_ore", 3),
+                    new MaterialCostSpec("mat_sturdy_wood", 2),
+                    new MaterialCostSpec("mat_beast_hide", 2)
+                },
+                0)
+        };
+
+        CreateOrUpdateLevelUpRequirementDatabase(LevelUpRequirementDatabasePath, levelUpRequirements);
+
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("Test synthesis master data was generated.");
@@ -171,6 +193,31 @@ public static class TestSynthesisDataBuilder
         return recipe;
     }
 
+    private static SynthesisLevelUpRequirementData CreateOrUpdateLevelUpRequirement(
+        string id,
+        string displayName,
+        string description,
+        int currentLevel,
+        int targetLevel,
+        int moneyCost,
+        IReadOnlyList<MaterialCostSpec> materialCosts,
+        int sortOrder)
+    {
+        var requirement = LoadOrCreate<SynthesisLevelUpRequirementData>(SynthesisLevelUpFolder + "/" + id + ".asset");
+        var serialized = new SerializedObject(requirement);
+        serialized.FindProperty("id").stringValue = id;
+        serialized.FindProperty("displayName").stringValue = displayName;
+        serialized.FindProperty("description").stringValue = description;
+        serialized.FindProperty("currentLevel").intValue = currentLevel;
+        serialized.FindProperty("targetLevel").intValue = targetLevel;
+        serialized.FindProperty("moneyCost").intValue = moneyCost;
+        serialized.FindProperty("sortOrder").intValue = sortOrder;
+        SetMaterialCosts(serialized.FindProperty("materialCosts"), materialCosts);
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(requirement);
+        return requirement;
+    }
+
     private static void SetMaterialCosts(SerializedProperty property, IReadOnlyList<MaterialCostSpec> materialCosts)
     {
         property.arraySize = materialCosts.Count;
@@ -190,6 +237,22 @@ public static class TestSynthesisDataBuilder
     private static void CreateOrUpdateDatabase(string path, SynthesisRecipeData[] entries)
     {
         var database = LoadOrCreate<SynthesisRecipeDatabase>(path);
+        var serialized = new SerializedObject(database);
+        var entriesProperty = serialized.FindProperty("entries");
+        entriesProperty.arraySize = entries.Length;
+
+        for (var i = 0; i < entries.Length; i++)
+        {
+            entriesProperty.GetArrayElementAtIndex(i).objectReferenceValue = entries[i];
+        }
+
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(database);
+    }
+
+    private static void CreateOrUpdateLevelUpRequirementDatabase(string path, SynthesisLevelUpRequirementData[] entries)
+    {
+        var database = LoadOrCreate<SynthesisLevelUpRequirementDatabase>(path);
         var serialized = new SerializedObject(database);
         var entriesProperty = serialized.FindProperty("entries");
         entriesProperty.arraySize = entries.Length;
@@ -229,6 +292,16 @@ public static class TestSynthesisDataBuilder
         {
             AssetDatabase.DeleteAsset(path.Replace('\\', '/'));
         }
+
+        if (!Directory.Exists(SynthesisLevelUpFolder))
+        {
+            return;
+        }
+
+        foreach (var path in Directory.GetFiles(SynthesisLevelUpFolder, "*.asset", SearchOption.TopDirectoryOnly))
+        {
+            AssetDatabase.DeleteAsset(path.Replace('\\', '/'));
+        }
     }
 
     private static void DeleteInvalidAsset(string path)
@@ -244,6 +317,7 @@ public static class TestSynthesisDataBuilder
         CreateFolder("Assets", "MasterData");
         CreateFolder(RootFolder, "Test");
         CreateFolder(TestFolder, "Synthesis");
+        CreateFolder(TestFolder, "SynthesisLevelUp");
         CreateFolder(TestFolder, "Databases");
     }
 

@@ -70,7 +70,6 @@ namespace RPG.Game
         {
             var saveData = RunSaveData.CreateNew();
             saveData.AddMoney(initialMoney);
-            saveData.SetSynthesisLevel(RunSaveData.MaxSynthesisLevel);
             AddInitialSynthesisMaterials(saveData);
             return saveData;
         }

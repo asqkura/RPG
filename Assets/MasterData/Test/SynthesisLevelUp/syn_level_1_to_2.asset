@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d20a6ff8b6b4bdb96bf7723b874ace1, type: 3}
+  m_Name: syn_level_1_to_2
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.MasterData.SynthesisLevelUpRequirementData
+  id: syn_level_1_to_2
+  displayName: "\u5408\u6210Lv2\u3078\u5F37\u5316"
+  description: "\u5E8F\u76E4\u306E\u5F37\u5316\u88C5\u5099\u3068\u57FA\u672C\u30A2\u30AF\u30BB\u30B5\u30EA\u306E\u30EC\u30B7\u30D4\u304C\u5897\u3048\u307E\u3059\u3002"
+  iconSprite: {fileID: 0}
+  currentLevel: 1
+  targetLevel: 2
+  moneyCost: 100
+  materialCosts:
+  - item: {fileID: 11400000, guid: 6ab27ddb54aba9e498fbf2e8a5f5e2b1, type: 2}
+    count: 3
+  - item: {fileID: 11400000, guid: f29733404b61c424e9da00a3d927f22e, type: 2}
+    count: 2
+  - item: {fileID: 11400000, guid: 91d11e4a25956f44ca8a28f63d143c83, type: 2}
+    count: 2
+  sortOrder: 0

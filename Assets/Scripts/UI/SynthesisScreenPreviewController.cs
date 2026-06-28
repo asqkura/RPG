@@ -36,7 +36,9 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
     [SerializeField] private Button weaponCategoryButton;
     [SerializeField] private Button armorCategoryButton;
     [SerializeField] private Button accessoryCategoryButton;
+    [SerializeField] private Button otherCategoryButton;
     [SerializeField] private SynthesisRecipeDatabase recipeDatabase;
+    [SerializeField] private SynthesisLevelUpRequirementDatabase levelUpRequirementDatabase;
     [SerializeField] private ItemDatabase itemDatabase;
     [SerializeField] private EquipmentDatabase equipmentDatabase;
     [SerializeField] private SkillDatabase skillDatabase;
@@ -162,6 +164,13 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         }
 
         var recipeId = selectedRow.RecipeId;
+        if (TryGetDisplayEntry(recipeId, out var selectedEntry)
+            && selectedEntry.EntryType == SynthesisDisplayEntryType.LevelUpRequirement)
+        {
+            SubmitLevelUpRequirement(recipeId);
+            return;
+        }
+
         var result = synthesisService.TrySynthesize(runSaveData, recipeId);
         if (!result.CanSynthesize)
         {
@@ -198,6 +207,11 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
     private void ShowAccessories()
     {
         ShowCategory(SynthesisCategory.Accessory);
+    }
+
+    private void ShowOther()
+    {
+        ShowCategory(SynthesisCategory.Other);
     }
 
     private void ShowCategory(SynthesisCategory category)
@@ -291,22 +305,31 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         displayEntries.Clear();
         equipmentDetailsByRecipeId.Clear();
 
-        if (recipeDatabase == null)
+        if (currentCategory == SynthesisCategory.Other)
+        {
+            if (TryCreateLevelUpEntry(out var levelUpEntry))
+            {
+                displayEntries.Add(levelUpEntry);
+            }
+        }
+        else if (recipeDatabase != null)
+        {
+            foreach (var recipe in recipeDatabase.Entries
+                .Where(recipe => recipe != null)
+                .Where(recipe => runSaveData == null || recipe.RequiredSynthesisLevel <= runSaveData.SynthesisLevel)
+                .OrderBy(recipe => recipe.SortOrder)
+                .ThenBy(recipe => recipe.RecipeId))
+            {
+                if (TryCreateEntry(recipe, out var entry))
+                {
+                    displayEntries.Add(entry);
+                }
+            }
+        }
+        else
         {
             ClearRows();
             return;
-        }
-
-        foreach (var recipe in recipeDatabase.Entries
-            .Where(recipe => recipe != null)
-            .Where(recipe => runSaveData == null || recipe.RequiredSynthesisLevel <= runSaveData.SynthesisLevel)
-            .OrderBy(recipe => recipe.SortOrder)
-            .ThenBy(recipe => recipe.RecipeId))
-        {
-            if (TryCreateEntry(recipe, out var entry))
-            {
-                displayEntries.Add(entry);
-            }
         }
 
         EnsureRowCount(displayEntries.Count);
@@ -352,6 +375,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             }
 
             entry = new SynthesisDisplayEntry(
+                SynthesisDisplayEntryType.Recipe,
                 recipe.RecipeId,
                 item.IconSprite,
                 item.DisplayName,
@@ -370,6 +394,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         }
 
         entry = new SynthesisDisplayEntry(
+            SynthesisDisplayEntryType.Recipe,
             recipe.RecipeId,
             equipment.IconSprite,
             equipment.DisplayName,
@@ -381,10 +406,48 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         return true;
     }
 
+    private bool TryCreateLevelUpEntry(out SynthesisDisplayEntry entry)
+    {
+        entry = default;
+        if (synthesisService == null || runSaveData == null)
+        {
+            return false;
+        }
+
+        var quote = synthesisService.GetLevelUpQuote(runSaveData);
+        if (quote.FailureReason == SynthesisLevelUpFailureReason.MaxLevelReached)
+        {
+            return false;
+        }
+
+        var requirement = quote.Requirement;
+        var entryId = requirement != null
+            ? requirement.RequirementId
+            : $"synthesis_level_{quote.CurrentLevel}_to_{quote.TargetLevel}";
+        var displayName = requirement != null && !string.IsNullOrWhiteSpace(requirement.DisplayName)
+            ? requirement.DisplayName
+            : $"合成Lv{quote.TargetLevel}へ強化";
+        var description = requirement != null && !string.IsNullOrWhiteSpace(requirement.Description)
+            ? requirement.Description
+            : "合成レベルを上げ、作成できるレシピを増やします。";
+
+        entry = new SynthesisDisplayEntry(
+            SynthesisDisplayEntryType.LevelUpRequirement,
+            entryId,
+            requirement != null ? requirement.IconSprite : null,
+            displayName,
+            MasterDataDisplayLabels.FormatTag($"Lv{quote.CurrentLevel} から Lv{quote.TargetLevel}"),
+            description,
+            $"Lv{runSaveData.SynthesisLevel}",
+            quote.MoneyCost > 0 ? quote.MoneyCost.ToString() : "-",
+            requirement);
+        return true;
+    }
+
     private void InitializeGameState()
     {
         runSaveData = GameSession.GetOrCreate().RunSaveData;
-        synthesisService = new SynthesisService(recipeDatabase, itemDatabase, equipmentDatabase);
+        synthesisService = new SynthesisService(recipeDatabase, itemDatabase, equipmentDatabase, levelUpRequirementDatabase);
     }
 
     private void RegisterCategoryButtons()
@@ -412,6 +475,11 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         if (accessoryCategoryButton != null)
         {
             accessoryCategoryButton.onClick.AddListener(ShowAccessories);
+        }
+
+        if (otherCategoryButton != null)
+        {
+            otherCategoryButton.onClick.AddListener(ShowOther);
         }
     }
 
@@ -441,6 +509,11 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         {
             accessoryCategoryButton.onClick.RemoveListener(ShowAccessories);
         }
+
+        if (otherCategoryButton != null)
+        {
+            otherCategoryButton.onClick.RemoveListener(ShowOther);
+        }
     }
 
     private void RefreshCategoryButtons()
@@ -450,6 +523,7 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         SetCategoryButtonState(weaponCategoryButton, currentCategory == SynthesisCategory.Weapon);
         SetCategoryButtonState(armorCategoryButton, currentCategory == SynthesisCategory.Armor);
         SetCategoryButtonState(accessoryCategoryButton, currentCategory == SynthesisCategory.Accessory);
+        SetCategoryButtonState(otherCategoryButton, currentCategory == SynthesisCategory.Other);
     }
 
     private static void SetCategoryButtonState(Button button, bool selected)
@@ -589,6 +663,21 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             return;
         }
 
+        if (!TryGetDisplayEntry(recipeId, out var entry))
+        {
+            materialPanelView.Clear();
+            return;
+        }
+
+        if (entry.EntryType == SynthesisDisplayEntryType.LevelUpRequirement)
+        {
+            var levelUpEntries = entry.LevelUpRequirement != null
+                ? BuildMaterialPanelEntries(entry.LevelUpRequirement.MaterialCosts)
+                : new List<SynthesisMaterialPanelEntry>();
+            ShowMaterialPanelEntries(levelUpEntries);
+            return;
+        }
+
         if (recipeDatabase == null
             || string.IsNullOrWhiteSpace(recipeId)
             || !recipeDatabase.TryGetById(recipeId, out var recipe)
@@ -598,7 +687,11 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             return;
         }
 
-        var allEntries = BuildMaterialPanelEntries(recipe);
+        ShowMaterialPanelEntries(BuildMaterialPanelEntries(recipe));
+    }
+
+    private void ShowMaterialPanelEntries(List<SynthesisMaterialPanelEntry> allEntries)
+    {
         var overflowCount = 0;
         if (allEntries.Count > 3)
         {
@@ -611,13 +704,23 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
 
     private List<SynthesisMaterialPanelEntry> BuildMaterialPanelEntries(SynthesisRecipeData recipe)
     {
-        var materialCosts = new List<SynthesisMaterialPanelCost>();
         if (recipe == null)
         {
             return new List<SynthesisMaterialPanelEntry>();
         }
 
-        foreach (var cost in recipe.MaterialCosts)
+        return BuildMaterialPanelEntries(recipe.MaterialCosts);
+    }
+
+    private List<SynthesisMaterialPanelEntry> BuildMaterialPanelEntries(IReadOnlyList<SynthesisMaterialCostData> costs)
+    {
+        var materialCosts = new List<SynthesisMaterialPanelCost>();
+        if (costs == null)
+        {
+            return new List<SynthesisMaterialPanelEntry>();
+        }
+
+        foreach (var cost in costs)
         {
             if (cost == null || string.IsNullOrWhiteSpace(cost.ItemId) || cost.Count <= 0)
             {
@@ -780,15 +883,29 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
             return;
         }
 
-        var quote = selectedRow != null && synthesisService != null && runSaveData != null
-            ? synthesisService.GetQuote(runSaveData, selectedRow.RecipeId)
-            : default;
-        var canSubmit = quote.CanSynthesize;
+        var canSubmit = false;
+        var label = "合成する";
+        if (selectedRow != null && synthesisService != null && runSaveData != null)
+        {
+            if (TryGetDisplayEntry(selectedRow.RecipeId, out var entry)
+                && entry.EntryType == SynthesisDisplayEntryType.LevelUpRequirement)
+            {
+                var quote = synthesisService.GetLevelUpQuote(runSaveData);
+                canSubmit = quote.CanLevelUp;
+                label = FormatLevelUpActionButtonLabel(quote.FailureReason);
+            }
+            else
+            {
+                var quote = synthesisService.GetQuote(runSaveData, selectedRow.RecipeId);
+                canSubmit = quote.CanSynthesize;
+                label = FormatActionButtonLabel(quote.FailureReason);
+            }
+        }
 
         synthesizeButton.interactable = canSubmit;
         if (actionButtonLabel != null)
         {
-            actionButtonLabel.text = FormatActionButtonLabel(quote.FailureReason);
+            actionButtonLabel.text = label;
             actionButtonLabel.color = canSubmit ? AccentTextColor : TextColor;
         }
     }
@@ -798,6 +915,15 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         return failureReason == SynthesisFailureReason.NotEnoughMaterials
             ? "素材不足"
             : "合成する";
+    }
+
+    private static string FormatLevelUpActionButtonLabel(SynthesisLevelUpFailureReason failureReason)
+    {
+        return failureReason == SynthesisLevelUpFailureReason.NotEnoughMaterials
+            ? "素材不足"
+            : failureReason == SynthesisLevelUpFailureReason.NotEnoughMoney
+                ? "お金不足"
+                : "強化する";
     }
 
     private EquipmentDetailData BuildEquipmentDetailData(EquipmentData equipment, OwnedEquipmentSaveData ownedEquipment = null)
@@ -980,33 +1106,61 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         };
     }
 
+    private void SubmitLevelUpRequirement(string entryId)
+    {
+        var result = synthesisService.TryRaiseSynthesisLevel(runSaveData);
+        if (!result.CanLevelUp)
+        {
+            RefreshActionButtonState();
+            return;
+        }
+
+        PopulateRows();
+        SelectRowByRecipeId(entryId);
+        RefreshMoneyText();
+        RefreshSynthesisLevelText();
+    }
+
+    private bool TryGetDisplayEntry(string entryId, out SynthesisDisplayEntry entry)
+    {
+        entry = displayEntries.FirstOrDefault(candidate => candidate.EntryId == entryId);
+        return !string.IsNullOrWhiteSpace(entry.EntryId);
+    }
+
     private readonly struct SynthesisDisplayEntry
     {
         public SynthesisDisplayEntry(
-            string recipeId,
+            SynthesisDisplayEntryType entryType,
+            string entryId,
             Sprite icon,
             string name,
             string tag,
             string description,
             string owned,
-            string cost)
+            string cost,
+            SynthesisLevelUpRequirementData levelUpRequirement = null)
         {
-            RecipeId = recipeId ?? string.Empty;
+            EntryType = entryType;
+            EntryId = entryId ?? string.Empty;
             Icon = icon;
             Name = name ?? string.Empty;
             Tag = tag ?? string.Empty;
             Description = description ?? string.Empty;
             Owned = owned ?? string.Empty;
             Cost = cost ?? string.Empty;
+            LevelUpRequirement = levelUpRequirement;
         }
 
-        public string RecipeId { get; }
+        public SynthesisDisplayEntryType EntryType { get; }
+        public string EntryId { get; }
+        public string RecipeId => EntryId;
         public Sprite Icon { get; }
         public string Name { get; }
         public string Tag { get; }
         public string Description { get; }
         public string Owned { get; }
         public string Cost { get; }
+        public SynthesisLevelUpRequirementData LevelUpRequirement { get; }
     }
 
     private readonly struct SynthesisMaterialPanelCost
@@ -1034,6 +1188,13 @@ public sealed class SynthesisScreenPreviewController : MonoBehaviour, ISynthesis
         Consumable,
         Weapon,
         Armor,
-        Accessory
+        Accessory,
+        Other
+    }
+
+    private enum SynthesisDisplayEntryType
+    {
+        Recipe,
+        LevelUpRequirement
     }
 }
